@@ -38,7 +38,7 @@ import base64
 from base64 import b64encode
 # import kaleido
 
-from IPython.core.display import HTML # note the library
+# from IPython.core.display import HTML # note the library
 
 # from config import Config
 
@@ -330,6 +330,8 @@ for symbol in symbol_list:
     etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Close'] = sparkline(history_df, 'Close')
 
 etf_info = etf_info.drop(columns=['index']   )
+st.write(etf_info)
+
 
 
 # display (etf_info.head(1))
@@ -342,7 +344,8 @@ etf_info = etf_info.drop(columns=['index']   )
 
 # HTML(etf_info.to_html(escape=False))
 
-st.write(HTML(etf_info.to_html(escape=False)))
+# st.write(HTML(etf_info.to_html(escape=False)))
+
 
 
 # keys = etf_info.keys()
