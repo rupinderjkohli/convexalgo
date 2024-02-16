@@ -25,7 +25,10 @@ import csv
 
 import plotly   #install
 import plotly.io as pio
-# pio.kaleido.scope.default_format = "png"
+
+import kaleido  #install
+
+pio.kaleido.scope.default_format = "png"
 
 import plotly.graph_objects as go
 # import seaborn as sns
@@ -36,7 +39,7 @@ import streamlit as st      #install
 
 import base64
 from base64 import b64encode
-# import kaleido
+
 
 # from IPython.core.display import HTML # note the library
 
