@@ -3,5 +3,5 @@ matplotlib
 yfinance
 plotly
 streamlit
-kaleido = 0.2.1.post1
+kaleido == 0.2.1.post1
 # IPython
