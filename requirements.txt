@@ -3,3 +3,4 @@ matplotlib
 yfinance
 plotly
 streamlit
+kaleido
