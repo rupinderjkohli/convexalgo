@@ -26,9 +26,9 @@ import csv
 import plotly   #install
 import plotly.io as pio
 
-import kaleido  #install
+import Kaleido  #install
 
-pio.kaleido.scope.default_format = "png"
+pio.Kaleido.scope.default_format = "png"
 
 import plotly.graph_objects as go
 # import seaborn as sns
