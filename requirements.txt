@@ -3,4 +3,4 @@ matplotlib
 yfinance
 plotly
 streamlit
-ipython
+IPython
