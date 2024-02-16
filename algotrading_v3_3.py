@@ -36,7 +36,7 @@ import streamlit as st      #install
 
 import base64
 from base64 import b64encode
-import kaleido
+# import kaleido
 
 from IPython.core.display import HTML # note the library
 
