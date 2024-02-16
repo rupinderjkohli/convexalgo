@@ -3,5 +3,5 @@ matplotlib
 yfinance
 plotly
 streamlit
-Kaleido
+kaleido
 # IPython

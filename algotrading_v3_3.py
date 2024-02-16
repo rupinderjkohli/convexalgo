@@ -26,9 +26,15 @@ import csv
 import plotly   #install
 import plotly.io as pio
 
-import Kaleido  #install
+import kaleido  #install
 
-pio.Kaleido.scope.default_format = "png"
+pio.kaleido.scope.default_format = "png"
+pio.kaleido.scope.chromium_args = (
+        "--headless",
+        "--no-sandbox",
+        "--single-process",
+        "--disable-gpu"
+    )
 
 import plotly.graph_objects as go
 # import seaborn as sns
