@@ -26,15 +26,15 @@ import csv
 import plotly   #install
 import plotly.io as pio
 
-import kaleido  #install
+# import kaleido  #install
 
-pio.kaleido.scope.default_format = "png"
-pio.kaleido.scope.chromium_args = (
-        "--headless",
-        "--no-sandbox",
-        "--single-process",
-        "--disable-gpu"
-    )
+# pio.kaleido.scope.default_format = "png"
+# pio.kaleido.scope.chromium_args = (
+#         "--headless",
+#         "--no-sandbox",
+#         "--single-process",
+#         "--disable-gpu"
+#     )
 
 import plotly.graph_objects as go
 # import seaborn as sns
@@ -104,17 +104,17 @@ def get_hist_info(ticker, period, interval):
   hist = ticker.history(period=period, interval=interval)
   return hist
 
-def plot_stk_charts(df):
-  sns.set(style="whitegrid")
-  fig,axs = plt.subplots(3,2, figsize = (8,10))
-  sns.histplot(data=df, x="Open", kde=True, color="skyblue", ax=axs[0, 0])
-  sns.histplot(data=df, x="High", kde=True, color="olive", ax=axs[0, 1])
-  sns.histplot(data=df, x="Low", kde=True, color="gold", ax=axs[1, 0])
-  sns.histplot(data=df, x="Close", kde=True, color="teal", ax=axs[1, 1])
-  sns.histplot(data=df, x="Volume", kde=True, color="teal", ax=axs[2, 0])
-  sns.histplot(data=df, x="Dividends", kde=True, color="blue", ax=axs[2, 1])
-  fig.tight_layout()
-  return
+# def plot_stk_charts(df):
+#   sns.set(style="whitegrid")
+#   fig,axs = plt.subplots(3,2, figsize = (8,10))
+#   sns.histplot(data=df, x="Open", kde=True, color="skyblue", ax=axs[0, 0])
+#   sns.histplot(data=df, x="High", kde=True, color="olive", ax=axs[0, 1])
+#   sns.histplot(data=df, x="Low", kde=True, color="gold", ax=axs[1, 0])
+#   sns.histplot(data=df, x="Close", kde=True, color="teal", ax=axs[1, 1])
+#   sns.histplot(data=df, x="Volume", kde=True, color="teal", ax=axs[2, 0])
+#   sns.histplot(data=df, x="Dividends", kde=True, color="blue", ax=axs[2, 1])
+#   fig.tight_layout()
+#   return
 
 def get_stk_news(ticker):
   # show news
