@@ -36,12 +36,12 @@ import plotly.io as pio
 #         "--disable-gpu"
 #     )
 
+# For plotting
 import plotly.graph_objects as go
-# import seaborn as sns
-
-# import panel as pn      #install
+from plotly.subplots import make_subplots
 
 import streamlit as st      #install
+# from streamlit_autorefresh import st_autorefresh
 
 import base64
 from base64 import b64encode
@@ -54,10 +54,10 @@ from base64 import b64encode
 # Using plotly dark template
 TEMPLATE = 'plotly_dark'
 
+st.set_page_config(layout='wide', page_title='Stock Dashboard', page_icon=':dollar:')
 
-# !pip install streamlit
-
-# !pip install -U kaleido
+# update every 5 mins
+# st_autorefresh(interval=5 * 60 * 1000, key="dataframerefresh")
 
 
 # print("Plotly Version : {}".format(plotly.__version__))
@@ -68,7 +68,7 @@ pd.set_option('display.max_columns', None,
 
 
 
-"""## stocks"""
+# """## stocks"""
 
 def get_all_stock_info(ticker):
   # get all stock info
@@ -125,7 +125,7 @@ def get_stk_news(ticker):
   # note the new way of creating column
   news_df = news_df.assign(providerPublishTime_n=lambda x: pd.to_datetime(x.providerPublishTime, unit='s'))
 
-  display(news_df.info())
+  # display(news_df.info())
 
   news_df[['title',	'publisher',	'link',	'providerPublishTime_n',	'type'	,'relatedTickers']]
 
@@ -245,36 +245,61 @@ def sparkline(df, col): #, Avg):
     return '<img src="data:image/png;base64,{}"/>'.format(png_base64)
 
 
+    
+# """### Select Stock and Time interval"""
+# https://github.com/smudali/stocks-analysis/blob/main/dasboard/01_Home.py
+symbol_list = ['TSLA','NVDA','AMZN','NFLX','BA','GS','SPY','QQQ','IWM','SMH','RSP' ]
 
-"""### Select Stock and Time interval"""
-
-symbol_list = ['TSLA',
-'NVDA',
-'AMZN',
-'NFLX',
-'BA',
-'GS',
-'SPY',
-'QQQ',
-'IWM',
-'SMH',
-'RSP' ]
+st.sidebar.header("Choose your Stock filter: ")
+ticker = st.sidebar.multiselect('Choose Ticker', options=symbol_list,
+                              help = 'Select a ticker', key='ticker',max_selections=None)
+selected_period = st.sidebar.selectbox(
+    'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'])
+selected_interval = st.sidebar.selectbox(
+    'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'])
+    
 
 #         Valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
 # Either Use period parameter or use start and end
 #     interval : str
 #         Valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
-st.write("""
-# Candlestick Charts
-
-""",
-         symbol_list)
 
 
 period = "1mo"
 interval= "1d"
 ema_period1 = 5
 ema_period2 = 10
+
+
+# showing for just 1 ticker
+yf_data = yf.Ticker(ticker) #initiate the ticker
+
+# Subheader with company name and symbol
+st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+st.subheader(st.session_state.page_subheader)
+# st.write(yf_data)
+
+get_all_stock_info(yf_data)
+st.divider()
+
+get_hist_info(yf_data, selected_period, selected_interval)
+st.divider()
+
+get_stk_news(yf_data)
+st.divider()
+
+col1, col2 = st.columns([4.5,4.5])
+with col1:
+    st.text('Previous Close')
+    st.text(yf_data.info['previousClose'])
+with col2:
+    st.text('Previous Open')
+    st.text(yf_data.info['open'])
+
+
+# #########################################################################################
+
+# #########################################################################################
 
 # showing for just 1 ticker
 # symbol = symbol_list[3]
