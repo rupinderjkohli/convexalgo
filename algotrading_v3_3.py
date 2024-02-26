@@ -258,9 +258,9 @@ ticker = st.sidebar.selectbox(
 #                               key='ticker',
 #                               max_selections=None)
 selected_period = st.sidebar.selectbox(
-    'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'])
+    'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'], index=2)
 selected_interval = st.sidebar.selectbox(
-    'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'])
+    'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'], index=8)
     
 
 #         Valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
@@ -287,11 +287,11 @@ st.write(stock_info_df.to_html(escape=False, index=False), unsafe_allow_html=Tru
 st.divider()
 
 stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-st.write(stock_hist_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+st.write(stock_hist_df.to_html(escape=False, index=True), unsafe_allow_html=True)
 st.divider()
 
 stock_news_df = get_stk_news(yf_data)
-st.write(stock_news_df) #(stock_news_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+st.write(stock_news_df.to_html(escape=True, index=False), unsafe_allow_html=True)
 st.divider()
 
 col1, col2 = st.columns([4.5,4.5])
