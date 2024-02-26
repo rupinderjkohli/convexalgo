@@ -127,9 +127,9 @@ def get_stk_news(ticker):
 
   # display(news_df.info())
 
-  news_df = news_df[['title',	'publisher',	'link',	'providerPublishTime_n',	'type'	,'relatedTickers']]
+  news_df_select = news_df[['title',	'publisher',	'link',	'providerPublishTime_n',	'type'	,'relatedTickers']]
 
-  return news_df
+  return news_df_select
 
 # https://coderzcolumn.com/tutorials/data-science/candlestick-chart-in-python-mplfinance-plotly-bokeh#2
 
