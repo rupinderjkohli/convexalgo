@@ -291,7 +291,7 @@ st.write(stock_hist_df.to_html(escape=False, index=False), unsafe_allow_html=Tru
 st.divider()
 
 stock_news_df = get_stk_news(yf_data)
-st.write(stock_news_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+st.write(stock_news_df) #(stock_news_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 st.divider()
 
 col1, col2 = st.columns([4.5,4.5])
