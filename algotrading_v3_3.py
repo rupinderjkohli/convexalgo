@@ -127,7 +127,7 @@ def get_stk_news(ticker):
 
   # display(news_df.info())
 
-  news_df[['title',	'publisher',	'link',	'providerPublishTime_n',	'type'	,'relatedTickers']]
+  news_df = news_df[['title',	'publisher',	'link',	'providerPublishTime_n',	'type'	,'relatedTickers']]
 
   return news_df
 
@@ -248,11 +248,15 @@ def sparkline(df, col): #, Avg):
     
 # """### Select Stock and Time interval"""
 # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01_Home.py
-symbol_list = ['TSLA','NVDA','AMZN','NFLX','BA','GS','SPY','QQQ','IWM','SMH','RSP' ]
+symbol_list = ['TSLA','NVDA','AMZN','NFLX','BA','GS','SPY','QQQ','IWM','SMH','RSP']
 
 st.sidebar.header("Choose your Stock filter: ")
-ticker = st.sidebar.multiselect('Choose Ticker', options=symbol_list,
-                              help = 'Select a ticker', key='ticker',max_selections=None)
+ticker = st.sidebar.selectbox(
+    'Select Ticker', options=symbol_list)
+# ticker = st.sidebar.multiselect('Choose Ticker', options=symbol_list,
+#                               help = 'Select a ticker', 
+#                               key='ticker',
+#                               max_selections=None)
 selected_period = st.sidebar.selectbox(
     'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'])
 selected_interval = st.sidebar.selectbox(
@@ -264,12 +268,10 @@ selected_interval = st.sidebar.selectbox(
 #     interval : str
 #         Valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
 
-
 period = "1mo"
 interval= "1d"
 ema_period1 = 5
 ema_period2 = 10
-
 
 # showing for just 1 ticker
 yf_data = yf.Ticker(ticker) #initiate the ticker
@@ -279,13 +281,17 @@ st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], 
 st.subheader(st.session_state.page_subheader)
 # st.write(yf_data)
 
-get_all_stock_info(yf_data)
+stock_info_df = get_all_stock_info(yf_data)
+st.write(stock_info_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+
 st.divider()
 
-get_hist_info(yf_data, selected_period, selected_interval)
+stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+st.write(stock_hist_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 st.divider()
 
-get_stk_news(yf_data)
+stock_news_df = get_stk_news(yf_data)
+st.write(stock_news_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 st.divider()
 
 col1, col2 = st.columns([4.5,4.5])
