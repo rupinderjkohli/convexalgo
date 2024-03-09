@@ -298,13 +298,22 @@ with tab1:
     # st.write(yf_data)
 
     stock_info_df = get_all_stock_info(yf_data)
+    st.write("Overview")
     st.write(stock_info_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
     st.divider()
 
+    stock_news_df = get_stk_news(yf_data)
+    st.write("News")
+    st.write(stock_news_df.to_html(escape=False, index=True), unsafe_allow_html=True)
+    st.divider()
+   
+    st.write("Historical data per period")
     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
     st.write(stock_hist_df.to_html(escape=False, index=True), unsafe_allow_html=True)
     st.divider()
+    
+    
 
 with tab2:
     fig = draw_candle_stick_chart(stock_hist_df, ticker)
