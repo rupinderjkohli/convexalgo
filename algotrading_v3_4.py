@@ -96,6 +96,17 @@ def get_all_stock_info(ticker):
 def get_hist_info(ticker, period, interval):
   # get historical market data
   hist = ticker.history(period=period, interval=interval)
+  hist['SMA'] = hist['Close'].rolling(20).mean()
+  hist['EMA_5day'] = hist['Close'].ewm(span=5, adjust=False).mean()
+  hist['EMA_10day'] = hist['Close'].ewm(span=10, adjust=False).mean()
+  hist['Signal'] = 0.0
+
+  # If 5 period ema crosses over 10 period ema (note: ema not sma) then go long
+
+  hist['Signal'] = np.where(hist['EMA_5day'] > hist['EMA_10day'], 1.0, 0.0)
+
+  hist['Position'] = hist['Signal'].diff()
+
   return hist
 
 # def plot_stk_charts(df):
@@ -147,7 +158,7 @@ def draw_candle_stick_chart(df,symbol):
   #fig.show()
   return fig
 
-def draw_candle_stick_chart_ma(df):
+def draw_candle_stick_chart_ma(df, symbol):
   candlestick = go.Candlestick(
                             x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
                             open=df['Open'],
@@ -160,31 +171,120 @@ def draw_candle_stick_chart_ma(df):
                   y=df["SMA"],
                   #yaxis="y1",
                   name="SMA",
-                  fillcolor = 'black',
+                  # fillcolor = 'black',
 
                   )
-  ema_3day = go.Scatter(x=df.index,
-                   y=df["EMA_3day"],
-                   name="EMA_3day"
+  ema_5day = go.Scatter(x=df.index,
+                   y=df["EMA_5day"],
+                   name="EMA_5day"
                   )
 
-  ema = go.Scatter(x=df.index,
-                   y=df["EMA"],
-                   name="EMA"
+  ema_10day = go.Scatter(x=df.index,
+                   y=df["EMA_10day"],
+                   name="EMA_10day"
                   )
 
-  fig = go.Figure(data=[candlestick, sma, ema_3day, ema])
+  fig = go.Figure(data=[candlestick, sma, ema_5day, ema_10day])
 
   # fig = go.Figure(data=[candlestick])
 
   fig.update_layout(
       xaxis_rangeslider_visible=True,
       #width=800, height=600,
-      title="NVDA, Today - Dec 2023",
+      title= symbol,
+      yaxis_title= symbol # selected ticker
+  )
+  # fig.show()
+  return fig
+
+def draw_candle_stick_triggers(df, symbol):
+  
+  # https://plotly.com/python/reference/scattergl/
+
+  candlestick = go.Candlestick(
+                              x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
+                              open=df['Open'],
+                              high=df['High'],
+                              low=df['Low'],
+                              close=df['Close'],
+                              #increasing_line_color= 'green', decreasing_line_color= 'red'8
+                              )
+
+  ema_5day = go.Scatter(x=df.index,
+                    y=df["EMA_5day"],
+                    name="EMA_5day",
+                        fillcolor = 'azure'
+                  )
+
+  ema_10day = go.Scatter(x=df.index,
+                    y=df["EMA_10day"],
+                    name="EMA_10day"
+                  )
+
+  # plot 'buy' signals
+  N = 100000
+  position_buy = go.Scattergl(x=df[df['Position'] == 1].index,
+                    y=df['EMA_5day'][df['Position'] == 1],
+                    name="Buy",
+                    mode='markers',
+                    marker=dict(
+                        color=np.random.randn(N),
+                        colorscale='tropic',
+                        line_width=1,
+                        symbol = 'triangle-up',
+                        size = 15
+                        )
+                  )
+
+  # plot 'sell' signals
+  position_sell = go.Scattergl(x=df[df['Position'] == -1].index,
+                            y=df['EMA_10day'][df['Position'] == -1],
+                            name = 'sell',
+                            mode='markers',
+                            marker=dict(
+                              color= np.random.randn(N+1000),
+                              colorscale='armyrose',
+                              line_width=1,
+                              symbol = 'triangle-down',
+                              size = 15
+                              # hovertext = df_hist['Open','Close','High','Low']
+                              )
+                            )
+
+  # # plot ‘buy’ signals
+  # plt.plot(df_hist[df_hist['Position'] == 1].index,
+  #          df_hist['EMA_p1'][df_hist['Position'] == 1],
+  #          '^', markersize = 15, color = 'g', label = 'buy')
+  # # plot ‘sell’ signals
+  # plt.plot(df_hist[df_hist['Position'] == -1].index,
+  #          df_hist['EMA_p2'][df_hist['Position'] == -1],
+  #          'v', markersize = 15, color = 'r', label = 'sell')
+
+  # # plot 'buy' signals
+  # position_buy = go.Scatter(x=df_hist[df_hist['Position'] == 1].index,
+  #          df_hist['EMA_5day'][df_hist['Position'] == 1],
+  #          '^', markersize = 15, color = 'c', label = 'buy')
+
+  # # plot 'sell' signals
+  # position_sell = go.Scatter(df_hist[df_hist['Position'] == -1].index,
+  #          df_hist['EMA_10day'][df_hist['Position'] == -1],
+  #          'v', markersize = 15, color = 'k', label = 'sell')
+
+  fig = go.Figure(data=[candlestick, ema_5day, ema_10day
+                        , position_buy, position_sell
+                        ])
+
+  # fig = go.Figure(data=[candlestick])
+  
+  fig.update_layout(
+      xaxis_rangeslider_visible=True,
+      #width=800, height=600,
+      # title= symbol #  "NVDA, Today - Dec 2023",
       yaxis_title= symbol #'NVDA Stock'
   )
-  fig.show()
-  return
+  # fig.show()
+  return fig
+
 
 def plot_stk_hist(df):
   print("plotting Data and Histogram")
@@ -309,6 +409,7 @@ with tab1:
     st.divider()
    
     st.write("Historical data per period")
+    st.write("Showing EMA-5day period vs EMA-10day period")
     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
     st.write(stock_hist_df.to_html(escape=False, index=True), unsafe_allow_html=True)
     st.divider()
@@ -316,11 +417,10 @@ with tab1:
     
 
 with tab2:
-    fig = draw_candle_stick_chart(stock_hist_df, ticker)
+    fig = draw_candle_stick_triggers(stock_hist_df, ticker)
     # Plot!
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
-  
 
 
 # # https://www.quantstart.com/articles/candlestick-subplots-with-plotly-and-the-alphavantage-api/
