@@ -4,4 +4,5 @@ yfinance
 plotly
 streamlit
 kaleido==0.2.1
+pybase64
 # IPython

@@ -26,6 +26,10 @@ import csv
 import plotly   #install
 import plotly.io as pio
 
+import plotly.figure_factory as ff
+#importing pybase64 module
+import pybase64
+
 # import kaleido  #install
 
 # pio.kaleido.scope.default_format = "png"
@@ -133,7 +137,7 @@ def get_stk_news(ticker):
 
 # https://coderzcolumn.com/tutorials/data-science/candlestick-chart-in-python-mplfinance-plotly-bokeh#2
 
-def draw_candle_stick_chart(df):
+def draw_candle_stick_chart(df,symbol):
   candlestick = go.Candlestick(
                             x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
                             open=df['Open'],
@@ -149,11 +153,11 @@ def draw_candle_stick_chart(df):
   fig.update_layout(
       xaxis_rangeslider_visible=True,
       #width=800, height=600,
-      title="NVDA, Today - Dec 2023",
-      yaxis_title= symbol #'NVDA Stock'
+      title=symbol,
+      yaxis_title= symbol 
   )
-  fig.show()
-  return
+  #fig.show()
+  return fig
 
 def draw_candle_stick_chart_ma(df):
   candlestick = go.Candlestick(
@@ -239,11 +243,31 @@ def sparkline(df, col): #, Avg):
     # png = plotly.io.to_image(fig)
 
     # png_base64 = base64.b64encode(png).decode() #('ascii')
-    png_base64 = base64.b64encode(fig.to_image()).decode('ascii')
+    png_base64 = pybase64.b64encode(fig.to_image()).decode('utf-8') #'ascii')
     # display(png_base64)
+    
+    #decode base64 string data
+    # decoded_data = base64.b64decode(fig.to_image()).decode('utf-8')
+    
+    # print(type(png_base64))
+    sparkline_url = '<img src="data:image/png;pybase64,{}"/>'.format(png_base64)
+    # print(type(sparkline_url))
+    # print (sparkline_url)
+    
+    #open file with base64 string data
+    # file = open('file1.txt', 'rb')
+    # encoded_data = file.read()
+    # file.close()
+    #decode base64 string data
+    decoded_data=pybase64.b64decode((png_base64))
+    #write the decoded data back to original format in  file
+    img_file = open('image.jpeg', 'wb')
+    img_file.write(decoded_data)
+    img_file.close()
 
-    return '<img src="data:image/png;base64,{}"/>'.format(png_base64)
-
+    #print ('<img src="data:image/png;base64,{}"/>'.format(png_base64))
+    return png_base64 #('<img src="data:image/png;base64,{}"/>'.format(decoded_data))
+    # return ('<img src="data:/png;pybase64,{}"/>'.format(png_base64))
 
     
 # """### Select Stock and Time interval"""
@@ -299,8 +323,11 @@ with col1:
     st.text('Previous Close')
     st.text(yf_data.info['previousClose'])
 with col2:
-    st.text('Previous Open')
-    st.text(yf_data.info['open'])
+    fig = draw_candle_stick_chart(stock_hist_df, ticker)
+    # Plot!
+    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+
+  
 
 
 # #########################################################################################
@@ -363,12 +390,15 @@ for symbol in symbol_list:
     # display (ticker)
     # display (history_df.head(5))
 
-    # Add the sparkline for 12 month Open history data
-    etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Open'] = sparkline(history_df, 'Open')
+    # # Add the sparkline for 12 month Open history data
+    # spark_img = sparkline(history_df, 'Open')
+    # spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
+    # etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Open'] = (spark_img_url)
 
-    # Add the sparkline for 12 month Close history data
-    etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Close'] = sparkline(history_df, 'Close')
+    # # Add the sparkline for 12 month Close history data
+    # etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Close'] = sparkline(history_df, 'Close')
 
+    
 etf_info = etf_info.drop(columns=['index']   )
 st.write(etf_info)
 
