@@ -36,6 +36,7 @@ from plotly.subplots import make_subplots
 
 import streamlit as st      #install
 # from streamlit_autorefresh import st_autorefresh
+# from schedule import every, repeat, run_pending
 
 import base64
 from base64 import b64encode
@@ -213,7 +214,7 @@ def draw_candle_stick_triggers(df, symbol):
   ema_5day = go.Scatter(x=df.index,
                     y=df["EMA_5day"],
                     name="EMA_5day",
-                        fillcolor = 'azure'
+                    # fillcolor = 'azure'
                   )
 
   ema_10day = go.Scatter(x=df.index,
@@ -229,10 +230,10 @@ def draw_candle_stick_triggers(df, symbol):
                     mode='markers',
                     marker=dict(
                         color=np.random.randn(N),
-                        colorscale='tropic',
+                        colorscale='greens',
                         line_width=1,
                         symbol = 'triangle-up',
-                        size = 15
+                        size = 12
                         )
                   )
 
@@ -243,10 +244,10 @@ def draw_candle_stick_triggers(df, symbol):
                             mode='markers',
                             marker=dict(
                               color= np.random.randn(N+1000),
-                              colorscale='armyrose',
+                              colorscale='reds',
                               line_width=1,
                               symbol = 'triangle-down',
-                              size = 15
+                              size = 10
                               # hovertext = df_hist['Open','Close','High','Low']
                               )
                             )
@@ -357,71 +358,74 @@ def sparkline(df, col): #, Avg):
     # return ('<img src="data:/png;pybase64,{}"/>'.format(png_base64))
 
 
+def main():
+      
+  # """### Select Stock and Time interval"""
+  # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01_Home.py
+  symbol_list = ['TSLA','NVDA','AMZN','NFLX','BA','GS','SPY','QQQ','IWM','SMH','RSP']
+
+  st.sidebar.header("Choose your Stock filter: ")
+  ticker = st.sidebar.selectbox(
+      'Select Ticker', options=symbol_list)
+  # ticker = st.sidebar.multiselect('Choose Ticker', options=symbol_list,
+  #                               help = 'Select a ticker', 
+  #                               key='ticker',
+  #                               max_selections=None)
+  selected_period = st.sidebar.selectbox(
+      'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'], index=2)
+  selected_interval = st.sidebar.selectbox(
+      'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'], index=8)
+      
+
+  #         Valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
+  # Either Use period parameter or use start and end
+  #     interval : str
+  #         Valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
+
+  # period = "1mo"
+  # interval= "1d"
+  ema_period1 = 5
+  ema_period2 = 10
+
+  # showing for just 1 ticker
+  yf_data = yf.Ticker(ticker) #initiate the ticker
+
+  tab1, tab2 = st.tabs(["🗃 Data","📈 Chart"])
+
+  
+  with tab1:
+
+      # Subheader with company name and symbol
+      st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+      st.subheader(st.session_state.page_subheader)
+      # st.write(yf_data)
+
+      stock_info_df = get_all_stock_info(yf_data)
+      st.write("Overview")
+      st.write(stock_info_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+
+      st.divider()
+
+      stock_news_df = get_stk_news(yf_data)
+      st.write("News")
+      st.write(stock_news_df.to_html(escape=False, index=True), unsafe_allow_html=True)
+      st.divider()
     
-# """### Select Stock and Time interval"""
-# https://github.com/smudali/stocks-analysis/blob/main/dasboard/01_Home.py
-symbol_list = ['TSLA','NVDA','AMZN','NFLX','BA','GS','SPY','QQQ','IWM','SMH','RSP']
+      st.write("Historical data per period")
+      st.write("Showing EMA-5day period vs EMA-10day period")
+      stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+      st.write(stock_hist_df.to_html(escape=False, index=True), unsafe_allow_html=True)
+      st.divider()
+      
+  with tab2:
+      fig = draw_candle_stick_triggers(stock_hist_df, ticker)
+      # Plot!
+      st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
-st.sidebar.header("Choose your Stock filter: ")
-ticker = st.sidebar.selectbox(
-    'Select Ticker', options=symbol_list)
-# ticker = st.sidebar.multiselect('Choose Ticker', options=symbol_list,
-#                               help = 'Select a ticker', 
-#                               key='ticker',
-#                               max_selections=None)
-selected_period = st.sidebar.selectbox(
-    'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'], index=2)
-selected_interval = st.sidebar.selectbox(
-    'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'], index=8)
-    
+  return
 
-#         Valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
-# Either Use period parameter or use start and end
-#     interval : str
-#         Valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
-
-# period = "1mo"
-# interval= "1d"
-ema_period1 = 5
-ema_period2 = 10
-
-# showing for just 1 ticker
-yf_data = yf.Ticker(ticker) #initiate the ticker
-
-tab1, tab2 = st.tabs(["🗃 Data","📈 Chart"])
-
-with tab1:
-
-    # Subheader with company name and symbol
-    st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
-    st.subheader(st.session_state.page_subheader)
-    # st.write(yf_data)
-
-    stock_info_df = get_all_stock_info(yf_data)
-    st.write("Overview")
-    st.write(stock_info_df.to_html(escape=False, index=False), unsafe_allow_html=True)
-
-    st.divider()
-
-    stock_news_df = get_stk_news(yf_data)
-    st.write("News")
-    st.write(stock_news_df.to_html(escape=False, index=True), unsafe_allow_html=True)
-    st.divider()
-   
-    st.write("Historical data per period")
-    st.write("Showing EMA-5day period vs EMA-10day period")
-    stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-    st.write(stock_hist_df.to_html(escape=False, index=True), unsafe_allow_html=True)
-    st.divider()
-    
-    
-
-with tab2:
-    fig = draw_candle_stick_triggers(stock_hist_df, ticker)
-    # Plot!
-    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-
-
+if __name__ == '__main__':
+  main()
 
 # # https://www.quantstart.com/articles/candlestick-subplots-with-plotly-and-the-alphavantage-api/
 
