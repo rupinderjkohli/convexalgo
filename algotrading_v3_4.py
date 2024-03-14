@@ -397,7 +397,7 @@ def main():
     st.write ("Please select a ticker in the sidebar")
     return
   else:
-    tab = st.tabs(["🗃 Base Data"])
+    tab = st.tabs(["📈 Chart"])
     with tab[0]:
       
       for symbol in known_options:
