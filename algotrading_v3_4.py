@@ -368,6 +368,8 @@ def main():
   # ticker = st.sidebar.selectbox(
   #     'Select Ticker', options=symbol_list)
   #implement multi-selection for tickers
+  # st.write(st.__version__)
+  
   ticker = st.sidebar.multiselect('Choose Ticker', options=symbol_list,
                                 help = 'Select a ticker', 
                                 key='ticker',
@@ -397,9 +399,8 @@ def main():
     st.write ("Please select a ticker in the sidebar")
     return
   else:
-    tab = st.tabs(["📈 Chart"])
+    tab = st.tabs(["🗃 Base Data","📈 Chart"])
     with tab[0]:
-      
       for symbol in known_options:
         yf_data = yf.Ticker(symbol) #initiate the ticker
         
@@ -412,16 +413,31 @@ def main():
         st.write(stock_info_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
         st.divider()
+    with tab[1]:
+      ## Create two columns
+      # col1, col2 = st.columns(2)
+      
+      for symbol in known_options:
+        yf_data = yf.Ticker(symbol) #initiate the ticker
         
-        st.write("Historical data per period")
-        st.write("Showing EMA-5day period vs EMA-10day period")
+        st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+        st.subheader(st.session_state.page_subheader)
+        # st.write(yf_data)
+        st.write(symbol)
+        st.write("Historical data per period (Showing EMA-5day period vs EMA-10day period)")
+        
+        # st.write("(Showing EMA-5day period vs EMA-10day period)")
         stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+        
+        # ## Display the data table in the first column
+        # st.dataframe(stock_hist_df.head(10))
+
         fig = draw_candle_stick_triggers(stock_hist_df, symbol)
-  #     # Plot!
+        # Plot!
+        # Create and display the bar chart in the second column
         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-  
-        # st.write(stock_hist_df.to_html(escape=False, index=True), unsafe_allow_html=True)
-        # st.divider()
+        
+        st.divider()
     
     # tab1 = st.tabs(["🗃 Base Data"])
     # with tab1:
