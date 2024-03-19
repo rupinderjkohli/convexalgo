@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# RUN git clone https://github.com/rupinderjkohli/convexalgo.git .
+#should be a public repository
+RUN git clone https://github.com/rupinderjkohli/convexalgo.git .
 
 RUN pip3 install -r requirements.txt
 
