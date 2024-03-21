@@ -429,20 +429,20 @@ def main():
         
         # print("df:", etf_summary)
         # History data for 12 months
-        history = yf_data.history(period=selected_period)[['Open', 'Close']]
-        # Convert the history series to a DF
-        history_df = history #.to_frame()
+        # history = yf_data.history(period=selected_period)[['Open', 'Close']]
+        # # Convert the history series to a DF
+        # history_df = history #.to_frame()
         
-        # Add the sparkline for 12 month Open history data
-        spark_img = sparkline(history_df, 'Open')
-        spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
-        # c_decoded = base64.b64decode(spark_img)
-        # etf_summary.loc[etf_summary['symbol'] == symbol, 'last_12_months_Open'] = st.image(base64.b64decode(spark_img))
+        # # Add the sparkline for 12 month Open history data
+        # spark_img = sparkline(history_df, 'Open')
+        # spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
+        # # c_decoded = base64.b64decode(spark_img)
+        # # etf_summary.loc[etf_summary['symbol'] == symbol, 'last_12_months_Open'] = st.image(base64.b64decode(spark_img))
 
-        # Add the sparkline for 12 month Close history data
-        spark_img = sparkline(history_df, 'Close')
-        spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
-        # etf_summary.loc[etf_summary['symbol'] == symbol, 'last_12_months_Close'] = st.image(base64.b64decode(spark_img)) #sparkline(history_df, 'Close')
+        # # Add the sparkline for 12 month Close history data
+        # spark_img = sparkline(history_df, 'Close')
+        # spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
+        # # etf_summary.loc[etf_summary['symbol'] == symbol, 'last_12_months_Close'] = st.image(base64.b64decode(spark_img)) #sparkline(history_df, 'Close')
 
         
       etf_summary = etf_summary.drop(columns='index')  
