@@ -421,7 +421,11 @@ def main():
         yf_data = yf.Ticker(symbol) #initiate the ticker
         etf_summary_info = get_all_stock_info(yf_data) #get_hist_info(yf_data, selected_period, selected_interval)
          
+         
+        #memory leak
         etf_summary = etf_summary.append(etf_summary_info, ignore_index=True)
+        # etf_summary = pd.concat([etf_summary, pd.DataFrame([etf_summary_info])], ignore_index=True)
+        
         # print("df:", etf_summary)
         # History data for 12 months
         history = yf_data.history(period=selected_period)[['Open', 'Close']]
