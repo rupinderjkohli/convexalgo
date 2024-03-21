@@ -415,7 +415,7 @@ def main():
       
       st.write(str(known_options))
       etf_summary = pd.DataFrame()
-      etf_summary_info = {} # dictionary
+      etf_summary_info = [] # dictionary
       
       for symbol in known_options:
         yf_data = yf.Ticker(symbol) #initiate the ticker
@@ -423,8 +423,9 @@ def main():
          
          
         #memory leak
-        # etf_summary = etf_summary.append(etf_summary_info, ignore_index=True)
-        etf_summary = pd.concat([etf_summary, pd.DataFrame([etf_summary_info])], ignore_index=True)
+        etf_summary = etf_summary.append(etf_summary_info, ignore_index=True)
+        # etf_summary = pd.concat([etf_summary, pd.DataFrame([etf_summary_info])], ignore_index=True)
+        
         
         # print("df:", etf_summary)
         # History data for 12 months
