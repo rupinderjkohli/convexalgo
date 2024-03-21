@@ -423,8 +423,8 @@ def main():
          
          
         #memory leak
-        etf_summary = etf_summary.append(etf_summary_info, ignore_index=True)
-        # etf_summary = pd.concat([etf_summary, pd.DataFrame([etf_summary_info])], ignore_index=True)
+        # etf_summary = etf_summary.append(etf_summary_info, ignore_index=True)
+        etf_summary = pd.concat([etf_summary, pd.DataFrame([etf_summary_info])], ignore_index=True)
         
         # print("df:", etf_summary)
         # History data for 12 months
