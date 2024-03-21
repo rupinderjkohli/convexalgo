@@ -16,8 +16,17 @@ RUN git clone https://github.com/rupinderjkohli/convexalgo.git .
 
 RUN pip3 install -r requirements.txt
 
-EXPOSE 8501
+# 8501 is in use for the local changes
+EXPOSE 8502  
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
-ENTRYPOINT ["streamlit", "run", "algotrading_v3_4.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "algotrading_v3_4.py", "--server.port=8502", "--server.address=0.0.0.0"]
+
+# ########################################
+# commands to setup the docker image
+# docker build -t streamlit .
+# docker images # to view the streamlit app image
+# docker run -p 8501:8501 streamlit
+# open the URL
+# ########################################

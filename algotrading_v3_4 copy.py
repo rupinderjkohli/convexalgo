@@ -96,7 +96,6 @@ def get_all_stock_info(ticker):
 
 def get_hist_info(ticker, period, interval):
   # get historical market data
-  # print(ticker, period, interval)
   hist = ticker.history(period=period, interval=interval)
   hist['SMA'] = hist['Close'].rolling(20).mean()
   hist['EMA_5day'] = hist['Close'].ewm(span=5, adjust=False).mean()
@@ -413,38 +412,40 @@ def main():
       st.write("Showing Summary for the following stocks:")
       # st.write(selected_period, selected_interval)
       
-      st.write(str(known_options))
-      etf_summary = pd.DataFrame()
+      st.write(known_options)
+      etf_summary = {} #pd.DataFrame()
       etf_summary_info = {} # dictionary
       
       for symbol in known_options:
         yf_data = yf.Ticker(symbol) #initiate the ticker
-        etf_summary_info = get_all_stock_info(yf_data) #get_hist_info(yf_data, selected_period, selected_interval)
-         
-        etf_summary = etf_summary.append(etf_summary_info, ignore_index=True)
-        # print("df:", etf_summary)
-        # History data for 12 months
-        history = yf_data.history(period=selected_period)[['Open', 'Close']]
-        # Convert the history series to a DF
-        history_df = history #.to_frame()
+        etf_summary_info[symbol] = get_all_stock_info(yf_data) #get_hist_info(yf_data, selected_period, selected_interval)
+        # etf_summary = pd.concat([etf_summary, etf_summary_info])
+        # etf_summary = pd.DataFrame(etf_summary_info.items())
         
-        # Add the sparkline for 12 month Open history data
-        spark_img = sparkline(history_df, 'Open')
-        spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
-        # c_decoded = base64.b64decode(spark_img)
-        # etf_summary.loc[etf_summary['symbol'] == symbol, 'last_12_months_Open'] = st.image(base64.b64decode(spark_img))
-
-        # Add the sparkline for 12 month Close history data
-        spark_img = sparkline(history_df, 'Close')
-        spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
-        # etf_summary.loc[etf_summary['symbol'] == symbol, 'last_12_months_Close'] = st.image(base64.b64decode(spark_img)) #sparkline(history_df, 'Close')
-
+        etf_summary.update(etf_summary_info)
+        # etf_summary = pd.Series(etf_summary_info).to_frame()
         
-      etf_summary = etf_summary.drop(columns='index')  
-      st.write(etf_summary.to_html(escape=False, index=False), unsafe_allow_html=True) 
-      st.divider()
-       
+        # print(type(etf_summary_info))
+        print("df:", etf_summary)
+        
+      # etf_summary_df = pd.DataFrame.from_dict([etf_summary_info])
       
+      st.write(etf_summary['TSLA']) #.to_html(escape=False, index=False), unsafe_allow_html=True) 
+      st.divider()
+      st.write(etf_summary['TSLA'])
+      
+      df = pd.json_normalize(etf_summary)
+      
+      st.write(df)
+       
+        # # Subheader with company name and symbol
+        # st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+        # st.subheader(st.session_state.page_subheader)
+        # st.write(symbol)
+        # stock_info_df = get_all_stock_info(yf_data)
+        # st.write(stock_info_df.to_html(escape=False, index=False), unsafe_allow_html=True)
+
+    
     # ###################################################
     # List View: 
     # # of all stocks; 
@@ -453,22 +454,44 @@ def main():
       st.write("Showing the List View of the selected stocks")
       ## Create two columns
       # col1, col2 = st.columns(2)
-      etf_info = pd.DataFrame()
-      etf_data = {} # dictionary
+      # etf_info = pd.DataFrame()
+      # etf_data = {} # dictionary
         
-      for symbol in known_options:
-        yf_data = yf.Ticker(symbol)
-        etf_data[symbol] = get_hist_info(yf_data, selected_period, selected_interval)
+      # for symbol in known_options:
+      #   yf_data = yf.Ticker(symbol) #initiate the ticker
+      #   ticker = yf.Ticker(symbol)
+      #   # df = get_all_stock_info(ticker)
+
+      #   etf_data[symbol] = get_hist_info(yf_data, selected_period, selected_interval)
+      #   etf_info = pd.concat([etf_data, etf_info], ignore_index=True)
+
+      #   # History data for 12 months
+      #   history = yf_data.history(period=selected_period)[['Open', 'Close']]
+      #   # Convert the history series to a DF
+      #   history_df = history #.to_frame()
+      #   # display (ticker)
+      #   # display (history_df.head(5))
+
+      #   # Add the sparkline for 12 month Open history data
+      #   spark_img = sparkline(history_df, 'Open')
+      #   spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
+      #   # etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Open'] = (spark_img_url)
+      #   # etf_data.loc[etf_data['symbol'] == symbol, 'last_12_months_Open'] = (spark_img_url)
+
+
+      #   # Add the sparkline for 12 month Close history data
+      #   # etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Close'] = sparkline(history_df, 'Close')
+
+      # # etf_data_df = pd.DataFrame.from_dict(etf_data,orient='index')
       
-      # st.write(etf_data.keys())  
+      # # st.write(etf_data) #.to_html(render_links=True))
+          
+      # etf_info = etf_info.drop(columns=['index']   )
+      # etf_info_df = pd.DataFrame.from_dict(etf_info)
       
-      for key in etf_data.keys():
-        # Subheader with company name and symbol
-        st.session_state.page_subheader = '{0}'.format(key)
-        st.subheader(st.session_state.page_subheader)
-        st.write (etf_data[key])  
-        st.divider()
-        
+      # # st.write(etf_info_df) #.to_html(render_links=True))
+      
+      st.divider()
     # ###################################################
     # Charts: 
     # # of stocks being watched; 
