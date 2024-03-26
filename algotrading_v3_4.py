@@ -41,6 +41,11 @@ import streamlit as st      #install
 import base64
 from base64 import b64encode
 
+from millify import millify # shortens values (10_000 ---> 10k)
+
+import streamlit_extras #.metric_cards #import style_metric_cards # beautify metric card with css
+# from streamlit_extras.metric_cards import style_metric_cards # beautify metric card with css
+# from streamlit_extras import chart_container
 
 # from IPython.core.display import HTML # note the library
 
@@ -75,7 +80,7 @@ def get_all_stock_info(ticker):
                           #  'category', 'navPrice',    # dc, don't know why this is failing?
                           #  'regularMarketPreviousClose', 'regularMarketOpen',
                           #  'regularMarketDayLow', 'regularMarketDayHigh',
-                          #  'fiftyTwoWeekLow', 'fiftyTwoWeekHigh', 'fiftyDayAverage',
+                           'fiftyTwoWeekLow', 'fiftyTwoWeekHigh', 'fiftyDayAverage',
                           #  'regularMarketVolume',
                           #  'twoHundredDayAverage',
                           #  'trailingPE', 'volume',
@@ -85,8 +90,9 @@ def get_all_stock_info(ticker):
                           #  'trailingAnnualDividendYield',
                           #  'ytdReturn', 'beta3Year', 'fundFamily', 'fundInceptionDate',
                           #  'legalType', 'threeYearAverageReturn', 'fiveYearAverageReturn',
-                          # 'underlyingSymbol',
-                          #  'longName', 'firstTradeDateEpochUtc', 'timeZoneFullName',
+                          'underlyingSymbol',
+                          #  'longName', 'firstTradeDateEpochUtc', 
+                          'timeZoneFullName',
                           #  'timeZoneShortName', 'uuid', 'messageBoardId', 'gmtOffSetMilliseconds',
                           #  'trailingPegRatio'
                             ]]
@@ -103,6 +109,7 @@ def get_hist_info(ticker, period, interval):
   hist['EMA_10day'] = hist['Close'].ewm(span=10, adjust=False).mean()
   hist['Signal'] = 0.0
 
+  #DC review: revisit the rules below
   # If 5 period ema crosses over 10 period ema (note: ema not sma) then go long
 
   hist['Signal'] = np.where(hist['EMA_5day'] > hist['EMA_10day'], 1.0, 0.0)
@@ -395,8 +402,6 @@ def main():
   ema_period2 = 10
 
   known_options = ticker 
-  # st.write (known_options)
-  
   if len(known_options) == 0:
     st.write ("Please select a ticker in the sidebar")
     return
@@ -410,46 +415,79 @@ def main():
     # # best stocks
     # ###################################################
     with tab[0]:    
-      st.write("Showing Summary for the following stocks:")
-      # st.write(selected_period, selected_interval)
-      
-      st.write(str(known_options))
-      etf_summary = pd.DataFrame()
-      etf_summary_info = {} # dictionary
-      
-      for symbol in known_options:
-        yf_data = yf.Ticker(symbol) #initiate the ticker
-        etf_summary_info = get_all_stock_info(yf_data) #get_hist_info(yf_data, selected_period, selected_interval)
-        print(type(etf_summary_info)) 
-         
-        #memory leak
-        # etf_summary = etf_summary.append(etf_summary_info, ignore_index=True)
-        etf_summary = pd.concat([etf_summary, etf_summary_info], ignore_index=True)
-        
-        
-        # print("df:", etf_summary)
-        # History data for 12 months
-        # history = yf_data.history(period=selected_period)[['Open', 'Close']]
-        # # Convert the history series to a DF
-        # history_df = history #.to_frame()
-        
-        # # Add the sparkline for 12 month Open history data
-        # spark_img = sparkline(history_df, 'Open')
-        # spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
-        # # c_decoded = base64.b64decode(spark_img)
-        # # etf_summary.loc[etf_summary['symbol'] == symbol, 'last_12_months_Open'] = st.image(base64.b64decode(spark_img))
+      # creates the container for page title
+      dash_1 = st.container()
 
-        # # Add the sparkline for 12 month Close history data
-        # spark_img = sparkline(history_df, 'Close')
-        # spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
-        # # etf_summary.loc[etf_summary['symbol'] == symbol, 'last_12_months_Close'] = st.image(base64.b64decode(spark_img)) #sparkline(history_df, 'Close')
+      with dash_1:
+          st.markdown("<h3 style='text-align: center;'>You are watching</h3>", unsafe_allow_html=True)
+          st.write("")
+          
+          # get basics
+          selected_stocks = len(known_options) 
 
+          col1, col2, col3 = st.columns(3)
+          # create column span
+          col1.metric(label="No. Stocks Watch", value= selected_stocks , delta=None)
+          col2.metric(label="Period", value= selected_period , delta=None)
+          col3.metric(label="Interval", value= selected_interval , delta=None)
         
-      etf_summary = etf_summary.drop(columns='index')  
-      st.write(etf_summary.to_html(escape=False, index=False), unsafe_allow_html=True) 
       st.divider()
        
-      
+      dash_2 = st.container()
+      with dash_2:
+        # get stock metrics
+        
+        for symbol in known_options:
+          st.subheader(symbol)
+          yf_data = yf.Ticker(symbol) #initiate the ticker
+          etf_summary_info = get_all_stock_info(yf_data)
+          stock_caption = ("exchange: "+etf_summary_info.exchange[0]
+                     + "; currency: "+etf_summary_info.currency[0])
+                  
+          st.caption(stock_caption)
+          # st.expander(symbol, expanded=False)
+          col1, col2, col3, col4 = st.columns(4)
+          with st.container(): # chart_container(chart_data):
+            # delta_close = millify((etf_summary_info.previousClose - etf_summary_info.open))
+            change = (etf_summary_info.dayLow - etf_summary_info.dayHigh).item()
+            
+            #'underlyingSymbol','timeZoneFullName'
+                          
+            col1.metric(label="Close", value= etf_summary_info.previousClose , delta=None)
+            col1.metric(label="Open", value= etf_summary_info.open , delta=None) 
+            col2.metric(label="Day Low", value= etf_summary_info.dayLow)
+            col2.metric(label="Day High", value= etf_summary_info.dayHigh)
+            col3.metric(label="52 week Low", value= etf_summary_info.fiftyTwoWeekLow)
+            col3.metric(label="52 week High", value= etf_summary_info.fiftyTwoWeekHigh)
+            
+            # print(etf_summary_info.info())
+            # print(etf_summary_info.dayHigh[0]
+            #       )
+            # print(etf_summary_info.dayLow[0],etf_summary_info.dayHigh[0])
+            # value = col3.slider(label = 'Day Range',
+            #                   min_value=0.00, #etf_summary_info.dayLow[0], 
+            #                   max_value=500.00, #etf_summary_info.dayHigh[0],
+            #                   value = (etf_summary_info.dayLow[0],etf_summary_info.dayHigh[0]), 
+            #                   step=float(0.5),
+                              
+            #                   disabled=True
+            #             )   
+            # #st.write(value)      
+          
+          st.divider()
+          
+            # history = yf_data.history(period='5d', interval='5m')[['Open', 'Close']]
+            # # Convert the history series to a DF
+            # history_df = history 
+            # col1, col2 = st.columns([2.5,2.5],gap='medium')
+            # with st.expander(':blue[Charts]'): 
+            #   col1.line_chart(history.Close)
+            #   col2.line_chart(history.Open)
+          
+          
+        # this is used to style the metric card
+        # style_metric_cards(border_left_color="#DBF227")
+        
     # ###################################################
     # List View: 
     # # of all stocks; 
