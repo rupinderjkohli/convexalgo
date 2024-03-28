@@ -451,7 +451,7 @@ def main():
             
           df_pos = stock_hist_df[(stock_hist_df['Position'] == 1) | (stock_hist_df['Position'] == -1)]
           df_pos['Notify'] = df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
-          df_pos.reset_index(inplace=True)
+          # df_pos.reset_index(inplace=True)
           # buy_sell = pd.DataFrame(df_pos.Notify.value_counts()).reset_index(inplace=True)
                                                                             
           # print(buy_sell.columns)
