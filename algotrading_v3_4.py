@@ -486,7 +486,8 @@ def main():
           
             # df1 = df_pos[df_pos['Datetime'] > cutoff_date]
             st.write("Last 4 triggers were at: ")
-            st.write(df_pos[['Datetime','Close', 'EMA_5day', 'EMA_10day', 'Notify']][-4:])
+            # st.write(df_pos[['Datetime','Close', 'EMA_5day', 'EMA_10day', 'Notify']][-4:])
+            st.write(df_pos[['Close', 'EMA_5day', 'EMA_10day', 'Notify']][-4:])
             # st.toast(''' :red[BUY] ''', icon='🏃')  #:red[Red] :blue[Blue] :green[Green] :orange[Orange] :violet[BUY] 
       
           
