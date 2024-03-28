@@ -241,7 +241,7 @@ def draw_candle_stick_triggers(df, symbol):
                         colorscale='greens',
                         line_width=1,
                         symbol = 'triangle-up',
-                        size = 12
+                        size = 10
                         )
                   )
 
@@ -382,7 +382,7 @@ def main():
   ticker = st.sidebar.multiselect('Choose Ticker', options=symbol_list,
                                 help = 'Select a ticker', 
                                 key='ticker',
-                                max_selections=4,
+                                max_selections=8,
                                 default= ["TSLA"]
                                 )
   selected_period = st.sidebar.selectbox(
@@ -446,47 +446,53 @@ def main():
                   
           st.caption(stock_caption)
           # st.expander(symbol, expanded=False)
-          col1, col2, col3, col4 = st.columns(4)
-          with st.container(): # chart_container(chart_data):
-            # delta_close = millify((etf_summary_info.previousClose - etf_summary_info.open))
-            change = (etf_summary_info.dayLow - etf_summary_info.dayHigh).item()
+          
+          stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
             
-            #'underlyingSymbol','timeZoneFullName'
-                          
+          df_pos = stock_hist_df[(stock_hist_df['Position'] == 1) | (stock_hist_df['Position'] == -1)]
+          df_pos['Notify'] = df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
+          df_pos.reset_index(inplace=True)
+          # buy_sell = pd.DataFrame(df_pos.Notify.value_counts()).reset_index(inplace=True)
+                                                                            
+          # print(buy_sell.columns)
+          buy_trigger = len(df_pos[df_pos['Notify']=='Buy'])
+          sell_trigger = len(df_pos[df_pos['Notify']=='Sell'])
+          # print(buy_trigger, sell_trigger)
+            
+          col1, col2, col3, col4 = st.columns(4)
+          
+          with st.container(): # chart_container(chart_data):
+            toast_message = (":red["
+                             +"Fetching information for " 
+                             + etf_summary_info.shortName[0] 
+                             + " "+ symbol
+                             +"]"
+                     )
+            st.toast(toast_message, icon='🏃')  
+            # time.sleep(1)            
             col1.metric(label="Close", value= etf_summary_info.previousClose , delta=None)
             col1.metric(label="Open", value= etf_summary_info.open , delta=None) 
             col2.metric(label="Day Low", value= etf_summary_info.dayLow)
             col2.metric(label="Day High", value= etf_summary_info.dayHigh)
             col3.metric(label="52 week Low", value= etf_summary_info.fiftyTwoWeekLow)
             col3.metric(label="52 week High", value= etf_summary_info.fiftyTwoWeekHigh)
+            col4.metric(label="Buy (period)", value= buy_trigger)
+            col4.metric(label="Sell (period)", value= sell_trigger)
             
-            # print(etf_summary_info.info())
-            # print(etf_summary_info.dayHigh[0]
-            #       )
-            # print(etf_summary_info.dayLow[0],etf_summary_info.dayHigh[0])
-            # value = col3.slider(label = 'Day Range',
-            #                   min_value=0.00, #etf_summary_info.dayLow[0], 
-            #                   max_value=500.00, #etf_summary_info.dayHigh[0],
-            #                   value = (etf_summary_info.dayLow[0],etf_summary_info.dayHigh[0]), 
-            #                   step=float(0.5),
-                              
-            #                   disabled=True
-            #             )   
-            # #st.write(value)      
+            # days=10  
+            # print(df_pos.columns)  
+            # cutoff_date = df_pos['Datetime'].iloc[-10:] - pd.Timedelta(days=days)
+            # print (cutoff_date)
+          
+            # df1 = df_pos[df_pos['Datetime'] > cutoff_date]
+            st.write("Last 4 triggers were at: ")
+            st.write(df_pos[['Datetime','Close', 'EMA_5day', 'EMA_10day', 'Notify']][-4:])
+            # st.toast(''' :red[BUY] ''', icon='🏃')  #:red[Red] :blue[Blue] :green[Green] :orange[Orange] :violet[BUY] 
+      
           
           st.divider()
           
-            # history = yf_data.history(period='5d', interval='5m')[['Open', 'Close']]
-            # # Convert the history series to a DF
-            # history_df = history 
-            # col1, col2 = st.columns([2.5,2.5],gap='medium')
-            # with st.expander(':blue[Charts]'): 
-            #   col1.line_chart(history.Close)
-            #   col2.line_chart(history.Open)
-          
-          
-        # this is used to style the metric card
-        # style_metric_cards(border_left_color="#DBF227")
+      
         
     # ###################################################
     # List View: 

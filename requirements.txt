@@ -2,7 +2,7 @@ pandas
 matplotlib
 yfinance
 plotly
-streamlit
+streamlit==1.32.0
 kaleido==0.2.1
 pybase64
 # IPython
