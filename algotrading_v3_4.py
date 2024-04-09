@@ -505,9 +505,9 @@ def main():
                                 default= ["TSLA"]
                                 )
   selected_period = st.sidebar.selectbox(
-      'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'], index=2)
+      'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'], index=1)
   selected_interval = st.sidebar.selectbox(
-      'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'], index=8)
+      'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'], index=82)
   algo_strategy = st.sidebar.selectbox(
       'Select Moving Average Strategy', options=['SMA', 'EMA'], index=0)
   selected_short_window =  st.sidebar.number_input(":gray[Short Window]", step = 1, value=5)  
@@ -615,7 +615,8 @@ def main():
             # df1 = df_pos[df_pos['Datetime'] > cutoff_date]
             st.write("Last 4 triggers were at: ")
             
-            st.write(df_pos[['Datetime','Close', 'Position']][:4])
+            # Index column error when the interval is 1d
+            st.write(df_pos[['Datetime','Close', 'Position']][:4]) 
             
             st.toast(''' :red[BUY] ''', icon='🏃')  #:red[Red] :blue[Blue] :green[Green] :orange[Orange] :violet[BUY] 
       
