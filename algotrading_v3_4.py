@@ -507,7 +507,7 @@ def main():
   selected_period = st.sidebar.selectbox(
       'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'], index=1)
   selected_interval = st.sidebar.selectbox(
-      'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'], index=82)
+      'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'], index=2)
   algo_strategy = st.sidebar.selectbox(
       'Select Moving Average Strategy', options=['SMA', 'EMA'], index=0)
   selected_short_window =  st.sidebar.number_input(":gray[Short Window]", step = 1, value=5)  
