@@ -48,7 +48,7 @@ import streamlit_extras #.metric_cards #import style_metric_cards # beautify met
 # from streamlit_extras import chart_container
 
 # from IPython.core.display import HTML # note the library
-
+# from tabulate import tabulate
 # from config import Config
 
 # Using plotly dark template
@@ -104,19 +104,37 @@ def get_hist_info(ticker, period, interval):
   # get historical market data
   # print(ticker, period, interval)
   hist = ticker.history(period=period, interval=interval)
-  hist['SMA'] = hist['Close'].rolling(20).mean()
-  hist['EMA_5day'] = hist['Close'].ewm(span=5, adjust=False).mean()
-  hist['EMA_10day'] = hist['Close'].ewm(span=10, adjust=False).mean()
-  hist['Signal'] = 0.0
+  # hist['SMA'] = hist['Close'].rolling(20).mean()
+  # hist['EMA_5day'] = hist['Close'].ewm(span=5, adjust=False).mean()
+  # hist['EMA_10day'] = hist['Close'].ewm(span=10, adjust=False).mean()
+  # hist['Signal'] = 0.0
+
+  # #DC review: revisit the rules below
+  # # If 5 period ema crosses over 10 period ema (note: ema not sma) then go long
+
+  # hist['Signal'] = np.where(hist['EMA_5day'] > hist['EMA_10day'], 1.0, 0.0)
+
+  # hist['Position'] = hist['Signal'].diff()
+
+  return hist
+
+
+
+def sma_buy_sell_trigger(df, sma_p1, sma_p2):
+  # get historical market data
+  # print(ticker, period, interval)
+  df['SMA_p1'] = df['Close'].rolling(sma_p1).mean()
+  df['SMA_p2'] = df['Close'].rolling(sma_p2).mean()
+  df['SMA_Signal'] = 0.0
 
   #DC review: revisit the rules below
   # If 5 period ema crosses over 10 period ema (note: ema not sma) then go long
 
-  hist['Signal'] = np.where(hist['EMA_5day'] > hist['EMA_10day'], 1.0, 0.0)
+  df['SMA_Signal'] = np.where(df['SMA_p1'] > df['SMA_p2'], 1.0, 0.0)
 
-  hist['Position'] = hist['Signal'].diff()
+  df['SMA_Position'] = df['SMA_Signal'].diff()
 
-  return hist
+  return df
 
 # def plot_stk_charts(df):
 #   sns.set(style="whitegrid")
@@ -206,9 +224,14 @@ def draw_candle_stick_chart_ma(df, symbol):
   # fig.show()
   return fig
 
-def draw_candle_stick_triggers(df, symbol):
+def draw_candle_stick_triggers(df, symbol, short_window, long_window, algo_strategy):
   
   # https://plotly.com/python/reference/scattergl/
+  # column names for long and short moving average columns
+  # print("draw_candle_stick_triggers")
+  # print(df.info())
+  short_window_col = str(short_window) + '_' + algo_strategy
+  long_window_col = str(long_window) + '_' + algo_strategy
 
   candlestick = go.Candlestick(
                               x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
@@ -219,21 +242,21 @@ def draw_candle_stick_triggers(df, symbol):
                               #increasing_line_color= 'green', decreasing_line_color= 'red'8
                               )
 
-  ema_5day = go.Scatter(x=df.index,
-                    y=df["EMA_5day"],
-                    name="EMA_5day",
+  short_window = go.Scatter(x=df.index,
+                    y=df[short_window_col],
+                    name=short_window_col,
                     # fillcolor = 'azure'
                   )
 
-  ema_10day = go.Scatter(x=df.index,
-                    y=df["EMA_10day"],
-                    name="EMA_10day"
+  long_window = go.Scatter(x=df.index,
+                    y=df[long_window_col],
+                    name=long_window_col
                   )
 
   # plot 'buy' signals
   N = 100000
   position_buy = go.Scattergl(x=df[df['Position'] == 1].index,
-                    y=df['EMA_5day'][df['Position'] == 1],
+                    y=df[short_window_col][df['Position'] == 1],
                     name="Buy",
                     mode='markers',
                     marker=dict(
@@ -247,7 +270,7 @@ def draw_candle_stick_triggers(df, symbol):
 
   # plot 'sell' signals
   position_sell = go.Scattergl(x=df[df['Position'] == -1].index,
-                            y=df['EMA_10day'][df['Position'] == -1],
+                            y=df[long_window_col][df['Position'] == -1],
                             name = 'sell',
                             mode='markers',
                             marker=dict(
@@ -279,7 +302,7 @@ def draw_candle_stick_triggers(df, symbol):
   #          df_hist['EMA_10day'][df_hist['Position'] == -1],
   #          'v', markersize = 15, color = 'k', label = 'sell')
 
-  fig = go.Figure(data=[candlestick, ema_5day, ema_10day
+  fig = go.Figure(data=[candlestick, short_window, long_window
                         , position_buy, position_sell
                         ])
 
@@ -294,9 +317,35 @@ def draw_candle_stick_triggers(df, symbol):
   # fig.show()
   return fig
 
+def sma_trigger_plot(df):
+  import plotly.express as px
+  df = df.reset_index()
+  
+  plt.figure(figsize = (20,10))
+  # plot close price, short-term and long-term moving averages 
+  df['Close'].plot(color = 'k', label= 'Close') 
+  df['SMA_p1'].plot(color = 'b',label = 'SMA_p1') 
+  df['SMA_p2'].plot(color = 'g', label = 'SMA_p2')
+  
+  # fig = px.line(df, x="Datetime", y="Close", title='Close')
+  
+  # st.plotly_chart(fig, theme="streamlit")
+  
+  # plot ‘buy’ signals
+  go_long = df[df['SMA_Position'] == 1].index, df['SMA_p1'][df['SMA_Position'] == 1]
+  # print("go_long")
+  # print(go_long)
+  
+  # plot ‘sell’ signals
+  go_short = df[df['SMA_Position'] == -1].index, df['SMA_p2'][df['SMA_Position'] == -1]
+  # print("go_short")
+  # print(go_short)
+  
+  
+  return 
 
 def plot_stk_hist(df):
-  print("plotting Data and Histogram")
+  # print("plotting Data and Histogram")
   plt.figure(figsize=(12, 5))
   plt.plot(df.Close, color='green')
   plt.plot(df.Open, color='red')
@@ -365,12 +414,82 @@ def sparkline(df, col): #, Avg):
     return png_base64 #png_base64 #('<img src="data:image/png;base64,{}"/>'.format(decoded_data))
     # return ('<img src="data:/png;pybase64,{}"/>'.format(png_base64))
 
+def MovingAverageCrossStrategy(symbol, 
+                               stock_df,
+                               #stock_symbol, 
+                               #start_date = '2018-01-01', 
+                               #end_date = '2020-01-01',
+                               short_window,
+                               long_window, 
+                               moving_avg, 
+                               display_table = True):
+    
+    '''
+    The function takes the stock symbol, time-duration of analysis, 
+    look-back periods and the moving-average type(SMA or EMA) as input 
+    and returns the respective MA Crossover chart along with the buy/sell signals for the given period.
+    '''
+    # stock_symbol - (str)stock ticker as on Yahoo finance. Eg: 'ULTRACEMCO.NS' 
+    # start_date - (str)start analysis from this date (format: 'YYYY-MM-DD') Eg: '2018-01-01'
+    # end_date - (str)end analysis on this date (format: 'YYYY-MM-DD') Eg: '2020-01-01'
+    # short_window - (int)lookback period for short-term moving average. Eg: 5, 10, 20 
+    # long_window - (int)lookback period for long-term moving average. Eg: 50, 100, 200
+    # moving_avg - (str)the type of moving average to use ('SMA' or 'EMA')
+    # display_table - (bool)whether to display the date and price table at buy/sell positions(True/False)
+
+    # import the closing price data of the stock for the aforementioned period of time in Pandas dataframe
+    # start = datetime.datetime(*map(int, start_date.split('-')))
+    # end = datetime.datetime(*map(int, end_date.split('-'))) 
+    # stock_df = web.DataReader(stock_symbol, 'yahoo', start = start, end = end)['Close']
+    # stock_df = pd.DataFrame(stock_df) # convert Series object to dataframe 
+    # stock_df.columns = {'Close'} # assign new column name
+    # stock_df.dropna(axis = 0, inplace = True) # remove any null rows 
+                        
+    # column names for long and short moving average columns
+    short_window_col = str(short_window) + '_' + moving_avg
+    long_window_col = str(long_window) + '_' + moving_avg  
+  
+    if moving_avg == 'SMA':
+        # Create a short simple moving average column
+        stock_df[short_window_col] = stock_df['Close'].rolling(window = short_window, min_periods = 1).mean()
+
+        # Create a long simple moving average column
+        stock_df[long_window_col] = stock_df['Close'].rolling(window = long_window, min_periods = 1).mean()
+
+    elif moving_avg == 'EMA':
+        # Create short exponential moving average column
+        stock_df[short_window_col] = stock_df['Close'].ewm(span = short_window, adjust = False).mean()
+
+        # Create a long exponential moving average column
+        stock_df[long_window_col] = stock_df['Close'].ewm(span = long_window, adjust = False).mean()
+
+    # create a new column 'Signal' such that if faster moving average is greater than slower moving average 
+    # then set Signal as 1 else 0.
+    stock_df['Signal'] = 0.0  
+    stock_df['Signal'] = np.where(stock_df[short_window_col] > stock_df[long_window_col], 1.0, 0.0) 
+
+    # create a new column 'Position' which is a day-to-day difference of the 'Signal' column. 
+    stock_df['Position'] = stock_df['Signal'].diff()
+    
+    df_pos = pd.DataFrame()
+    if display_table == True:
+        df_pos = stock_df[(stock_df['Position'] == 1) | (stock_df['Position'] == -1)]
+        df_pos['Position'] = df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
+        # print(tabulate(df_pos, headers = 'keys', tablefmt = 'psql'))
+        # print(df_pos)
+    return stock_df, df_pos
+
+def get_current_price(symbol, selected_period, selected_interval):
+    ticker = yf.Ticker(symbol)
+    todays_data = ticker.history(period = selected_period, interval = selected_interval)
+    # print(todays_data)
+    return todays_data['Close'].iloc[-1]
 
 def main():
       
   # """### Select Stock and Time interval"""
   # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01Home.py
-  symbol_list = ["TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
+  symbol_list = ["PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
 
   st.sidebar.header("Choose your Stock filter: ")
   # ticker = st.sidebar.selectbox(
@@ -389,17 +508,18 @@ def main():
       'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'], index=2)
   selected_interval = st.sidebar.selectbox(
       'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'], index=8)
-      
+  algo_strategy = st.sidebar.selectbox(
+      'Select Moving Average Strategy', options=['SMA', 'EMA'], index=0)
+  selected_short_window =  st.sidebar.number_input(":gray[Short Window]", step = 1, value=5)  
+  selected_long_window =  st.sidebar.number_input(":gray[Long Window]", step = 1, value=8)   
 
   #         Valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
   # Either Use period parameter or use start and end
   #     interval : str
   #         Valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
 
-  # period = "1mo"
-  # interval= "1d"
-  ema_period1 = 5
-  ema_period2 = 10
+  ema_period1 = selected_short_window
+  ema_period2 = selected_long_window
 
   known_options = ticker 
   if len(known_options) == 0:
@@ -448,15 +568,23 @@ def main():
           # st.expander(symbol, expanded=False)
           
           stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-            
-          df_pos = stock_hist_df[(stock_hist_df['Position'] == 1) | (stock_hist_df['Position'] == -1)]
-          df_pos['Notify'] = df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
-          # df_pos.reset_index(inplace=True)
+          stock_hist_df, df_pos = MovingAverageCrossStrategy(symbol,
+                                     stock_hist_df,
+                                     selected_short_window,
+                                     selected_long_window,
+                                     algo_strategy,
+                                     True)  
+          # df_pos = stock_hist_df[(stock_hist_df['Position'] == 1) | (stock_hist_df['Position'] == -1)]
+          # df_pos['Notify'] = df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
+          df_pos.reset_index(inplace=True)
+          df_pos = df_pos.sort_index(ascending=False)
           # buy_sell = pd.DataFrame(df_pos.Notify.value_counts()).reset_index(inplace=True)
-                                                                            
+          # print(df_pos.)
+          print(df_pos.value_counts('Position'))                                                                  
           # print(buy_sell.columns)
-          buy_trigger = len(df_pos[df_pos['Notify']=='Buy'])
-          sell_trigger = len(df_pos[df_pos['Notify']=='Sell'])
+          
+          buy_trigger = len(df_pos[df_pos['Position']=='Buy'])
+          sell_trigger = len(df_pos[df_pos['Position']=='Sell'])
           # print(buy_trigger, sell_trigger)
             
           col1, col2, col3, col4 = st.columns(4)
@@ -486,9 +614,10 @@ def main():
           
             # df1 = df_pos[df_pos['Datetime'] > cutoff_date]
             st.write("Last 4 triggers were at: ")
-            # st.write(df_pos[['Datetime','Close', 'EMA_5day', 'EMA_10day', 'Notify']][-4:])
-            st.write(df_pos[['Close', 'EMA_5day', 'EMA_10day', 'Notify']][-4:])
-            # st.toast(''' :red[BUY] ''', icon='🏃')  #:red[Red] :blue[Blue] :green[Green] :orange[Orange] :violet[BUY] 
+            
+            st.write(df_pos[['Datetime','Close', 'Position']][:4])
+            
+            st.toast(''' :red[BUY] ''', icon='🏃')  #:red[Red] :blue[Blue] :green[Green] :orange[Orange] :violet[BUY] 
       
           
           st.divider()
@@ -500,25 +629,83 @@ def main():
     # # of all stocks; 
     # ###################################################
     with tab[1]:
-      st.write("Showing the List View of the selected stocks")
+      # st.write("Showing the List View of the selected stocks")
       ## Create two columns
       # col1, col2 = st.columns(2)
-      etf_info = pd.DataFrame()
-      etf_data = {} # dictionary
+      
+      # stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+      # df = sma_buy_sell_trigger(stock_hist_df, 5, 10)
+      # print(df.info())
+      # st.write(df)
+      # sma_trigger_plot(df)
+      
+      # st.plotly_chart(fig, theme="streamlit", use_container_width=True)
         
+      title = "Moving Average Strategy: " + algo_strategy
+      st.subheader(title)
+      st.divider()
+      
+      # Collate high level stats on the data
+      quick_explore = {}
+      
+      quick_explore_df = pd.DataFrame()      
       for symbol in known_options:
-        yf_data = yf.Ticker(symbol)
-        etf_data[symbol] = get_hist_info(yf_data, selected_period, selected_interval)
-      
-      # st.write(etf_data.keys())  
-      
-      for key in etf_data.keys():
-        # Subheader with company name and symbol
-        st.session_state.page_subheader = '{0}'.format(key)
-        st.subheader(st.session_state.page_subheader)
-        st.write (etf_data[key])  
-        st.divider()
+          st.subheader(symbol)
+          stock_name =  symbol
+          yf_data = yf.Ticker(symbol) #initiate the ticker
+          stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+          stock_df, df_pos = MovingAverageCrossStrategy(symbol,
+                                     stock_hist_df,
+                                     selected_short_window,
+                                     selected_long_window,
+                                     algo_strategy,
+                                     True)
+        # list_view_df = 
+          # stock_snapshot = (stock_df.groupby('BABY_ID').apply(baby_feed_agg))
+          st.write("the last 10 records")
+          st.write(stock_df.sort_index(ascending=False)[:10])
+          st.write("the last 10 stock trading state")
+          st.write(df_pos.sort_index(ascending=False)[:10])
+           
+          stock_close = get_current_price(symbol, selected_period, selected_interval)
+          stock_trigger_at = df_pos.index.max()
+          stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
+          
+          for variable in ["symbol",
+                           "stock_close",
+                           "stock_trigger_state",
+                           "stock_trigger_at"]:
+            quick_explore[variable] = eval(variable)
+          print(quick_explore)  
+          #x = pd.DataFrame.from_dict(quick_explore, orient = 'index')
+          x = pd.DataFrame([quick_explore])
+          #print("x\n", x)
+            
+          # quick_explore_df = quick_explore_df.append(x)
+          quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
+      st.write(quick_explore_df)
+      # chart = get_chart(df)
+      # st.altair_chart(chart, use_container_width=True)
+      #     # (chart + annotation_layer).interactive(),
+          
+      # etf_info = pd.DataFrame()
+      # etf_data = {} # dictionary
         
+      # for symbol in known_options:
+      #   yf_data = yf.Ticker(symbol)
+      #   etf_data[symbol] = get_hist_info(yf_data, selected_period, selected_interval)
+      
+      # # st.write(etf_data.keys())  
+      
+      # for key in etf_data.keys():
+      #   # Subheader with company name and symbol
+      #   st.session_state.page_subheader = '{0}'.format(key)
+      #   st.subheader(st.session_state.page_subheader)
+      #   st.write (etf_data[key])  
+      #   st.divider()
+      
+        
+        #print(quick_explore_df)  
     # ###################################################
     # Charts: 
     # # of stocks being watched; 
@@ -538,8 +725,18 @@ def main():
         
         # ## Display the data table in the first column
         # st.dataframe(stock_hist_df.head(10))
-
-        fig = draw_candle_stick_triggers(stock_hist_df, symbol)
+        stock_df, df_position = MovingAverageCrossStrategy(symbol,
+                                     stock_hist_df,
+                                     selected_short_window,
+                                     selected_long_window,
+                                     algo_strategy,
+                                     False)
+        fig = draw_candle_stick_triggers(stock_hist_df, 
+                                         symbol,
+                                         selected_short_window,
+                                         selected_long_window,
+                                         algo_strategy
+                                         )
         # Plot!
         # Create and display the bar chart in the second column
         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
