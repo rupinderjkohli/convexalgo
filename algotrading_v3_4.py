@@ -7,12 +7,13 @@ Original file is located at
     https://colab.research.google.com/drive/18MuK4_G2Nf8oow21NW_a3pHg_35JgVSI
 """
 from algotrading_helper import *
+pd.options.display.float_format = '${:,.2f}'.format
 
 def main():
       
   # """### Select Stock and Time interval"""
   # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01Home.py
-  symbol_list = ["PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
+  symbol_list = ["TATAMOTORS.NS","PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
 
   # ticker selection
   st.sidebar.header("Choose your Stock filter: ")
@@ -69,11 +70,13 @@ def main():
           # get basics
           selected_stocks = len(known_options) 
 
-          col1, col2, col3 = st.columns(3)
+          col1, col2, col3, col4 = st.columns(4)
           # create column span
           col1.metric(label="No. Stocks Watch", value= selected_stocks , delta=None)
           col2.metric(label="Period", value= selected_period , delta=None)
           col3.metric(label="Interval", value= selected_interval , delta=None)
+          # trading_strategy = str(algo_strategy) + '_' + str(selected_short_window) + '_' + str(selected_long_window) + '_crossover'
+          col4.metric(label="Trading Strategy", value= algo_strategy , delta=None)
         
       st.divider()
        
@@ -129,16 +132,28 @@ def main():
             col4.metric(label="Buy (period)", value= buy_trigger)
             col4.metric(label="Sell (period)", value= sell_trigger)
             
-            # days=10  
+            expander = st.expander("Ticker trading prompts")
+            # # expander.write(\"\"\"
+            # #     The chart above shows some numbers I picked for you.
+            # #     I rolled actual dice for these, so they're *guaranteed* to
+            # #     be random.
+            # # \"\"\")
+            # # expander.image("https://static.streamlit.io/examples/dice.jpg")
+            # expander.write("the last 10 records")
+            days=1  
             # print(df_pos.columns)  
-            # cutoff_date = df_pos['Datetime'].iloc[-10:] - pd.Timedelta(days=days)
+            cutoff_date = df_pos['Datetime'].iloc[0] - pd.Timedelta(days=days)
+            # print ("cutoff_date")
             # print (cutoff_date)
           
-            # df1 = df_pos[df_pos['Datetime'] > cutoff_date]
-            st.write("Last 4 triggers were at: ")
+            df1 = df_pos[df_pos['Datetime'] > cutoff_date]
+            # print ("state till cutoff_date")
+            expander.write(df1[['Datetime','Close', 'Position']]) 
             
-            # Index column error when the interval is 1d
-            st.write(df_pos[['Datetime','Close', 'Position']][:4]) 
+            # st.write("Last 4 triggers were at: ")
+            
+            # # Index column error when the interval is 1d
+            # st.write(df_pos[['Datetime','Close', 'Position']][:4]) 
             
             # st.toast(''' :red[BUY] ''', icon='🏃')  #:red[Red] :blue[Blue] :green[Green] :orange[Orange] :violet[BUY] 
       
@@ -183,11 +198,6 @@ def main():
                                      selected_long_window,
                                      algo_strategy,
                                      True)
-          # ToDo: put this into a container
-          # st.write("the last 10 records")
-          # st.write(stock_df.sort_index(ascending=False)[:10])
-          # st.write("the last 10 stock trading state")
-          # st.write(df_pos.sort_index(ascending=False)[:10])
            
           stock_close = get_current_price(symbol, selected_period, selected_interval)
           stock_trigger_at = df_pos.index.max()

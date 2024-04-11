@@ -58,6 +58,8 @@ pd.set_option('display.max_columns', None,
               'display.max_rows', None,
               'display.max_colwidth', None)
 
+pd.options.display.float_format = '${:,.2f}'.format
+
 
 
 # """## stocks"""
@@ -463,6 +465,10 @@ def MovingAverageCrossStrategy(symbol,
     # create a new column 'Position' which is a day-to-day difference of the 'Signal' column. 
     stock_df['Position'] = stock_df['Signal'].diff()
     
+    # ########################################
+    # plot close price, short-term and long-term moving averages
+    # https://towardsdatascience.com/making-a-trade-call-using-simple-moving-average-sma-crossover-strategy-python-implementation-29963326da7a
+    # ########################################
     df_pos = pd.DataFrame()
     if display_table == True:
         df_pos = stock_df[(stock_df['Position'] == 1) | (stock_df['Position'] == -1)]
