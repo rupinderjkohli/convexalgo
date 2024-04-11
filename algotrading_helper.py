@@ -481,4 +481,18 @@ def get_current_price(symbol, selected_period, selected_interval):
     ticker = yf.Ticker(symbol)
     todays_data = ticker.history(period = selected_period, interval = selected_interval)
     # print(todays_data)
+    
     return todays_data['Close'].iloc[-1]
+
+def show_snapshot(all_tickers):
+    
+    fig = px.line(df, x="date", y=df.columns,
+              hover_data={"date": "|%B %d, %Y"},
+              title='custom tick labels with ticklabelmode="period"')
+    fig.update_xaxes(
+        dtick="M1",
+        tickformat="%b\n%Y",
+        ticklabelmode="period")
+    fig.show()  #st.pyplot(plt.gcf())
+    st.pyplot(fig)
+    return

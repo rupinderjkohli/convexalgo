@@ -83,74 +83,45 @@ def main():
        
       dash_2 = st.container()
       with dash_2:
-        # get stock metrics
         
-        for symbol in known_options:
-          st.subheader(symbol)
-          yf_data = yf.Ticker(symbol) #initiate the ticker
-          etf_summary_info = get_all_stock_info(yf_data)
-          stock_caption = ("exchange: "+etf_summary_info.exchange[0]
-                     + "; currency: "+etf_summary_info.currency[0])
-                  
-          st.caption(stock_caption)
+          title = "Moving Average Strategy: " + algo_strategy
+          st.subheader(title)
+          st.divider()
           
-          stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-          stock_hist_df, df_pos = MovingAverageCrossStrategy(symbol,
-                                     stock_hist_df,
-                                     selected_short_window,
-                                     selected_long_window,
-                                     algo_strategy,
-                                     True)  
+          # Collate high level stats on the data
+          quick_explore = {}
           
-          df_pos.reset_index(inplace=True)
-          df_pos = df_pos.sort_index(ascending=False)
-          # buy_sell = pd.DataFrame(df_pos.Notify.value_counts()).reset_index(inplace=True)
-          # print(df_pos.)
-          # print(df_pos.value_counts('Position'))                                                                  
-          # print(buy_sell.columns)
+          quick_explore_df = pd.DataFrame()      
+          for symbol in known_options:
+              # st.subheader(symbol)
+              stock_name =  symbol
+              yf_data = yf.Ticker(symbol) #initiate the ticker
+              stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+              stock_df, df_pos = MovingAverageCrossStrategy(symbol,
+                                        stock_hist_df,
+                                        selected_short_window,
+                                        selected_long_window,
+                                        algo_strategy,
+                                        True)
+              
+              stock_close = get_current_price(symbol, selected_period, selected_interval)
+              stock_trigger_at = df_pos.index.max()
+              stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
+              
+              for variable in ["symbol",
+                              "stock_close",
+                              "stock_trigger_state",
+                              "stock_trigger_at"]:
+                quick_explore[variable] = eval(variable)
+              # print(quick_explore)  
+              #x = pd.DataFrame.from_dict(quick_explore, orient = 'index')
+              x = pd.DataFrame([quick_explore])
+              #print("x\n", x)
+                
+              # quick_explore_df = quick_explore_df.append(x)
+              quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
+          st.write(quick_explore_df)
           
-          buy_trigger = len(df_pos[df_pos['Position']=='Buy'])
-          sell_trigger = len(df_pos[df_pos['Position']=='Sell'])
-          # print(buy_trigger, sell_trigger)
-            
-          col1, col2, col3, col4 = st.columns(4)
-          
-          with st.container(): # chart_container(chart_data):
-            toast_message = (":red["
-                             +"Fetching information for " 
-                             + etf_summary_info.shortName[0] 
-                             + " "+ symbol
-                             +"]"
-                     )
-            st.toast(toast_message, icon='🏃')  
-            # time.sleep(1)            
-            col1.metric(label="Close", value= etf_summary_info.previousClose , delta=None)
-            col1.metric(label="Open", value= etf_summary_info.open , delta=None) 
-            col2.metric(label="Day Low", value= etf_summary_info.dayLow)
-            col2.metric(label="Day High", value= etf_summary_info.dayHigh)
-            col3.metric(label="52 week Low", value= etf_summary_info.fiftyTwoWeekLow)
-            col3.metric(label="52 week High", value= etf_summary_info.fiftyTwoWeekHigh)
-            col4.metric(label="Buy (period)", value= buy_trigger)
-            col4.metric(label="Sell (period)", value= sell_trigger)
-            
-            expander = st.expander("Ticker trading prompts")
-            # # expander.write(\"\"\"
-            # #     The chart above shows some numbers I picked for you.
-            # #     I rolled actual dice for these, so they're *guaranteed* to
-            # #     be random.
-            # # \"\"\")
-            # # expander.image("https://static.streamlit.io/examples/dice.jpg")
-            # expander.write("the last 10 records")
-            days=1  
-            # print(df_pos.columns)  
-            cutoff_date = df_pos['Datetime'].iloc[0] - pd.Timedelta(days=days)
-            # print ("cutoff_date")
-            # print (cutoff_date)
-          
-            df1 = df_pos[df_pos['Datetime'] > cutoff_date]
-            # print ("state till cutoff_date")
-            expander.write(df1[['Datetime','Close', 'Position']]) 
-            
             # st.write("Last 4 triggers were at: ")
             
             # # Index column error when the interval is 1d
@@ -180,62 +151,74 @@ def main():
       
       # st.plotly_chart(fig, theme="streamlit", use_container_width=True)
         
-      title = "Moving Average Strategy: " + algo_strategy
-      st.subheader(title)
-      st.divider()
       
-      # Collate high level stats on the data
-      quick_explore = {}
-      
-      quick_explore_df = pd.DataFrame()      
-      for symbol in known_options:
-          # st.subheader(symbol)
-          stock_name =  symbol
-          yf_data = yf.Ticker(symbol) #initiate the ticker
-          stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-          stock_df, df_pos = MovingAverageCrossStrategy(symbol,
-                                     stock_hist_df,
-                                     selected_short_window,
-                                     selected_long_window,
-                                     algo_strategy,
-                                     True)
-           
-          stock_close = get_current_price(symbol, selected_period, selected_interval)
-          stock_trigger_at = df_pos.index.max()
-          stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
-          
-          for variable in ["symbol",
-                           "stock_close",
-                           "stock_trigger_state",
-                           "stock_trigger_at"]:
-            quick_explore[variable] = eval(variable)
-          # print(quick_explore)  
-          #x = pd.DataFrame.from_dict(quick_explore, orient = 'index')
-          x = pd.DataFrame([quick_explore])
-          #print("x\n", x)
-            
-          # quick_explore_df = quick_explore_df.append(x)
-          quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
-      st.write(quick_explore_df)
-      # chart = get_chart(df)
-      # st.altair_chart(chart, use_container_width=True)
-      #     # (chart + annotation_layer).interactive(),
-          
-      # etf_info = pd.DataFrame()
-      # etf_data = {} # dictionary
+      # get stock metrics
         
-      # for symbol in known_options:
-      #   yf_data = yf.Ticker(symbol)
-      #   etf_data[symbol] = get_hist_info(yf_data, selected_period, selected_interval)
-      
-      # # st.write(etf_data.keys())  
-      
-      # for key in etf_data.keys():
-      #   # Subheader with company name and symbol
-      #   st.session_state.page_subheader = '{0}'.format(key)
-      #   st.subheader(st.session_state.page_subheader)
-      #   st.write (etf_data[key])  
-      #   st.divider()
+      for symbol in known_options:
+        st.subheader(symbol)
+        yf_data = yf.Ticker(symbol) #initiate the ticker
+        etf_summary_info = get_all_stock_info(yf_data)
+        stock_caption = ("exchange: "+etf_summary_info.exchange[0]
+                    + "; currency: "+etf_summary_info.currency[0])
+                
+        st.caption(stock_caption)
+        
+        stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+        stock_hist_df, df_pos = MovingAverageCrossStrategy(symbol,
+                                    stock_hist_df,
+                                    selected_short_window,
+                                    selected_long_window,
+                                    algo_strategy,
+                                    True)  
+        
+        df_pos.reset_index(inplace=True)
+        df_pos = df_pos.sort_index(ascending=False)
+        # buy_sell = pd.DataFrame(df_pos.Notify.value_counts()).reset_index(inplace=True)
+        # print(df_pos.)
+        # print(df_pos.value_counts('Position'))                                                                  
+        # print(buy_sell.columns)
+        
+        buy_trigger = len(df_pos[df_pos['Position']=='Buy'])
+        sell_trigger = len(df_pos[df_pos['Position']=='Sell'])
+        # print(buy_trigger, sell_trigger)
+          
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with st.container(): # chart_container(chart_data):
+          toast_message = (":red["
+                            +"Fetching information for " 
+                            + etf_summary_info.shortName[0] 
+                            + " "+ symbol
+                            +"]"
+                    )
+          st.toast(toast_message, icon='🏃')  
+          # time.sleep(1)            
+          col1.metric(label="Close", value= etf_summary_info.previousClose , delta=None)
+          col1.metric(label="Open", value= etf_summary_info.open , delta=None) 
+          col2.metric(label="Day Low", value= etf_summary_info.dayLow)
+          col2.metric(label="Day High", value= etf_summary_info.dayHigh)
+          col3.metric(label="52 week Low", value= etf_summary_info.fiftyTwoWeekLow)
+          col3.metric(label="52 week High", value= etf_summary_info.fiftyTwoWeekHigh)
+          col4.metric(label="Buy (period)", value= buy_trigger)
+          col4.metric(label="Sell (period)", value= sell_trigger)
+          
+          expander = st.expander("Ticker trading prompts")
+          # # expander.write(\"\"\"
+          # #     The chart above shows some numbers I picked for you.
+          # #     I rolled actual dice for these, so they're *guaranteed* to
+          # #     be random.
+          # # \"\"\")
+          # # expander.image("https://static.streamlit.io/examples/dice.jpg")
+          # expander.write("the last 10 records")
+          days=1  
+          # print(df_pos.columns)  
+          cutoff_date = df_pos['Datetime'].iloc[0] - pd.Timedelta(days=days)
+          # print ("cutoff_date")
+          # print (cutoff_date)
+        
+          df1 = df_pos[df_pos['Datetime'] > cutoff_date]
+          # print ("state till cutoff_date")
+          expander.write(df1[['Datetime','Close', 'Position']]) 
       
         
          
