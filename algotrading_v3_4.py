@@ -48,6 +48,9 @@ def main():
 
   known_options = ticker 
   print(known_options)
+  
+  # print(show_snapshot(known_options))
+  
   if len(known_options) == 0:
     st.write ("Please select a ticker in the sidebar")
     return
@@ -104,14 +107,19 @@ def main():
                                         algo_strategy,
                                         True)
               
-              stock_close = get_current_price(symbol, selected_period, selected_interval)
+              # print("stock_df, df_pos")
+              # print(stock_df, df_pos)
+              stock_day_close = get_current_price(symbol, selected_period, selected_interval)
+              stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
               stock_trigger_at = df_pos.index.max()
               stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
               
               for variable in ["symbol",
-                              "stock_close",
+                              "stock_day_close",
+                              "stock_price_at_trigger",
                               "stock_trigger_state",
-                              "stock_trigger_at"]:
+                              "stock_trigger_at"
+                              ]:
                 quick_explore[variable] = eval(variable)
               # print(quick_explore)  
               #x = pd.DataFrame.from_dict(quick_explore, orient = 'index')
