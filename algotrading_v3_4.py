@@ -34,7 +34,7 @@ def main():
   
   # trading strategy selection
   algo_strategy = st.sidebar.selectbox(
-      'Select Moving Average Strategy', options=['SMA', 'EMA'], index=0)
+      'Select Moving Average Strategy', options=['SMA', 'EMA'], index=1)
   selected_short_window =  st.sidebar.number_input(":gray[Short Window]", step = 1, value=5)  
   selected_long_window =  st.sidebar.number_input(":gray[Long Window]", step = 1, value=8)   
 
@@ -47,6 +47,7 @@ def main():
   ema_period2 = selected_long_window
 
   known_options = ticker 
+  print(known_options)
   if len(known_options) == 0:
     st.write ("Please select a ticker in the sidebar")
     return
