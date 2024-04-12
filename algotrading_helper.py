@@ -516,6 +516,7 @@ def save_user_selected_options(selected_tickers):
   df_tickers = pd.DataFrame(selected_tickers)
   
   df = pd.read_csv("user_selected_options.csv")
+  df.columns = ['user_tickers']
   # df = df.concat([df, df_tickers])
   df_tickers.to_csv("user_selected_options.csv", mode='a', index=False, header=False)
   return
@@ -523,8 +524,8 @@ def save_user_selected_options(selected_tickers):
 def load_user_selected_options():
   user_list = []
   df = pd.read_csv("user_selected_options.csv")
-  print(df['0'].unique())
-  user_list = df['0'].unique()
+  print(df['user_tickers'].unique())
+  user_list = df['user_tickers'].unique()
   return user_list
   
 
