@@ -144,6 +144,7 @@ def main():
                 
               # quick_explore_df = quick_explore_df.append(x)
               quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
+          quick_explore_df = quick_explore_df.sort_values(by = ['stock_trigger_at'], ascending=False)
           st.write(quick_explore_df)
           
             # st.write("Last 4 triggers were at: ")
