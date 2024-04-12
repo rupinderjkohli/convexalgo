@@ -294,21 +294,21 @@ def main():
     # ###################################################
     with tab[3]:    
       st.subheader("News on the selected stocks")
-      for symbol in known_options:
-        st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
-        st.subheader(st.session_state.page_subheader)
-        yf_data = yf.Ticker(symbol) #initiate the ticker
-        stock_news_df = get_stk_news(yf_data)
-        # st.write(stock_news_df)
-        st.data_editor(
-            stock_news_df,
-            column_config={
-                "link": st.column_config.LinkColumn(
-                    "News Link", #display_text="Open profile"
-                ),
-            },
-            hide_index=True,
-        )
+      # for symbol in known_options:
+      #   st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+      #   st.subheader(st.session_state.page_subheader)
+      #   yf_data = yf.Ticker(symbol) #initiate the ticker
+      #   stock_news_df = get_stk_news(yf_data)
+      #   # st.write(stock_news_df)
+      #   st.data_editor(
+      #       stock_news_df,
+      #       column_config={
+      #           "link": st.column_config.LinkColumn(
+      #               "News Link", #display_text="Open profile"
+      #           ),
+      #       },
+      #       hide_index=True,
+      #   )
       # st.write("News")
       # st.write(stock_news_df.to_html(escape=False, index=True), unsafe_allow_html=True)
       # st.divider()
