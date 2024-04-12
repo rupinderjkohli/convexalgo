@@ -13,7 +13,7 @@ def main():
       
   # """### Select Stock and Time interval"""
   # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01Home.py
-  symbol_list = ["TATAMOTORS.NS","PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
+  symbol_list = ["PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
   
   # user selected list of tickers
   # load_user_selected_options()
@@ -125,6 +125,10 @@ def main():
               
               # print("stock_df, df_pos")
               # print(stock_df, df_pos)
+              # st.subheader(symbol)
+              # st.subheader("Stock history")
+              # st.caption(df_pos.index.max())
+              # st.write((stock_df.sort_index(ascending=False)[:10]))
               stock_day_close = get_current_price(symbol, selected_period, selected_interval)
               stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
               stock_trigger_at = df_pos.index.max()
