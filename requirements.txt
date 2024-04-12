@@ -8,3 +8,7 @@ pybase64
 # IPython
 millify
 streamlit-extras
+lightweight_charts
+asyncio
+nest_asyncio
+streamlit-lightweight-charts

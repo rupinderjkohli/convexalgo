@@ -14,14 +14,23 @@ def main():
   # """### Select Stock and Time interval"""
   # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01Home.py
   symbol_list = ["TATAMOTORS.NS","PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
-
+  
+  # user selected list of tickers
+  # load_user_selected_options()
+  user_sel_list = []
+  
+  # load_user_selected_options()
+  
+  user_sel_list = load_user_selected_options()
+  print(user_sel_list)
+  
   # ticker selection
   st.sidebar.header("Choose your Stock filter: ")
   ticker = st.sidebar.multiselect('Choose Ticker', options=symbol_list,
                                 help = 'Select a ticker', 
                                 key='ticker',
                                 max_selections=8,
-                                default= ["TSLA"]
+                                default= user_sel_list #["TSLA"]
                                 )
   
   # period selection
@@ -46,8 +55,15 @@ def main():
   ema_period1 = selected_short_window
   ema_period2 = selected_long_window
 
-  known_options = ticker 
-  print(known_options)
+  
+  known_options = ticker
+  save_user_selected_options(known_options)
+  
+  # all_symbols  = " ".join(known_options)
+  # print(known_options)
+  # print(all_symbols)
+  # show_snapshot(all_symbols)
+  
   
   # print(show_snapshot(known_options))
   
@@ -55,7 +71,7 @@ def main():
     st.write ("Please select a ticker in the sidebar")
     return
   else:
-    tab = st.tabs(["Summary","🗃 List View","📈 Visualisations", "🗃 Details"])
+    tab = st.tabs(["Summary","🗃 List View","📈 Visualisations", "🗃 Details", "Release Notes"])
     # ###################################################
     # Summary: 
     # # of stocks being watched; 
@@ -241,7 +257,7 @@ def main():
         st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
         st.subheader(st.session_state.page_subheader)
         # st.write(yf_data)
-        st.write(symbol)
+        # st.write(symbol)
         st.write("Historical data per period (Showing EMA-5day period vs EMA-10day period)")
         
         # st.write("(Showing EMA-5day period vs EMA-10day period)")
@@ -265,6 +281,11 @@ def main():
         # Create and display the bar chart in the second column
         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
         
+        # st.divider()
+        
+        # chart = lw_charts_snapshot(stock_hist_df)
+        # st.
+        
         st.divider()
 
     # ###################################################
@@ -272,8 +293,22 @@ def main():
     # Details of all stocks individually being watched; 
     # ###################################################
     with tab[3]:    
-      st.write("Placeholder for details on the individual stocks")
-      # stock_news_df = get_stk_news(yf_data)
+      st.subheader("News on the selected stocks")
+      for symbol in known_options:
+        st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+        st.subheader(st.session_state.page_subheader)
+        yf_data = yf.Ticker(symbol) #initiate the ticker
+        stock_news_df = get_stk_news(yf_data)
+        # st.write(stock_news_df)
+        st.data_editor(
+            stock_news_df,
+            column_config={
+                "link": st.column_config.LinkColumn(
+                    "News Link", #display_text="Open profile"
+                ),
+            },
+            hide_index=True,
+        )
       # st.write("News")
       # st.write(stock_news_df.to_html(escape=False, index=True), unsafe_allow_html=True)
       # st.divider()
@@ -282,71 +317,9 @@ def main():
     # tab1 = st.tabs(["🗃 Base Data"])
     # with tab1:
 
-    
-
-    #     # stock_news_df = get_stk_news(yf_data)
-    #     # st.write("News")
-    #     # st.write(stock_news_df.to_html(escape=False, index=True), unsafe_allow_html=True)
-    #     # st.divider()
-      
-    #     st.write("Historical data per period")
-    #     st.write("Showing EMA-5day period vs EMA-10day period")
-    #     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-    #     st.write(stock_hist_df.to_html(escape=False, index=True), unsafe_allow_html=True)
-    #     st.divider()
-    
-  # for symbol in symbol_list:
-# #     units = hist_df.query("Symbol == @symbol")['Units'].sum()
-
-# #     ticker = yf.Ticker(symbol)
-
-# #     data['symbol'].append(ticker.info['symbol'])
-# #     data['industry'].append(ticker.info['industry'])
-# #     data['units'].append(units)
-# #     current_price = ticker.info['currentPrice']
-# #     data['current_price'].append(current_price)
-# #     # Round to 2 decimal points
-# #     market_value = round(units * current_price, 2)
-# #     data['market_value'].append(market_value)
-
-# #     # Prev close value to calculate day change
-# #     prev_close = ticker.info['previousClose']
-# #     day_change = (current_price - prev_close) * units
-# #     data['day_change'].append(day_change)
-# #     data['day_change_pct'].append(((current_price/prev_close) - 1) * 100)
-
-# #     # History data for 12 months
-# #     history = ticker.history(period='1y')['Close']
-
-# # showing for just 1 ticker
-# yf_data = yf.Ticker(ticker) #initiate the ticker
-
-  # tab1, tab2 = st.tabs(["🗃 Data","📈 Chart"])
-
-  # with tab1:
-
-  #     # Subheader with company name and symbol
-  #     st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
-  #     st.subheader(st.session_state.page_subheader)
-  #     # st.write(yf_data)
-
-  #     stock_info_df = get_all_stock_info(yf_data)
-  #     st.write("Overview")
-  #     st.write(stock_info_df.to_html(escape=False, index=False), unsafe_allow_html=True)
-
-  #     st.divider()
-
-      
-  #     st.write("Historical data per period")
-  #     st.write("Showing EMA-5day period vs EMA-10day period")
-  #     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-  #     st.write(stock_hist_df.to_html(escape=False, index=True), unsafe_allow_html=True)
-  #     st.divider()
-      
-  # with tab2:
-  #     fig = draw_candle_stick_triggers(stock_hist_df, ticker)
-  #     # Plot!
-  #     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+    with tab[4]:
+      st.subheader("Change Log")
+      st.write("Ability to add more stocks to the existing watchlist from the universe of all stocks allowed by the app.")
 
   return
 
@@ -354,35 +327,3 @@ if __name__ == '__main__':
   main()
 
 # # https://www.quantstart.com/articles/candlestick-subplots-with-plotly-and-the-alphavantage-api/
-
-# etf_info = pd.DataFrame()
-# etf_data = {} # dictionary
-# for symbol in symbol_list:
-#     ticker = yf.Ticker(symbol)
-#     # df = get_all_stock_info(ticker)
-
-#     etf_data[symbol] = get_hist_info(ticker, period, interval)
-#     etf_info = pd.concat([get_all_stock_info(ticker), etf_info], ignore_index=True)
-
-#     # History data for 12 months
-#     history = ticker.history(period='1y')[['Open', 'Close']]
-#     # Convert the history series to a DF
-#     history_df = history #.to_frame()
-#     # display (ticker)
-#     # display (history_df.head(5))
-
-#     # # Add the sparkline for 12 month Open history data
-#     # spark_img = sparkline(history_df, 'Open')
-#     # spark_img_url =  ('<img src="data:/png;pybase64,{}"/>'.format(spark_img))
-#     # etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Open'] = (spark_img_url)
-
-#     # # Add the sparkline for 12 month Close history data
-#     # etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Close'] = sparkline(history_df, 'Close')
-
-    
-# etf_info = etf_info.drop(columns=['index']   )
-# st.write(etf_info)
-
-# #########################################################
-# IGNORE BELOW
-# #########################################################

@@ -51,6 +51,11 @@ st.set_page_config(layout='wide', page_title='Stock Dashboard', page_icon=':doll
 # update every 5 mins
 # st_autorefresh(interval=5 * 60 * 1000, key="dataframerefresh")
 
+from lightweight_charts import Chart
+import time
+import asyncio
+import nest_asyncio
+nest_asyncio.apply()
 
 # print("Plotly Version : {}".format(plotly.__version__))
 
@@ -485,7 +490,9 @@ def get_current_price(symbol, selected_period, selected_interval):
     return todays_data['Close'].iloc[-1]
 
 def show_snapshot(all_tickers):
-    ticker = yf.Ticker("AAPL", "MSFT")
+    print(str(all_tickers))
+    # ticker = yf.Ticker("AAPL", "MSFT")
+    ticker = yf.Ticker(all_tickers)
     print(ticker)
     # fig = px.line(df, x="date", y=df.columns,
     #           hover_data={"date": "|%B %d, %Y"},
@@ -497,3 +504,29 @@ def show_snapshot(all_tickers):
     # fig.show()  #st.pyplot(plt.gcf())
     # st.pyplot(fig)
     return
+  
+  
+def lw_charts_snapshot(hist_df):
+    chart = Chart()
+    chart.set(hist_df)
+    chart.show(block = False)
+    return
+  
+def save_user_selected_options(selected_tickers):
+  df_tickers = pd.DataFrame(selected_tickers)
+  
+  df = pd.read_csv("user_selected_options.csv")
+  # df = df.concat([df, df_tickers])
+  df_tickers.to_csv("user_selected_options.csv", mode='a', index=False, header=False)
+  return
+  
+def load_user_selected_options():
+  user_list = []
+  df = pd.read_csv("user_selected_options.csv")
+  print(df['0'].unique())
+  user_list = df['0'].unique()
+  return user_list
+  
+
+  
+  
