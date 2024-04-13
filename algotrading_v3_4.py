@@ -10,7 +10,7 @@ from algotrading_helper import *
 pd.options.display.float_format = '${:,.2f}'.format
 
 def main():
-      
+     
   # """### Select Stock and Time interval"""
   # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01Home.py
   symbol_list = ["PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
@@ -28,10 +28,16 @@ def main():
   st.sidebar.header("Choose your Stock filter: ")
   ticker = st.sidebar.multiselect('Choose Ticker', options=symbol_list,
                                 help = 'Select a ticker', 
-                                key='ticker',
+                                key='ticker_list',
                                 max_selections=8,
-                                default= user_sel_list #["TSLA"]
+                                default= user_sel_list, #["TSLA"],
+                                placeholder="Choose an option",
+                                # on_change=update_selection(),
                                 )
+  print(ticker)
+  print(st.session_state)
+  known_options = ticker
+  save_user_selected_options(ticker)
   
   # period selection
   selected_period = st.sidebar.selectbox(
@@ -56,8 +62,7 @@ def main():
   ema_period2 = selected_long_window
 
   
-  known_options = ticker
-  save_user_selected_options(known_options)
+  
   
   # all_symbols  = " ".join(known_options)
   # print(known_options)

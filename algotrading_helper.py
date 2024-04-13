@@ -46,7 +46,18 @@ import streamlit_extras #.metric_cards #import style_metric_cards # beautify met
 # Using plotly dark template
 TEMPLATE = 'plotly_dark'
 
-st.set_page_config(layout='wide', page_title='Stock Dashboard', page_icon=':dollar:')
+# st.set_page_config(layout='wide', page_title='Stock Dashboard', page_icon=':dollar:')
+st.set_page_config(
+    page_title="Convex Trades App",
+    page_icon="🧊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': 'https://convextrades.com/',
+        # 'Report a bug': "mailto:rupinder.johar.kohli@gmail.com",
+        'About': "#An *extremely* cool app displaying your GoTo Dashboard!"
+    }
+  ) 
 
 # update every 5 mins
 # st_autorefresh(interval=5 * 60 * 1000, key="dataframerefresh")
@@ -76,7 +87,8 @@ def get_all_stock_info(ticker):
   info_df = pd.DataFrame.from_dict([info])
   info_df_short = info_df[['symbol', 'shortName', 'exchange', 'quoteType', 'currency',
                            'previousClose', 'open', 'dayLow', 'dayHigh',
-                          #  'category', 'navPrice',    # dc, don't know why this is failing?
+                          #  'category', 
+                          # 'navPrice',    # dc, don't know why this is failing?
                           #  'regularMarketPreviousClose', 'regularMarketOpen',
                           #  'regularMarketDayLow', 'regularMarketDayHigh',
                            'fiftyTwoWeekLow', 'fiftyTwoWeekHigh', 'fiftyDayAverage',
@@ -514,20 +526,50 @@ def lw_charts_snapshot(hist_df):
   
 def save_user_selected_options(selected_tickers):
   df_tickers = pd.DataFrame(selected_tickers)
-  
-  df = pd.read_csv("user_selected_options.csv")
-  df.columns = ['user_tickers']
-  # df = df.concat([df, df_tickers])
-  df_tickers.to_csv("user_selected_options.csv", mode='a', index=False, header=False)
+  try:
+    # df = pd.read_csv("user_selected_options.csv")
+    # df = pd.DataFrame(columns = ['user_tickers'])
+    # df_tickers.columns = ['user_tickers']
+    # df = df.concat([df, df_tickers])
+    # print("are we here")
+    df_tickers.to_csv("user_selected_options.csv", mode='w', index=False, header=True)
+  except pd.errors.EmptyDataError:
+    print('CSV file is empty save')
+  except FileNotFoundError:
+    print('CSV file not found save')
   return
   
 def load_user_selected_options():
   user_list = []
-  df = pd.read_csv("user_selected_options.csv")
-  print(df['user_tickers'].unique())
-  user_list = df['user_tickers'].unique()
+  try :
+    df = pd.read_csv("user_selected_options.csv", header=0)
+    # print("OR are we here")
+    if (df.empty):
+      user_list = []
+      
+    else: 
+      user_list = df['0'].unique()
+      print(df['0'].unique())
+  except pd.errors.EmptyDataError:
+    print('CSV file is empty load')
+  except FileNotFoundError:
+    print('CSV file not found load')
+  
   return user_list
   
-
+def update_selection():
+  print("options changed")
+  # Session State also supports the attribute based syntax
+  if 'ticker_list' not in st.session_state:
+      st.session_state.key = 'ticker_list'
+      
+  # st.write(st.session_state['ticker_list'])
+  
+  print (st.session_state['ticker_list'])
+  
+  # st.write(st.session_state['ticker_list'])
+  
+  return st.session_state.key #['ticker_list']
+  
   
   
