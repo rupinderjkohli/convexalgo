@@ -1,5 +1,7 @@
 
-# Commented out IPython magic to ensure Python compatibility.
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 import pandas as pd
 import numpy as np
 
@@ -26,18 +28,23 @@ import pybase64
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+
 import streamlit as st      #install
 # from streamlit_autorefresh import st_autorefresh
 # from schedule import every, repeat, run_pending
+import streamlit_extras #.metric_cards #import style_metric_cards # beautify metric card with css
+
+# from lightweight_charts import Chart
+import time
+import asyncio
+import nest_asyncio
+
 
 import base64
 from base64 import b64encode
 
 from millify import millify # shortens values (10_000 ---> 10k)
 
-import streamlit_extras #.metric_cards #import style_metric_cards # beautify metric card with css
-# from streamlit_extras.metric_cards import style_metric_cards # beautify metric card with css
-# from streamlit_extras import chart_container
 
 # from IPython.core.display import HTML # note the library
 # from tabulate import tabulate
@@ -48,24 +55,20 @@ TEMPLATE = 'plotly_dark'
 
 # st.set_page_config(layout='wide', page_title='Stock Dashboard', page_icon=':dollar:')
 st.set_page_config(
-    page_title="Convex Trades App",
+    page_title="Convex Trades Dashboard",
     page_icon="🧊",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
         'Get Help': 'https://convextrades.com/',
         # 'Report a bug': "mailto:rupinder.johar.kohli@gmail.com",
-        'About': "#An *extremely* cool app displaying your GoTo Dashboard!"
+        'About': "#An *extremely* cool app displaying your GoTo Trading Dashboard!"
     }
   ) 
 
 # update every 5 mins
 # st_autorefresh(interval=5 * 60 * 1000, key="dataframerefresh")
 
-from lightweight_charts import Chart
-import time
-import asyncio
-import nest_asyncio
 nest_asyncio.apply()
 
 # print("Plotly Version : {}".format(plotly.__version__))
@@ -77,9 +80,10 @@ pd.set_option('display.max_columns', None,
 pd.options.display.float_format = '${:,.2f}'.format
 
 
-
+# ##########################################################  
+# Purpose: 
 # """## stocks"""
-
+# # ##########################################################
 def get_all_stock_info(ticker):
   # get all stock info
 
@@ -111,26 +115,19 @@ def get_all_stock_info(ticker):
   # st.write (info_df_short.to_dict(orient='dict'))
   return info_df_short
 
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def get_hist_info(ticker, period, interval):
   # get historical market data
   # print(ticker, period, interval)
   hist = ticker.history(period=period, interval=interval)
-  # hist['SMA'] = hist['Close'].rolling(20).mean()
-  # hist['EMA_5day'] = hist['Close'].ewm(span=5, adjust=False).mean()
-  # hist['EMA_10day'] = hist['Close'].ewm(span=10, adjust=False).mean()
-  # hist['Signal'] = 0.0
-
-  # #DC review: revisit the rules below
-  # # If 5 period ema crosses over 10 period ema (note: ema not sma) then go long
-
-  # hist['Signal'] = np.where(hist['EMA_5day'] > hist['EMA_10day'], 1.0, 0.0)
-
-  # hist['Position'] = hist['Signal'].diff()
 
   return hist
 
-
-
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def sma_buy_sell_trigger(df, sma_p1, sma_p2):
   # get historical market data
   # print(ticker, period, interval)
@@ -147,6 +144,9 @@ def sma_buy_sell_trigger(df, sma_p1, sma_p2):
 
   return df
 
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 # def plot_stk_charts(df):
 #   sns.set(style="whitegrid")
 #   fig,axs = plt.subplots(3,2, figsize = (8,10))
@@ -159,6 +159,9 @@ def sma_buy_sell_trigger(df, sma_p1, sma_p2):
 #   fig.tight_layout()
 #   return
 
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def get_stk_news(ticker):
 
   news_df = pd.DataFrame(ticker.news)
@@ -174,6 +177,9 @@ def get_stk_news(ticker):
 
 # https://coderzcolumn.com/tutorials/data-science/candlestick-chart-in-python-mplfinance-plotly-bokeh#2
 
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def draw_candle_stick_chart(df,symbol):
   candlestick = go.Candlestick(
                             x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
@@ -235,6 +241,9 @@ def draw_candle_stick_chart_ma(df, symbol):
   # fig.show()
   return fig
 
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def draw_candle_stick_triggers(df, symbol, short_window, long_window, algo_strategy):
   
   # https://plotly.com/python/reference/scattergl/
@@ -328,6 +337,9 @@ def draw_candle_stick_triggers(df, symbol, short_window, long_window, algo_strat
   # fig.show()
   return fig
 
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def sma_trigger_plot(df):
   import plotly.express as px
   df = df.reset_index()
@@ -355,6 +367,9 @@ def sma_trigger_plot(df):
   
   return 
 
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def plot_stk_hist(df):
   # print("plotting Data and Histogram")
   plt.figure(figsize=(12, 5))
@@ -365,7 +380,9 @@ def plot_stk_hist(df):
 
   return
 
-
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def sparkline(df, col): #, Avg):
     fig = go.Figure()
 
@@ -425,6 +442,9 @@ def sparkline(df, col): #, Avg):
     return png_base64 #png_base64 #('<img src="data:image/png;base64,{}"/>'.format(decoded_data))
     # return ('<img src="data:/png;pybase64,{}"/>'.format(png_base64))
 
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def MovingAverageCrossStrategy(symbol, 
                                stock_df,
                                #stock_symbol, 
@@ -494,13 +514,21 @@ def MovingAverageCrossStrategy(symbol,
         # print(df_pos)
     return stock_df, df_pos
 
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def get_current_price(symbol, selected_period, selected_interval):
-    ticker = yf.Ticker(symbol)
-    todays_data = ticker.history(period = selected_period, interval = selected_interval)
-    # print(todays_data['Close'][:-4])
-    
+    try:
+      ticker = yf.Ticker(symbol)
+      todays_data = ticker.history(period = selected_period, interval = selected_interval)
+      # print(todays_data['Close'][:-4])
+    except:
+      print("unable to load the ticker current price")  
     return todays_data['Close'].iloc[-1]
 
+# ##########################################################  
+# Purpose: 
+# ##########################################################
 def show_snapshot(all_tickers):
     print(str(all_tickers))
     # ticker = yf.Ticker("AAPL", "MSFT")
@@ -517,13 +545,11 @@ def show_snapshot(all_tickers):
     # st.pyplot(fig)
     return
   
-  
-def lw_charts_snapshot(hist_df):
-    chart = Chart()
-    chart.set(hist_df)
-    chart.show(block = False)
-    return
-  
+
+
+# ##########################################################  
+# Purpose: set up the stock ticker watchlist (user customisation)
+# ##########################################################
 def save_user_selected_options(selected_tickers):
   df_tickers = pd.DataFrame(selected_tickers)
   try:

@@ -7,6 +7,8 @@ Original file is located at
     https://colab.research.google.com/drive/18MuK4_G2Nf8oow21NW_a3pHg_35JgVSI
 """
 from algotrading_helper import *
+from algotrading_visualisations import *
+
 pd.options.display.float_format = '${:,.2f}'.format
 
 def main():
@@ -155,7 +157,7 @@ def main():
               quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
           quick_explore_df = quick_explore_df.sort_values(by = ['stock_trigger_at'], ascending=False)
           st.write(quick_explore_df)
-          
+           
             # st.write("Last 4 triggers were at: ")
             
             # # Index column error when the interval is 1d
@@ -173,87 +175,79 @@ def main():
     # # of all stocks; 
     # ###################################################
     with tab[1]:
-      # st.write("Showing the List View of the selected stocks")
-      ## Create two columns
-      # col1, col2 = st.columns(2)
-      
-      # stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-      # df = sma_buy_sell_trigger(stock_hist_df, 5, 10)
-      # print(df.info())
-      # st.write(df)
-      # sma_trigger_plot(df)
-      
-      # st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-        
       
       # get stock metrics
         
       for symbol in known_options:
         st.subheader(symbol)
-        yf_data = yf.Ticker(symbol) #initiate the ticker
-        etf_summary_info = get_all_stock_info(yf_data)
-        stock_caption = ("exchange: "+etf_summary_info.exchange[0]
-                    + "; currency: "+etf_summary_info.currency[0])
-                
-        st.caption(stock_caption)
-        
-        stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-        stock_hist_df, df_pos = MovingAverageCrossStrategy(symbol,
-                                    stock_hist_df,
-                                    selected_short_window,
-                                    selected_long_window,
-                                    algo_strategy,
-                                    True)  
-        
-        df_pos.reset_index(inplace=True)
-        df_pos = df_pos.sort_index(ascending=False)
-        # buy_sell = pd.DataFrame(df_pos.Notify.value_counts()).reset_index(inplace=True)
-        # print(df_pos.)
-        # print(df_pos.value_counts('Position'))                                                                  
-        # print(buy_sell.columns)
-        
-        buy_trigger = len(df_pos[df_pos['Position']=='Buy'])
-        sell_trigger = len(df_pos[df_pos['Position']=='Sell'])
-        # print(buy_trigger, sell_trigger)
+        try:
+          yf_data = yf.Ticker(symbol) #initiate the ticker
+          etf_summary_info = get_all_stock_info(yf_data)
+          stock_caption = ("exchange: "+etf_summary_info.exchange[0]
+                      + "; currency: "+etf_summary_info.currency[0])
+                  
+          st.caption(stock_caption)
           
-        col1, col2, col3, col4 = st.columns(4)
+          stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
         
-        with st.container(): # chart_container(chart_data):
-          toast_message = (":red["
-                            +"Fetching information for " 
-                            + etf_summary_info.shortName[0] 
-                            + " "+ symbol
-                            +"]"
-                    )
-          st.toast(toast_message, icon='🏃')  
-          # time.sleep(1)            
-          col1.metric(label="Close", value= etf_summary_info.previousClose , delta=None)
-          col1.metric(label="Open", value= etf_summary_info.open , delta=None) 
-          col2.metric(label="Day Low", value= etf_summary_info.dayLow)
-          col2.metric(label="Day High", value= etf_summary_info.dayHigh)
-          col3.metric(label="52 week Low", value= etf_summary_info.fiftyTwoWeekLow)
-          col3.metric(label="52 week High", value= etf_summary_info.fiftyTwoWeekHigh)
-          col4.metric(label="Buy (period)", value= buy_trigger)
-          col4.metric(label="Sell (period)", value= sell_trigger)
+          stock_hist_df, df_pos = MovingAverageCrossStrategy(symbol,
+                                      stock_hist_df,
+                                      selected_short_window,
+                                      selected_long_window,
+                                      algo_strategy,
+                                      True)  
           
-          expander = st.expander("Ticker trading prompts")
-          # # expander.write(\"\"\"
-          # #     The chart above shows some numbers I picked for you.
-          # #     I rolled actual dice for these, so they're *guaranteed* to
-          # #     be random.
-          # # \"\"\")
-          # # expander.image("https://static.streamlit.io/examples/dice.jpg")
-          # expander.write("the last 10 records")
-          days=1  
-          # print(df_pos.columns)  
-          cutoff_date = df_pos['Datetime'].iloc[0] - pd.Timedelta(days=days)
-          # print ("cutoff_date")
-          # print (cutoff_date)
-        
-          df1 = df_pos[df_pos['Datetime'] > cutoff_date]
-          # print ("state till cutoff_date")
-          expander.write(df1[['Datetime','Close', 'Position']]) 
-      
+          df_pos.reset_index(inplace=True)
+          df_pos = df_pos.sort_index(ascending=False)
+          # buy_sell = pd.DataFrame(df_pos.Notify.value_counts()).reset_index(inplace=True)
+          # print(df_pos.)
+          # print(df_pos.value_counts('Position'))                                                                  
+          # print(buy_sell.columns)
+          
+          buy_trigger = len(df_pos[df_pos['Position']=='Buy'])
+          sell_trigger = len(df_pos[df_pos['Position']=='Sell'])
+          # print(buy_trigger, sell_trigger)
+         
+          col1, col2, col3, col4 = st.columns(4)
+          
+          with st.container(): # chart_container(chart_data):
+            toast_message = (":red["
+                              +"Fetching information for " 
+                              + etf_summary_info.shortName[0] 
+                              + " "+ symbol
+                              +"]"
+                      )
+            st.toast(toast_message, icon='🏃')  
+            # time.sleep(1)            
+            col1.metric(label="Close", value= etf_summary_info.previousClose , delta=None)
+            col1.metric(label="Open", value= etf_summary_info.open , delta=None) 
+            col2.metric(label="Day Low", value= etf_summary_info.dayLow)
+            col2.metric(label="Day High", value= etf_summary_info.dayHigh)
+            col3.metric(label="52 week Low", value= etf_summary_info.fiftyTwoWeekLow)
+            col3.metric(label="52 week High", value= etf_summary_info.fiftyTwoWeekHigh)
+            col4.metric(label="Buy (period)", value= buy_trigger)
+            col4.metric(label="Sell (period)", value= sell_trigger)
+            
+            expander = st.expander("Ticker trading prompts")
+            # # expander.write(\"\"\"
+            # #     The chart above shows some numbers I picked for you.
+            # #     I rolled actual dice for these, so they're *guaranteed* to
+            # #     be random.
+            # # \"\"\")
+            # # expander.image("https://static.streamlit.io/examples/dice.jpg")
+            # expander.write("the last 10 records")
+            days=1  
+            # print(df_pos.columns)  
+            cutoff_date = df_pos['Datetime'].iloc[0] - pd.Timedelta(days=days)
+            # print ("cutoff_date")
+            # print (cutoff_date)
+          
+            df1 = df_pos[df_pos['Datetime'] > cutoff_date]
+            # print ("state till cutoff_date")
+            expander.write(df1[['Datetime','Close', 'Position']]) 
+        except:
+          print('Error loading stock data for ' + symbol)
+          return None 
         
          
     # ###################################################
@@ -273,23 +267,32 @@ def main():
         # st.write("(Showing EMA-5day period vs EMA-10day period)")
         stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
         
-        # ## Display the data table in the first column
-        # st.dataframe(stock_hist_df.head(10))
-        stock_df, df_position = MovingAverageCrossStrategy(symbol,
-                                     stock_hist_df,
-                                     selected_short_window,
-                                     selected_long_window,
-                                     algo_strategy,
-                                     False)
-        fig = draw_candle_stick_triggers(stock_hist_df, 
-                                         symbol,
-                                         selected_short_window,
-                                         selected_long_window,
-                                         algo_strategy
-                                         )
-        # Plot!
-        # Create and display the bar chart in the second column
-        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+        # use streamlit light weight charts
+        lw_charts_snapshot(symbol, 
+                           stock_hist_df, 
+                           algo_strategy,
+                           selected_short_window,
+                           selected_long_window,
+                           False)
+        
+        
+        # # ## Display the data table in the first column
+        # # st.dataframe(stock_hist_df.head(10))
+        # stock_df, df_position = MovingAverageCrossStrategy(symbol,
+        #                              stock_hist_df,
+        #                              selected_short_window,
+        #                              selected_long_window,
+        #                              algo_strategy,
+        #                              False)
+        # fig = draw_candle_stick_triggers(stock_hist_df, 
+        #                                  symbol,
+        #                                  selected_short_window,
+        #                                  selected_long_window,
+        #                                  algo_strategy
+        #                                  )
+        # # Plot!
+        # # Create and display the bar chart in the second column
+        # st.plotly_chart(fig, theme="streamlit", use_container_width=True)
         
         # st.divider()
         

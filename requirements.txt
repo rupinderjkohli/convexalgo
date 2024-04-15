@@ -11,4 +11,4 @@ streamlit-extras
 lightweight_charts
 asyncio
 nest_asyncio
-streamlit-lightweight-charts
+# streamlit_lightweight_charts
