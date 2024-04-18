@@ -9,6 +9,7 @@ import yfinance as yf       #install
 import datetime
 from datetime import datetime
 import time
+import pytz
 
 # %matplotlib inline
 import matplotlib
@@ -493,6 +494,15 @@ def MovingAverageCrossStrategy(symbol,
 
         # Create a long exponential moving average column
         stock_df[long_window_col] = stock_df['Close'].ewm(span = long_window, adjust = False).mean()
+        
+        # calculate the stop loss / stop profit
+        # Determine Stop-Loss Order
+        # A stop-loss order is a request to a broker to sell stocks at a certain price. 
+        # These orders aid in minimizing an investor’s loss in a security position.
+
+        stock_df['stop_loss'] = stock_df['Close'] - stock_df['Close'] * 0.10
+        
+        stock_df['stop_profit'] = stock_df['Close'] + stock_df['Close'] * 0.10
 
     # create a new column 'Signal' such that if faster moving average is greater than slower moving average 
     # then set Signal as 1 else 0.
@@ -511,8 +521,9 @@ def MovingAverageCrossStrategy(symbol,
         df_pos = stock_df[(stock_df['Position'] == 1) | (stock_df['Position'] == -1)]
         df_pos['Position'] = df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
         # print(tabulate(df_pos, headers = 'keys', tablefmt = 'psql'))
-        # print(df_pos)
-    return stock_df, df_pos
+        previous_triggers = df_pos[['Position']][-6:]
+        # print(df_pos[['Position']])
+    return stock_df, df_pos, previous_triggers
 
 # ##########################################################  
 # Purpose: 
@@ -523,17 +534,18 @@ def get_current_price(symbol, selected_period, selected_interval):
       todays_data = ticker.history(period = selected_period, interval = selected_interval)
       # print(todays_data['Close'][:-4])
     except:
-      print("unable to load the ticker current price")  
+      print("unable to load the ticker current price") 
+      return 
     return todays_data['Close'].iloc[-1]
 
 # ##########################################################  
 # Purpose: 
 # ##########################################################
 def show_snapshot(all_tickers):
-    print(str(all_tickers))
+    # print(str(all_tickers))
     # ticker = yf.Ticker("AAPL", "MSFT")
     ticker = yf.Ticker(all_tickers)
-    print(ticker)
+    # print(ticker)
     # fig = px.line(df, x="date", y=df.columns,
     #           hover_data={"date": "|%B %d, %Y"},
     #           title='custom tick labels with ticklabelmode="period"')
@@ -598,4 +610,37 @@ def update_selection():
   return st.session_state.key #['ticker_list']
   
   
+# ##########################################################  
+# Purpose: timezone challenges
+# ##########################################################
+#  // you could use this function to convert all your times to required time zone
+def timeToTz(originalTime, timeZone): 
+  st.write(originalTime)
+  # zonedDate = new Date(new Date(originalTime * 1000).toLocaleString('en-US', { timeZone }))
+  zonedDate = pd.to_datetime(originalTime)#.dt.tz_localize('UTC').dt.tz_convert(timeZone)
+  timestamp_utc = zonedDate.replace(tzinfo=timeZone.utc).timestamp()
+
+  return zonedDate, timestamp_utc
+
+from datetime import datetime, timezone
+
+def unix_timestamp(local_timestamp, local_timezone):
+    """turn the input timestamp into a UTC `datetime` object, even though
+    the timestamp is not in UTC time, we must do this to construct a datetime
+    object with the proper date/time values"""
+    dt_fake_utc = datetime.fromtimestamp(local_timestamp, tz=timezone.utc)
+
+    """remove the (incorrect) timezone info that we supplied """
+    dt_naive = dt_fake_utc.replace(tzinfo=None)
+
+    """localize the datetime object to our `timezone`. You cannot use
+    datetime.replace() here, because it does not account for daylight savings
+    time"""
+    dt_local = local_timezone.localize(dt_naive)
+
+    """Convert our datetime object back to a timestamp"""
+    return int(dt_local.timestamp())
   
+  
+
+    

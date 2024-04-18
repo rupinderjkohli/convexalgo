@@ -8,6 +8,7 @@ Original file is located at
 """
 from algotrading_helper import *
 from algotrading_visualisations import *
+from pathlib import Path
 
 pd.options.display.float_format = '${:,.2f}'.format
 
@@ -117,13 +118,16 @@ def main():
           # Collate high level stats on the data
           quick_explore = {}
           
-          quick_explore_df = pd.DataFrame()      
+          quick_explore_df = pd.DataFrame() 
+          etf_info = pd.DataFrame()
+          etf_data = {} # dictionary
+                   
           for symbol in known_options:
               # st.subheader(symbol)
               stock_name =  symbol
               yf_data = yf.Ticker(symbol) #initiate the ticker
               stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-              stock_df, df_pos = MovingAverageCrossStrategy(symbol,
+              stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
                                         stock_hist_df,
                                         selected_short_window,
                                         selected_long_window,
@@ -135,17 +139,42 @@ def main():
               # st.subheader(symbol)
               # st.subheader("Stock history")
               # st.caption(df_pos.index.max())
-              # st.write((stock_df.sort_index(ascending=False)[:10]))
+              
+              # put this to a new tab on click of the button
+              # ###################################################
+              # st.write((stock_df.sort_index(ascending=False)[:10])) 
+              
+              etf_data[symbol] = stock_df
+              
+              # previous_triggers_list = previous_triggers
+              previous_triggers = previous_triggers.reset_index()
+              # st.write(previous_triggers)
+              # etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Open'] = (spark_img_url)
+              # etf_data.loc[etf_data['symbol'] == symbol, 'last_12_months_Open'] = (spark_img_url)
+   
+              # etf_info = etf_info.drop(columns=['index']   )
+              # etf_info_df = pd.DataFrame.from_dict(etf_info)
+              
+              # st.write(etf_info_df) #.to_html(render_links=True))
+              # ###################################################
+              
               stock_day_close = get_current_price(symbol, selected_period, selected_interval)
               stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
               stock_trigger_at = df_pos.index.max()
               stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
-              
+              stock_stop_loss = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_loss"].to_list()[0]
+              stock_stop_profit = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_profit"].to_list()[0]
+              stock_view_details = etf_data[symbol]
+              stock_previous_triggers = previous_triggers.Datetime.astype(str).to_list() #df_pos.Position[:6]#.to_list()
+              # st.write(stock_previous_triggers)
               for variable in ["symbol",
-                              "stock_day_close",
+                              "stock_stop_profit",
+                              "stock_stop_loss",
                               "stock_price_at_trigger",
                               "stock_trigger_state",
-                              "stock_trigger_at"
+                              "stock_trigger_at",
+                              "stock_previous_triggers"
+                              # "stock_view_details"
                               ]:
                 quick_explore[variable] = eval(variable)
               # print(quick_explore)  
@@ -156,15 +185,38 @@ def main():
               # quick_explore_df = quick_explore_df.append(x)
               quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
           quick_explore_df = quick_explore_df.sort_values(by = ['stock_trigger_at'], ascending=False)
-          st.write(quick_explore_df)
-           
-            # st.write("Last 4 triggers were at: ")
-            
-            # # Index column error when the interval is 1d
-            # st.write(df_pos[['Datetime','Close', 'Position']][:4]) 
-            
-            # st.toast(''' :red[BUY] ''', icon='🏃')  #:red[Red] :blue[Blue] :green[Green] :orange[Orange] :violet[BUY] 
-      
+          
+          st.data_editor(
+          quick_explore_df,
+          column_config={"stock_stop_profit": st.column_config.NumberColumn(
+              "Stop-Profit Order",
+              format="%.3f",
+          ),
+                         "stock_stop_loss": st.column_config.NumberColumn(
+              "Stop-Loss Order",
+              format="%.3f",
+          ),
+                         "stock_price_at_trigger": st.column_config.NumberColumn(
+              "Stock Price at Trigger",
+              format="%.3f",
+          ),
+                         "stock_previous_triggers": st.column_config.ListColumn(
+              "Previous Triggers at",
+              width=None,
+          ),
+              # "stock_view_details": st.column_config.LinkColumn
+              # (
+              #     "Stock Details",
+              #     help="The top trending Streamlit apps",
+              #     max_chars=100,
+              #     display_text="view table",
+              #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
+              # ),
+              
+          },
+          hide_index=True,
+          )
+          
           
           st.divider()
           
@@ -275,30 +327,7 @@ def main():
                            selected_long_window,
                            False)
         
-        
-        # # ## Display the data table in the first column
-        # # st.dataframe(stock_hist_df.head(10))
-        # stock_df, df_position = MovingAverageCrossStrategy(symbol,
-        #                              stock_hist_df,
-        #                              selected_short_window,
-        #                              selected_long_window,
-        #                              algo_strategy,
-        #                              False)
-        # fig = draw_candle_stick_triggers(stock_hist_df, 
-        #                                  symbol,
-        #                                  selected_short_window,
-        #                                  selected_long_window,
-        #                                  algo_strategy
-        #                                  )
-        # # Plot!
-        # # Create and display the bar chart in the second column
-        # st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-        
-        # st.divider()
-        
-        # chart = lw_charts_snapshot(stock_hist_df)
-        # st.
-        
+       
         st.divider()
 
     # ###################################################
