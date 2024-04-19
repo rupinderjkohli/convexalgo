@@ -407,8 +407,10 @@ def main():
     # ###################################################
     with tab[4]:    
       st.subheader("Customise Stocks list")
-      new_element = st.text_input("Add a new symbol:", "")
-      symbol_list.append(new_element)
+      # new_element = st.text_input("Add a new symbol:", "")
+      # symbol_list.append(str(new_element))
+      # print(symbol_list)
+      
   
       # ticker_list = ""
       # ticker_list = st.text_area(":red[enter the ticker list seperated with commas]"
