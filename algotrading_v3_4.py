@@ -188,8 +188,8 @@ def main():
               stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
               stock_trigger_at = df_pos.index.max()
               stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
-              stock_stop_loss = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_loss"].to_list()[0]
-              stock_take_profit = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_profit"].to_list()[0]
+              # stock_stop_loss = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_loss"].to_list()[0]
+              # stock_take_profit = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_profit"].to_list()[0]
               
               # (buy order) profit order is + if trigger is Buy; loss order is - if trigger is Buy 
               # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
@@ -304,6 +304,7 @@ def main():
           )
   
           st.divider()
+          # st.write(etf_data["NVDA"])
           
         
     # ###################################################

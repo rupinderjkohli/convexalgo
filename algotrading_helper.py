@@ -490,19 +490,19 @@ def MovingAverageCrossStrategy(symbol,
 
     elif moving_avg == 'EMA':
         # Create short exponential moving average column
-        stock_df[short_window_col] = stock_df['Close'].ewm(span = short_window, adjust = False).mean()
+        stock_df[short_window_col] = stock_df['Close'].ewm(span = short_window, adjust = True).mean()
 
         # Create a long exponential moving average column
-        stock_df[long_window_col] = stock_df['Close'].ewm(span = long_window, adjust = False).mean()
+        stock_df[long_window_col] = stock_df['Close'].ewm(span = long_window, adjust = True).mean()
         
         # calculate the stop loss / stop profit
         # Determine Stop-Loss Order
         # A stop-loss order is a request to a broker to sell stocks at a certain price. 
         # These orders aid in minimizing an investor’s loss in a security position.
 
-        stock_df['stop_loss'] = stock_df['Close'] - stock_df['Close'] * 0.10
+        # stock_df['stop_loss'] = stock_df['Close'] - stock_df['Close'] * 0.10
         
-        stock_df['stop_profit'] = stock_df['Close'] + stock_df['Close'] * 0.10
+        # stock_df['stop_profit'] = stock_df['Close'] + stock_df['Close'] * 0.10
 
     # create a new column 'Signal' such that if faster moving average is greater than slower moving average 
     # then set Signal as 1 else 0.
@@ -538,7 +538,10 @@ def MovingAverageCrossStrategy(symbol,
         # print(tabulate(df_pos, headers = 'keys', tablefmt = 'psql'))
         previous_triggers = df_pos[['Position']][-6:]
         # st.write(df_pos[['Position']])
-        # st.write(df_pos)
+        st.write(symbol)
+        st.write(df_pos.sort_index(ascending=False)[:10])
+    st.write("base data")
+    st.write(stock_df.sort_index(ascending=False)[:10])
     return stock_df, df_pos, previous_triggers, buy_short, sell_long
 
 # ##########################################################  
