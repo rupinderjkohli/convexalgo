@@ -539,7 +539,7 @@ def MovingAverageCrossStrategy(symbol,
         previous_triggers = df_pos[['Position']][-6:]
         # st.write(df_pos[['Position']])
         # st.write(symbol)
-        st.write(df_pos.sort_index(ascending=False)[:10])
+        # st.write(df_pos.sort_index(ascending=False)[:10])
     st.write(symbol)
     st.write("base data")
     st.write(stock_df.sort_index(ascending=False)[:10])
