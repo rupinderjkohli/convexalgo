@@ -303,6 +303,7 @@ def main():
             
             df1.Datetime = df1.Datetime.dt.strftime('%Y/%m/%d %H:%M')
             
+            # ToDo: Show more columns as per the Summary tab
             expander.write(df1[['Datetime','Close', 'Position']]) 
             
             
