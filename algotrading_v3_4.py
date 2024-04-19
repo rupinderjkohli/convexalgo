@@ -187,7 +187,18 @@ def main():
               stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
               stock_stop_loss = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_loss"].to_list()[0]
               stock_take_profit = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_profit"].to_list()[0]
-              stock_atr = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
+              
+              # (buy order) profit order is + if trigger is Buy; loss order is - if trigger is Buy 
+              # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
+              
+              if (stock_trigger_state == "Buy"):
+                stock_stop_loss_atr = (stock_price_at_trigger - df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+                stock_take_profit_atr = (stock_price_at_trigger + 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+              elif (stock_trigger_state == "Sell"):
+                stock_stop_loss_atr = (stock_price_at_trigger + df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+                stock_take_profit_atr = (stock_price_at_trigger - 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+              
+              stock_atr_ma = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
               stock_view_details = etf_data[symbol]
               stock_previous_triggers = previous_triggers.Datetime.astype(str).to_list() #df_pos.Position[:6]#.to_list()
               
@@ -214,15 +225,16 @@ def main():
               
               # st.write(stock_previous_triggers)
               for variable in ["symbol",
-                              "stock_take_profit",
-                              "stock_stop_loss",
-                              # "stock_take_profit_atr",
-                              # "stock_stop_loss_atr",
-                              "stock_atr",
-                              "stock_price_at_trigger",
-                              "stock_trigger_state",
-                              "stock_trigger_at",
-                              "stock_previous_triggers"
+                               "stock_trigger_at",
+                               "stock_trigger_state",
+                               "stock_price_at_trigger",
+                               "stock_stop_loss_atr",
+                               "stock_take_profit_atr",
+                               "stock_atr_ma",
+                               "stock_previous_triggers"
+                              
+                              # "stock_take_profit",
+                              # "stock_stop_loss",
                               # "stock_view_details"
                               ]:
                 quick_explore[variable] = eval(variable)
@@ -237,20 +249,20 @@ def main():
           
           st.data_editor(
           quick_explore_df,
-          column_config={"stock_take_profit": st.column_config.NumberColumn(
-              "Take-Profit Order",
+          column_config={"stock_take_profit_atr": st.column_config.NumberColumn(
+              "Take Profit Order (ATR)",
               format="%.3f",
           ),
-                         "stock_stop_loss": st.column_config.NumberColumn(
-              "Stop-Loss Order",
-              format="%.3f",
-          ),
-                         "stock_atr": st.column_config.NumberColumn(
-              "Order (ATR)",
+                         "stock_stop_loss_atr": st.column_config.NumberColumn(
+              "Stop Loss Order (ATR)",
               format="%.3f",
           ),
                          "stock_price_at_trigger": st.column_config.NumberColumn(
               "Stock Price at Trigger",
+              format="%.3f",
+          ),
+                         "stock_atr_ma": st.column_config.NumberColumn(
+              "ATR MA",
               format="%.3f",
           ),
                          "stock_previous_triggers": st.column_config.ListColumn(
