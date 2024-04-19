@@ -16,7 +16,17 @@ def main():
      
   # """### Select Stock and Time interval"""
   # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01Home.py
-  symbol_list = ["PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
+  new_ticker_list = []
+  
+  base_symbol_list = ["PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
+  # if (ticker_list.isna()):
+  #   ticker_list = []
+  
+  # using set() to remove duplicated from list
+  symbol_list = base_symbol_list + new_ticker_list
+  
+  
+  # symbol_list = list(set(symbol_list))
   
   # user selected list of tickers
   # load_user_selected_options()
@@ -79,7 +89,7 @@ def main():
     st.write ("Please select a ticker in the sidebar")
     return
   else:
-    tab = st.tabs(["Summary","🗃 List View","📈 Visualisations", "🗃 Details", "Release Notes"])
+    tab = st.tabs(["Summary","🗃 List View","📈 Visualisations", "🗃 Details", "Customization", "Release Notes"])
     # ###################################################
     # Summary: 
     # # of stocks being watched; 
@@ -127,7 +137,7 @@ def main():
               stock_name =  symbol
               yf_data = yf.Ticker(symbol) #initiate the ticker
               stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-              stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
+              stock_df, df_pos, previous_triggers, buy_short, sell_long = MovingAverageCrossStrategy(symbol,
                                         stock_hist_df,
                                         selected_short_window,
                                         selected_long_window,
@@ -148,6 +158,7 @@ def main():
               
               # previous_triggers_list = previous_triggers
               previous_triggers = previous_triggers.reset_index()
+              
               # st.write(previous_triggers)
               # etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Open'] = (spark_img_url)
               # etf_data.loc[etf_data['symbol'] == symbol, 'last_12_months_Open'] = (spark_img_url)
@@ -158,18 +169,56 @@ def main():
               # st.write(etf_info_df) #.to_html(render_links=True))
               # ###################################################
               
+              # df_atr, buy_signal, sell_signal = calculate_atr_buy_sell(stock_df)
+              
+              # st.write(buy_signal.max())
+              # st.write(df_pos.index.max())
+              
+              # st.write (sell_signal.max())
+              # st.write(df_pos.index.max())
+              
+              # st.write(df[df_pos.index.max().isin(buy_signal.max())])
+              
+              # st.write(df.loc[np.isin(df_pos.index, buy_signal)])
+              
               stock_day_close = get_current_price(symbol, selected_period, selected_interval)
               stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
               stock_trigger_at = df_pos.index.max()
               stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
               stock_stop_loss = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_loss"].to_list()[0]
-              stock_stop_profit = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_profit"].to_list()[0]
+              stock_take_profit = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_profit"].to_list()[0]
+              stock_atr = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
               stock_view_details = etf_data[symbol]
               stock_previous_triggers = previous_triggers.Datetime.astype(str).to_list() #df_pos.Position[:6]#.to_list()
+              
+              # # print(df_pos.info())
+              # print("buy_signal.index")
+              # print((buy_signal.sort_index(ascending=False)))
+              # # print("sell_signal.index")
+              # print(sell_signal.sort_index(ascending=False))
+              # print("df_pos.index")
+              # # print(df_pos.index.name)
+              # st.write(df_pos.sort_index(ascending=False))
+              
+              # print(df_atr.loc[df_atr.index == df_pos.index.max()])
+              # # print(df_atr.loc[df_atr.index.isin(buy_signal)])
+              # print(buy_signal.loc[buy_signal==True])
+              
+              # print(df_atr[[df_atr.index == df_pos.index.max() ]])
+              # print()
+              
+              # stock_take_profit_atr = df_pos.loc[df_pos.index ==  df_pos.index.max(), "atr_ma"].to_list()[0]
+              # print(stock_stop_loss_atr)
+              # print(stock_take_profit_atr)
+              
+              
               # st.write(stock_previous_triggers)
               for variable in ["symbol",
-                              "stock_stop_profit",
+                              "stock_take_profit",
                               "stock_stop_loss",
+                              # "stock_take_profit_atr",
+                              # "stock_stop_loss_atr",
+                              "stock_atr",
                               "stock_price_at_trigger",
                               "stock_trigger_state",
                               "stock_trigger_at",
@@ -188,12 +237,16 @@ def main():
           
           st.data_editor(
           quick_explore_df,
-          column_config={"stock_stop_profit": st.column_config.NumberColumn(
-              "Stop-Profit Order",
+          column_config={"stock_take_profit": st.column_config.NumberColumn(
+              "Take-Profit Order",
               format="%.3f",
           ),
                          "stock_stop_loss": st.column_config.NumberColumn(
               "Stop-Loss Order",
+              format="%.3f",
+          ),
+                         "stock_atr": st.column_config.NumberColumn(
+              "Order (ATR)",
               format="%.3f",
           ),
                          "stock_price_at_trigger": st.column_config.NumberColumn(
@@ -216,11 +269,9 @@ def main():
           },
           hide_index=True,
           )
-          
-          
+  
           st.divider()
           
-      
         
     # ###################################################
     # List View: 
@@ -242,7 +293,7 @@ def main():
           
           stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
         
-          stock_hist_df, df_pos = MovingAverageCrossStrategy(symbol,
+          stock_hist_df, df_pos, previous_triggers, buy_short, sell_long = MovingAverageCrossStrategy(symbol,
                                       stock_hist_df,
                                       selected_short_window,
                                       selected_long_window,
@@ -251,10 +302,6 @@ def main():
           
           df_pos.reset_index(inplace=True)
           df_pos = df_pos.sort_index(ascending=False)
-          # buy_sell = pd.DataFrame(df_pos.Notify.value_counts()).reset_index(inplace=True)
-          # print(df_pos.)
-          # print(df_pos.value_counts('Position'))                                                                  
-          # print(buy_sell.columns)
           
           buy_trigger = len(df_pos[df_pos['Position']=='Buy'])
           sell_trigger = len(df_pos[df_pos['Position']=='Sell'])
@@ -300,8 +347,8 @@ def main():
         except:
           print('Error loading stock data for ' + symbol)
           return None 
+   
         
-         
     # ###################################################
     # Charts: 
     # # of stocks being watched; 
@@ -354,12 +401,38 @@ def main():
       # st.write("News")
       # st.write(stock_news_df.to_html(escape=False, index=True), unsafe_allow_html=True)
       # st.divider()
+      
+    # ###################################################
+    # Volatility Indicators
+    # ###################################################
+    with tab[4]:    
+      st.subheader("Customise Stocks list")
+      new_element = st.text_input("Add a new symbol:", "")
+      symbol_list.append(new_element)
+  
+      # ticker_list = ""
+      # ticker_list = st.text_area(":red[enter the ticker list seperated with commas]"
+      #     )
 
+      # st.write(ticker_list)
+      # print((type(ticker_list)))
+      # st.write(list(ticker_list.split(",")))
+      # symbol_list = base_symbol_list + ticker_list
+      
+      # for symbol in known_options:
+      #   yf_data = yf.Ticker(symbol) #initiate the ticker
+      #   st.write(symbol)
+      #   stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+      #   # st.write(stock_hist_df.tail())
+      #   df, buy_signal, sell_signal = calculate_atr_buy_sell(stock_hist_df)
+      #   st.write(df)
+        
+        # show_atr(df)
+        
+        
+    
 
-    # tab1 = st.tabs(["🗃 Base Data"])
-    # with tab1:
-
-    with tab[4]:
+    with tab[5]:
       st.subheader("Change Log")
       st.write("Ability to add more stocks to the existing watchlist from the universe of all stocks allowed by the app.")
 

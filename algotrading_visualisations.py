@@ -15,7 +15,9 @@ import streamlit as st      #install
 from lightweight_charts import Chart
 from lightweight_charts.widgets import StreamlitChart
 
-from algotrading_helper import MovingAverageCrossStrategy, timeToTz, unix_timestamp
+import matplotlib.pyplot as plt
+
+from algotrading_helper import * #MovingAverageCrossStrategy, timeToTz, unix_timestamp
 
 # ##########################################################  
 # Purpose: 
@@ -27,7 +29,7 @@ def lw_charts_snapshot(symbol,
                        selected_long_window,
                        display_table = False):
 
-    stock_df, df_pos = MovingAverageCrossStrategy(symbol,
+    stock_df, df_pos, previous_triggers, buy_short, sell_long = MovingAverageCrossStrategy(symbol,
                                         stock_hist_df,
                                         selected_short_window,
                                         selected_long_window,
@@ -207,3 +209,37 @@ def time_to_tz(original_time, time_zone):
 #     chart.add_line_series(stock_df['time'], stock_df['Close'])
     
 #     return
+
+def show_atr(data):
+    # Plotting
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(25, 8), sharex=True)  # Share x-axis
+
+    # Stock price plot with ATR-based buy and sell signals
+    ax1.plot(data['Close'], label='Close Price', alpha=0.5)
+    ax1.scatter(data.index[buy_signal], data['Close'][buy_signal], label='Buy Signal (ATR)', marker='^', color='green', alpha=1)
+    ax1.scatter(data.index[sell_signal], data['Close'][sell_signal], label='Sell Signal (ATR)', marker='v', color='red', alpha=1)
+    for idx in data.index[buy_signal]:
+        ax1.axvline(x=idx, color='green', linestyle='--', alpha=0.5)
+    for idx in data.index[sell_signal]:
+        ax1.axvline(x=idx, color='red', linestyle='--', alpha=0.5)
+    ax1.set_title(f'{ticker} Stock Price with ATR-Based Signals')
+    ax1.set_ylabel('Price')
+    ax1.legend()
+
+    # ATR subplot with buy and sell signals
+    ax2.plot(data['ATR'], label='Average True Range', color='purple')
+    ax2.plot(data['ATR_MA'], label='14-day MA of ATR', color='orange', alpha=0.6)
+    # ax2.scatter(data.index[buy_signal], data['ATR'][buy_signal], label='Buy Signal (ATR)', marker='^', color='green')
+    # ax2.scatter(data.index[sell_signal], data['ATR'][sell_signal], label='Sell Signal (ATR)', marker='v', color='red')
+    # for idx in data.index[buy_signal]:
+    #     ax2.axvline(x=idx, color='green', linestyle='--', alpha=0.5)
+    # for idx in data.index[sell_signal]:
+    #     ax2.axvline(x=idx, color='red', linestyle='--', alpha=0.5)
+    ax2.set_title(f'{ticker} Average True Range (ATR) with Signals')
+    ax2.set_ylabel('ATR')
+    ax2.legend()
+
+    plt.tight_layout()
+    plt.show()
+    st.plotly_chart(fig)
+    return

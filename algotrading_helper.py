@@ -517,13 +517,29 @@ def MovingAverageCrossStrategy(symbol,
     # https://towardsdatascience.com/making-a-trade-call-using-simple-moving-average-sma-crossover-strategy-python-implementation-29963326da7a
     # ########################################
     df_pos = pd.DataFrame()
+    previous_triggers = pd.DataFrame()
+    
+    stock_df, buy_short, sell_long = calculate_atr_buy_sell(stock_df)
+    
+    # df_atr = stock_df[stock_df.index.isin(buy_short, sell_long)]
+    
+    # st.write("stock_df.index")
+    # st.write(stock_df.index)
+    # st.write(stock_df.sort_index(ascending=False))
+    
+    # st.write("buy_short")
+    # st.write(buy_short.sort_index(ascending=False))
+    # st.write("sell_long")
+    # st.write(sell_long.sort_index(ascending=False))
+    
     if display_table == True:
         df_pos = stock_df[(stock_df['Position'] == 1) | (stock_df['Position'] == -1)]
         df_pos['Position'] = df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
         # print(tabulate(df_pos, headers = 'keys', tablefmt = 'psql'))
         previous_triggers = df_pos[['Position']][-6:]
-        # print(df_pos[['Position']])
-    return stock_df, df_pos, previous_triggers
+        # st.write(df_pos[['Position']])
+        # st.write(df_pos)
+    return stock_df, df_pos, previous_triggers, buy_short, sell_long
 
 # ##########################################################  
 # Purpose: 
@@ -642,5 +658,54 @@ def unix_timestamp(local_timestamp, local_timezone):
     return int(dt_local.timestamp())
   
   
-
+# ##########################################################  
+# Purpose: Function to calculate the Average True Range (ATR)
+# For each time period (bar), the true range is simply the greatest of the three price differences:
+# High - Low
+# High - Previous close
+# Previous close - Low
+# ########################################################## 
+def calculate_atr(data, window=14):
+    high_low = data['High'] - data['Low']
+    high_close = abs(data['High'] - data['Close'].shift())
+    low_close = abs(data['Low'] - data['Close'].shift())
+    ranges = pd.concat([high_low, high_close, low_close], axis=1)
+    true_range = ranges.max(axis=1)
+    atr = true_range.rolling(window=window).mean()
     
+    return atr
+    
+# ##########################################################  
+# Purpose:  Calculate Average True Range (ATR) and its moving average
+# ##########################################################  
+def calculate_atr_buy_sell(data):
+  data['atr'] = calculate_atr(data)
+  data['atr_ma'] = data['atr'].rolling(window=14).mean()  # 14-day moving average of ATR
+
+  # Define buy and sell signals
+  buy_signal = (data['atr'] > data['atr_ma']) & (data['atr'].shift(1) <= data['atr_ma'].shift(1))
+  sell_signal = (data['atr'] < data['atr_ma']) & (data['atr'].shift(1) >= data['atr_ma'].shift(1))
+  
+  # st.write("buy_signal")
+  # st.write(buy_signal)
+  
+  buy_long_idx = data.index[buy_signal]
+  sell_short_idx = data.index[sell_signal]
+  
+  buy_long = buy_signal.loc[buy_signal==True]
+  sell_short = sell_signal.loc[sell_signal==True]
+  
+  # st.write ("buy_short")
+  # st.write (buy_short)
+  # st.write ("sell_long")
+  # st.write (sell_long)
+  # st.write("ATR Data")
+  # st.write(buy_long.sort_index(ascending=False))
+  # st.write(sell_short.sort_index(ascending=False))
+  
+  return data, buy_long, sell_short
+
+
+def add_ticker():
+  ticker = ['ABB']
+  return ticker
