@@ -131,6 +131,9 @@ def main():
           quick_explore_df = pd.DataFrame() 
           etf_info = pd.DataFrame()
           etf_data = {} # dictionary
+          
+          short_window_col = str(selected_short_window) + '_' + algo_strategy
+          long_window_col = str(selected_long_window) + '_' + algo_strategy  
                    
           for symbol in known_options:
               # st.subheader(symbol)
@@ -198,7 +201,11 @@ def main():
                 stock_stop_loss_atr = (stock_price_at_trigger + df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
                 stock_take_profit_atr = (stock_price_at_trigger - 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
               
+              stock_ema_p1 = df_pos.loc[df_pos.index == df_pos.index.max(), short_window_col].to_list()[0]
+              stock_ema_p2 = df_pos.loc[df_pos.index == df_pos.index.max(), long_window_col].to_list()[0]
+              
               stock_atr_ma = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
+              
               stock_view_details = etf_data[symbol]
               stock_previous_triggers = previous_triggers.Datetime.astype(str).to_list() #df_pos.Position[:6]#.to_list()
               
@@ -231,6 +238,8 @@ def main():
                                "stock_stop_loss_atr",
                                "stock_take_profit_atr",
                                "stock_atr_ma",
+                               "stock_ema_p1",
+                               "stock_ema_p2",
                                "stock_previous_triggers"
                               
                               # "stock_take_profit",
@@ -250,24 +259,36 @@ def main():
           st.data_editor(
           quick_explore_df,
           column_config={"stock_take_profit_atr": st.column_config.NumberColumn(
-              "Take Profit Order (ATR)",
-              format="%.3f",
+              "Take Profit Price",
+              format="%.2f",
           ),
                          "stock_stop_loss_atr": st.column_config.NumberColumn(
-              "Stop Loss Order (ATR)",
-              format="%.3f",
+              "Stop Loss Price",
+              format="%.2f",
           ),
                          "stock_price_at_trigger": st.column_config.NumberColumn(
-              "Stock Price at Trigger",
-              format="%.3f",
+              "Trigger Price",
+              format="%.2f",
           ),
                          "stock_atr_ma": st.column_config.NumberColumn(
               "ATR MA",
-              format="%.3f",
+              format="%.2f",
           ),
                          "stock_previous_triggers": st.column_config.ListColumn(
-              "Previous Triggers at",
+              "Previous Triggers",
               width=None,
+          ),
+                         "stock_trigger_at": st.column_config.DatetimeColumn(
+            "Trigger Time",
+            format="DD MMM YYYY, h:mm a"
+            ),
+                         "stock_ema_p1": st.column_config.NumberColumn(
+              "EMA P1",
+              format="%.2f",
+          ),
+                         "stock_ema_p2": st.column_config.NumberColumn(
+              "EMA P2",
+              format="%.2f",
           ),
               # "stock_view_details": st.column_config.LinkColumn
               # (
