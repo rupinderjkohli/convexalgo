@@ -448,9 +448,6 @@ def sparkline(df, col): #, Avg):
 # ##########################################################
 def MovingAverageCrossStrategy(symbol, 
                                stock_df,
-                               #stock_symbol, 
-                               #start_date = '2018-01-01', 
-                               #end_date = '2020-01-01',
                                short_window,
                                long_window, 
                                moving_avg, 
@@ -469,14 +466,6 @@ def MovingAverageCrossStrategy(symbol,
     # moving_avg - (str)the type of moving average to use ('SMA' or 'EMA')
     # display_table - (bool)whether to display the date and price table at buy/sell positions(True/False)
 
-    # import the closing price data of the stock for the aforementioned period of time in Pandas dataframe
-    # start = datetime.datetime(*map(int, start_date.split('-')))
-    # end = datetime.datetime(*map(int, end_date.split('-'))) 
-    # stock_df = web.DataReader(stock_symbol, 'yahoo', start = start, end = end)['Close']
-    # stock_df = pd.DataFrame(stock_df) # convert Series object to dataframe 
-    # stock_df.columns = {'Close'} # assign new column name
-    # stock_df.dropna(axis = 0, inplace = True) # remove any null rows 
-                        
     # column names for long and short moving average columns
     short_window_col = str(short_window) + '_' + moving_avg
     long_window_col = str(long_window) + '_' + moving_avg  
@@ -500,10 +489,6 @@ def MovingAverageCrossStrategy(symbol,
         # A stop-loss order is a request to a broker to sell stocks at a certain price. 
         # These orders aid in minimizing an investor’s loss in a security position.
 
-        # stock_df['stop_loss'] = stock_df['Close'] - stock_df['Close'] * 0.10
-        
-        # stock_df['stop_profit'] = stock_df['Close'] + stock_df['Close'] * 0.10
-
     # create a new column 'Signal' such that if faster moving average is greater than slower moving average 
     # then set Signal as 1 else 0.
     stock_df['Signal'] = 0.0  
@@ -521,29 +506,24 @@ def MovingAverageCrossStrategy(symbol,
     
     stock_df, buy_short, sell_long = calculate_atr_buy_sell(stock_df)
     
-    # df_atr = stock_df[stock_df.index.isin(buy_short, sell_long)]
-    
-    # st.write("stock_df.index")
-    # st.write(stock_df.index)
-    # st.write(stock_df.sort_index(ascending=False))
-    
-    # st.write("buy_short")
-    # st.write(buy_short.sort_index(ascending=False))
-    # st.write("sell_long")
-    # st.write(sell_long.sort_index(ascending=False))
-    
     if display_table == True:
         df_pos = stock_df[(stock_df['Position'] == 1) | (stock_df['Position'] == -1)]
         df_pos['Position'] = df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
-        # print(tabulate(df_pos, headers = 'keys', tablefmt = 'psql'))
         previous_triggers = df_pos[['Position']][-6:]
-        # st.write(df_pos[['Position']])
-        # st.write(symbol)
-        # st.write(df_pos.sort_index(ascending=False)[:10])
+        
+    
+    # #########################
+    # BEGIN: DEBUG_INFO
     st.write(symbol)
     st.write("base data")
+    stock_df = stock_df.reset_index()
+    stock_df.Datetime = stock_df.Datetime.dt.strftime('%Y/%m/%d %H:%M')
     st.write(stock_df.sort_index(ascending=False)[:10])
-    return stock_df, df_pos, previous_triggers, buy_short, sell_long
+    stock_df = stock_df.set_index('Datetime')
+    
+    # END: DEBUG_INFO
+    # #########################
+    return stock_df, df_pos, previous_triggers
 
 # ##########################################################  
 # Purpose: 
@@ -552,7 +532,7 @@ def get_current_price(symbol, selected_period, selected_interval):
     try:
       ticker = yf.Ticker(symbol)
       todays_data = ticker.history(period = selected_period, interval = selected_interval)
-      # print(todays_data['Close'][:-4])
+      
     except:
       print("unable to load the ticker current price") 
       return 
@@ -565,16 +545,7 @@ def show_snapshot(all_tickers):
     # print(str(all_tickers))
     # ticker = yf.Ticker("AAPL", "MSFT")
     ticker = yf.Ticker(all_tickers)
-    # print(ticker)
-    # fig = px.line(df, x="date", y=df.columns,
-    #           hover_data={"date": "|%B %d, %Y"},
-    #           title='custom tick labels with ticklabelmode="period"')
-    # fig.update_xaxes(
-    #     dtick="M1",
-    #     tickformat="%b\n%Y",
-    #     ticklabelmode="period")
-    # fig.show()  #st.pyplot(plt.gcf())
-    # st.pyplot(fig)
+    
     return
   
 
@@ -585,11 +556,6 @@ def show_snapshot(all_tickers):
 def save_user_selected_options(selected_tickers):
   df_tickers = pd.DataFrame(selected_tickers)
   try:
-    # df = pd.read_csv("user_selected_options.csv")
-    # df = pd.DataFrame(columns = ['user_tickers'])
-    # df_tickers.columns = ['user_tickers']
-    # df = df.concat([df, df_tickers])
-    # print("are we here")
     df_tickers.to_csv("user_selected_options.csv", mode='w', index=False, header=True)
   except pd.errors.EmptyDataError:
     print('CSV file is empty save')
@@ -601,7 +567,7 @@ def load_user_selected_options():
   user_list = []
   try :
     df = pd.read_csv("user_selected_options.csv", header=0)
-    # print("OR are we here")
+    
     if (df.empty):
       user_list = []
       
@@ -621,13 +587,9 @@ def update_selection():
   if 'ticker_list' not in st.session_state:
       st.session_state.key = 'ticker_list'
       
-  # st.write(st.session_state['ticker_list'])
-  
   print (st.session_state['ticker_list'])
   
-  # st.write(st.session_state['ticker_list'])
-  
-  return st.session_state.key #['ticker_list']
+  return st.session_state.key 
   
   
 # ##########################################################  
@@ -686,26 +648,16 @@ def calculate_atr_buy_sell(data):
   data['atr'] = calculate_atr(data)
   data['atr_ma'] = data['atr'].rolling(window=14).mean()  # 14-day moving average of ATR
 
+  # NOT IN USE
   # Define buy and sell signals
   buy_signal = (data['atr'] > data['atr_ma']) & (data['atr'].shift(1) <= data['atr_ma'].shift(1))
   sell_signal = (data['atr'] < data['atr_ma']) & (data['atr'].shift(1) >= data['atr_ma'].shift(1))
-  
-  # st.write("buy_signal")
-  # st.write(buy_signal)
   
   buy_long_idx = data.index[buy_signal]
   sell_short_idx = data.index[sell_signal]
   
   buy_long = buy_signal.loc[buy_signal==True]
   sell_short = sell_signal.loc[sell_signal==True]
-  
-  # st.write ("buy_short")
-  # st.write (buy_short)
-  # st.write ("sell_long")
-  # st.write (sell_long)
-  # st.write("ATR Data")
-  # st.write(buy_long.sort_index(ascending=False))
-  # st.write(sell_short.sort_index(ascending=False))
   
   return data, buy_long, sell_short
 

@@ -29,7 +29,7 @@ def lw_charts_snapshot(symbol,
                        selected_long_window,
                        display_table = False):
 
-    stock_df, df_pos, previous_triggers, buy_short, sell_long = MovingAverageCrossStrategy(symbol,
+    stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
                                         stock_hist_df,
                                         selected_short_window,
                                         selected_long_window,

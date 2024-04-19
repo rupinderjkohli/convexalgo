@@ -12,6 +12,8 @@ from pathlib import Path
 
 pd.options.display.float_format = '${:,.2f}'.format
 
+import streamlit.components.v1 as components
+
 def main():
      
   # """### Select Stock and Time interval"""
@@ -74,22 +76,11 @@ def main():
   ema_period1 = selected_short_window
   ema_period2 = selected_long_window
 
-  
-  
-  
-  # all_symbols  = " ".join(known_options)
-  # print(known_options)
-  # print(all_symbols)
-  # show_snapshot(all_symbols)
-  
-  
-  # print(show_snapshot(known_options))
-  
   if len(known_options) == 0:
     st.write ("Please select a ticker in the sidebar")
     return
   else:
-    tab = st.tabs(["Summary","🗃 List View","📈 Visualisations", "🗃 Details", "Customization", "Release Notes"])
+    tab = st.tabs(["Summary","List View","Visualisations", "Details", "Customization", "Release Notes"])
     # ###################################################
     # Summary: 
     # # of stocks being watched; 
@@ -140,18 +131,13 @@ def main():
               stock_name =  symbol
               yf_data = yf.Ticker(symbol) #initiate the ticker
               stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-              stock_df, df_pos, previous_triggers, buy_short, sell_long = MovingAverageCrossStrategy(symbol,
+              stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
                                         stock_hist_df,
                                         selected_short_window,
                                         selected_long_window,
                                         algo_strategy,
                                         True)
               
-              # print("stock_df, df_pos")
-              # print(stock_df, df_pos)
-              # st.subheader(symbol)
-              # st.subheader("Stock history")
-              # st.caption(df_pos.index.max())
               
               # put this to a new tab on click of the button
               # ###################################################
@@ -162,34 +148,10 @@ def main():
               # previous_triggers_list = previous_triggers
               previous_triggers = previous_triggers.reset_index()
               
-              # st.write(previous_triggers)
-              # etf_info.loc[etf_info['symbol'] == symbol, 'last_12_months_Open'] = (spark_img_url)
-              # etf_data.loc[etf_data['symbol'] == symbol, 'last_12_months_Open'] = (spark_img_url)
-   
-              # etf_info = etf_info.drop(columns=['index']   )
-              # etf_info_df = pd.DataFrame.from_dict(etf_info)
-              
-              # st.write(etf_info_df) #.to_html(render_links=True))
-              # ###################################################
-              
-              # df_atr, buy_signal, sell_signal = calculate_atr_buy_sell(stock_df)
-              
-              # st.write(buy_signal.max())
-              # st.write(df_pos.index.max())
-              
-              # st.write (sell_signal.max())
-              # st.write(df_pos.index.max())
-              
-              # st.write(df[df_pos.index.max().isin(buy_signal.max())])
-              
-              # st.write(df.loc[np.isin(df_pos.index, buy_signal)])
-              
               stock_day_close = get_current_price(symbol, selected_period, selected_interval)
               stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
               stock_trigger_at = df_pos.index.max()
               stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
-              # stock_stop_loss = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_loss"].to_list()[0]
-              # stock_take_profit = df_pos.loc[df_pos.index == df_pos.index.max(), "stop_profit"].to_list()[0]
               
               # (buy order) profit order is + if trigger is Buy; loss order is - if trigger is Buy 
               # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
@@ -209,28 +171,6 @@ def main():
               stock_view_details = etf_data[symbol]
               stock_previous_triggers = previous_triggers.Datetime.astype(str).to_list() #df_pos.Position[:6]#.to_list()
               
-              # # print(df_pos.info())
-              # print("buy_signal.index")
-              # print((buy_signal.sort_index(ascending=False)))
-              # # print("sell_signal.index")
-              # print(sell_signal.sort_index(ascending=False))
-              # print("df_pos.index")
-              # # print(df_pos.index.name)
-              # st.write(df_pos.sort_index(ascending=False))
-              
-              # print(df_atr.loc[df_atr.index == df_pos.index.max()])
-              # # print(df_atr.loc[df_atr.index.isin(buy_signal)])
-              # print(buy_signal.loc[buy_signal==True])
-              
-              # print(df_atr[[df_atr.index == df_pos.index.max() ]])
-              # print()
-              
-              # stock_take_profit_atr = df_pos.loc[df_pos.index ==  df_pos.index.max(), "atr_ma"].to_list()[0]
-              # print(stock_stop_loss_atr)
-              # print(stock_take_profit_atr)
-              
-              
-              # st.write(stock_previous_triggers)
               for variable in ["symbol",
                                "stock_trigger_at",
                                "stock_trigger_state",
@@ -241,20 +181,13 @@ def main():
                                "stock_ema_p1",
                                "stock_ema_p2",
                                "stock_previous_triggers"
-                              
-                              # "stock_take_profit",
-                              # "stock_stop_loss",
-                              # "stock_view_details"
                               ]:
                 quick_explore[variable] = eval(variable)
-              # print(quick_explore)  
-              #x = pd.DataFrame.from_dict(quick_explore, orient = 'index')
               x = pd.DataFrame([quick_explore])
-              #print("x\n", x)
                 
-              # quick_explore_df = quick_explore_df.append(x)
               quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
           quick_explore_df = quick_explore_df.sort_values(by = ['stock_trigger_at'], ascending=False)
+          # quick_explore_df = quick_explore_df.set_index(['symbol'])
           
           st.data_editor(
           quick_explore_df,
@@ -280,7 +213,7 @@ def main():
           ),
                          "stock_trigger_at": st.column_config.DatetimeColumn(
             "Trigger Time",
-            format="DD MMM YYYY, h:mm a"
+            format="DD MMM YYYY, HH:MM"
             ),
                          "stock_ema_p1": st.column_config.NumberColumn(
               "EMA P1",
@@ -327,7 +260,7 @@ def main():
           
           stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
         
-          stock_hist_df, df_pos, previous_triggers, buy_short, sell_long = MovingAverageCrossStrategy(symbol,
+          stock_hist_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
                                       stock_hist_df,
                                       selected_short_window,
                                       selected_long_window,
@@ -339,8 +272,7 @@ def main():
           
           buy_trigger = len(df_pos[df_pos['Position']=='Buy'])
           sell_trigger = len(df_pos[df_pos['Position']=='Sell'])
-          # print(buy_trigger, sell_trigger)
-         
+          
           col1, col2, col3, col4 = st.columns(4)
           
           with st.container(): # chart_container(chart_data):
@@ -362,22 +294,18 @@ def main():
             col4.metric(label="Sell (period)", value= sell_trigger)
             
             expander = st.expander("Ticker trading prompts")
-            # # expander.write(\"\"\"
-            # #     The chart above shows some numbers I picked for you.
-            # #     I rolled actual dice for these, so they're *guaranteed* to
-            # #     be random.
-            # # \"\"\")
-            # # expander.image("https://static.streamlit.io/examples/dice.jpg")
-            # expander.write("the last 10 records")
+            
             days=1  
-            # print(df_pos.columns)  
             cutoff_date = df_pos['Datetime'].iloc[0] - pd.Timedelta(days=days)
-            # print ("cutoff_date")
-            # print (cutoff_date)
-          
+            
             df1 = df_pos[df_pos['Datetime'] > cutoff_date]
             # print ("state till cutoff_date")
+            
+            df1.Datetime = df1.Datetime.dt.strftime('%Y/%m/%d %H:%M')
+            
             expander.write(df1[['Datetime','Close', 'Position']]) 
+            
+            
         except:
           print('Error loading stock data for ' + symbol)
           return None 
