@@ -382,20 +382,22 @@ def main():
           
           st.write("4-3-1 candle reversal")
           stock_hist_df = candle_four_three_one_soldiers(stock_hist_df, False)
+          # stock_hist_df = candle_four_three_one_soldiers_unsorted(stock_hist_df, True)
+          
           
           df_strategy_431 = stock_hist_df # (stock_hist_df[stock_hist_df["strategy_431"] == True])
           
           # st.write(df_strategy_431[['Open', 'High', 'Low', 'Close','candle_type','position','strategy_431']])
-          st.write(df_strategy_431[['High', 'Low', 'Open', 'Close','candle_type','strategy_431_long','strategy_431_short']])
-          st.write(df_strategy_431)
+          st.write(df_strategy_431.sort_index(ascending=False)[['High', 'Low', 'Open', 'Close','strategy_431_long','strategy_431_short']])
+          st.write(df_strategy_431.sort_index(ascending=False))
           
           st.write("filtered data - strategy_431_long")
           df_strategy_431_long = (stock_hist_df[stock_hist_df["strategy_431_long"] == True])
-          st.write(df_strategy_431_long)
+          st.write(df_strategy_431_long.sort_index(ascending=False))
           
           st.write("filtered data - strategy_431_short")
           df_strategy_431_short = (stock_hist_df[stock_hist_df["strategy_431_short"] == True])
-          st.write(df_strategy_431_short)
+          st.write(df_strategy_431_short.sort_index(ascending=False))
    
         
     # ###################################################
