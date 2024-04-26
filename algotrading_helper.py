@@ -530,18 +530,6 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   
   df_evaluate = df_evaluate.fillna(0)
   
-  # df_evaluate['candle_type'] = np.where(df_evaluate['Open'] - df_evaluate['Close']<0, "Green", "Red")
-  # # close of 4th less than close of 3rd - define the trend; should be same - down / up
-  # df_evaluate['trend_4_R'] = np.where ((df_evaluate['Close'].shift(3) - df_evaluate['Close'].shift(2))>0, "Up" , "Down")
-  # # close of 3rd less than close of 2nd - define the trend
-  # df_evaluate['trend_3_R'] = np.where ((df_evaluate['Close'].shift(2) - df_evaluate['Close'].shift(1))>0, "Up" , "Down")
-  # # 1st candle should now close below the close of the second
-  # df_evaluate['trend_1_R'] = np.where ((df_evaluate['Close'].shift(0) - df_evaluate['Close'].shift(1))<0, "Up" , "Down")
-  
-  # df_evaluate['trend_4'] = df_evaluate['Close'].shift(3) - df_evaluate['Close'].shift(2)
-  # df_evaluate['trend_3'] = df_evaluate['Close'].shift(2) - df_evaluate['Close'].shift(1) 
-  # df_evaluate['trend_1'] = df_evaluate['Close'].shift(1) - df_evaluate['Close'].shift(0) 
-  
   # for long
   # close of 4th greater than close of 3rd
   # close of 3rd greater than close of 2nd -
@@ -566,70 +554,3 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
 
   return df_evaluate #, position
 
-
-def candle_four_three_one_soldiers_unsorted(df, is_sorted) -> pd.Series:
-  """*** Candlestick Detected: Three White Soldiers ("Strong - Reversal - Bullish Pattern - Up")
-  # close of 4th less than close of 3rd - define the trend; should be same - down / up
-  # close of 3rd less than close of 2nd - define the trend
-  # 1st candle should now close below the close of the second
-  
-
-  # for long
-  # close of 4th greater than close of 3rd
-  # close of 3rd greater than close of 2nd -
-  # close of 2nd less than close of 1st
-  
-  # for short
-  # close of 4th less than close of 3rd
-  # close of 3rd less than close of 2nd -
-  # close of 2nd higher than close of 1st
-
-  """
-  # if(~is_sorted):
-  #   df = df.sort_index(ascending = False)
-  # Fill NaN values with 0
-  df = df.fillna(0)
-  # print(df.head())
-  df_evaluate = df[['Open','Close', 'High', 'Low']]
-  df_evaluate['t3'] = df_evaluate['Close'].shift(-4)
-  df_evaluate['t2'] = df_evaluate['Close'].shift(-3)
-  df_evaluate['t1'] = df_evaluate['Close'].shift(-2)
-  df_evaluate['t0'] = df_evaluate['Close'].shift(-1)
-  
-  df_evaluate = df_evaluate.fillna(0)
-  
-  # df_evaluate['candle_type'] = np.where(df_evaluate['Open'] - df_evaluate['Close']<0, "Green", "Red")
-  # # close of 4th less than close of 3rd - define the trend; should be same - down / up
-  # df_evaluate['trend_4_R'] = np.where ((df_evaluate['Close'].shift(3) - df_evaluate['Close'].shift(2))>0, "Up" , "Down")
-  # # close of 3rd less than close of 2nd - define the trend
-  # df_evaluate['trend_3_R'] = np.where ((df_evaluate['Close'].shift(2) - df_evaluate['Close'].shift(1))>0, "Up" , "Down")
-  # # 1st candle should now close below the close of the second
-  # df_evaluate['trend_1_R'] = np.where ((df_evaluate['Close'].shift(0) - df_evaluate['Close'].shift(1))<0, "Up" , "Down")
-  
-  # df_evaluate['trend_4'] = df_evaluate['Close'].shift(3) - df_evaluate['Close'].shift(2)
-  # df_evaluate['trend_3'] = df_evaluate['Close'].shift(2) - df_evaluate['Close'].shift(1) 
-  # df_evaluate['trend_1'] = df_evaluate['Close'].shift(1) - df_evaluate['Close'].shift(0) 
-  
-  # for long
-  # close of 4th greater than close of 3rd
-  # close of 3rd greater than close of 2nd -
-  # close of 2nd less than close of 1st
-  df_evaluate['strategy_431_long'] = ((df['Close'].shift(-4) > df['Close'].shift(-3)) &
-              (df['Close'].shift(-3) > df['Close'].shift(-2)) &
-              (df['Close'].shift(-2) < df['Close'].shift(-1))
-              )
-  
-  # for short
-  # close of 4th less than close of 3rd
-  # close of 3rd less than close of 2nd -
-  # close of 2nd higher than close of 1st
-
-  df_evaluate['strategy_431_short'] = ((df['Close'].shift(-4) < df['Close'].shift(-3)) &
-              (df['Close'].shift(-3) < df['Close'].shift(-2)) &
-              (df['Close'].shift(1) > df['Close'].shift(0))
-              )
-  
-  # print(position)
-  
-
-  return df_evaluate #, position

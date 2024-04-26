@@ -250,9 +250,6 @@ def main():
             # return
           # st.write(etf_data["NVDA"])
           elif (any(algo in algo_strategy for algo in algo_list)):
-            # st.write(algo_strategy) 
-            
-            # st.write("TAB1: 3-candle reversal Strategy")           
             for symbol in known_options:
                 # st.subheader(symbol)
                 stock_name =  symbol
@@ -273,10 +270,11 @@ def main():
       
       # get stock metrics
       # print(algo_strategy)
-      # st.write(algo_strategy)
+      title = "Strategy: " + algo_strategy
+      st.subheader(title)
+      st.divider()
   
       if any(ma in algo_strategy for ma in ma_list):
-        # print("TAB2: Moving Average Strategy")
         short_window_col = str(selected_short_window) + '_' + algo_strategy
         long_window_col = str(selected_long_window) + '_' + algo_strategy  
         # st.write(short_window_col) 
@@ -342,22 +340,18 @@ def main():
             return None 
               
       elif (any(algo in algo_strategy for algo in algo_list)): 
-        # st.write(algo_strategy) 
-        # st.write("TAB2: 3-Candle Reversal Strategy") 
         for symbol in known_options:
-          # st.subheader(symbol)
           stock_name =  symbol
-          st.write(stock_name)
+          # st.write(stock_name)
           yf_data = yf.Ticker(symbol) #initiate the ticker
-          # print(yf_data)
           stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
           # stock_hist_df = stock_hist_df.reset_index()
           stock_hist_df['candle_type'] = np.where(stock_hist_df['Open'] < stock_hist_df['Close'], "green", "red") 
           stock_hist_df['candle_length'] = stock_hist_df['High'] - stock_hist_df['Low']
           stock_hist_df['bodyLength'] = abs(stock_hist_df['Open'] - stock_hist_df['Close'])
           
-          fig = draw_candle_stick_chart(stock_hist_df,symbol)
-          st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+          # fig = draw_candle_stick_chart(stock_hist_df,symbol)
+          # st.plotly_chart(fig, theme="streamlit", use_container_width=True)
           
           # # """Calculate and return the length of lower shadow or wick."""
           stock_hist_df['lowerWick'] = np.where(stock_hist_df['Open'] <= stock_hist_df['Close'], 
@@ -370,17 +364,17 @@ def main():
                                                 stock_hist_df['Open'], 
                                                 stock_hist_df['Close'])
           
-          st.write("3 white soldiers")
+          # st.write("3 white soldiers")
           
-          # print(stock_hist_df.columns)
-          stock_hist_df["white_soldiers"] = candle_three_white_soldiers(stock_hist_df)
+          # # print(stock_hist_df.columns)
+          # stock_hist_df["white_soldiers"] = candle_three_white_soldiers(stock_hist_df)
           
-          df_white_soldiers = (stock_hist_df[stock_hist_df["white_soldiers"] == True])
-          st.write(df_white_soldiers[['Open', 'High', 'Low', 'Close','candle_type']])
+          # df_white_soldiers = (stock_hist_df[stock_hist_df["white_soldiers"] == True])
+          # st.write(df_white_soldiers[['Open', 'High', 'Low', 'Close','candle_type']])
           
-          # df_strategy_431, position = candle_four_three_one_soldiers(stock_hist_df, False)
+          # # df_strategy_431, position = candle_four_three_one_soldiers(stock_hist_df, False)
           
-          st.write("4-3-1 candle reversal")
+          # st.write("4-3-1 candle reversal")
           stock_hist_df = candle_four_three_one_soldiers(stock_hist_df, False)
           # stock_hist_df = candle_four_three_one_soldiers_unsorted(stock_hist_df, True)
           
@@ -405,8 +399,9 @@ def main():
     # # of stocks being watched; 
     # ###################################################
     with tab[2]:  
-      # st.write(algo_strategy) 
-      # st.write("IN TAB 3")
+      title = "Strategy: " + algo_strategy
+      st.subheader(title)
+      st.divider()
       if any(ma in algo_strategy for ma in ma_list):
         # print("TAB3: Moving Average Strategy", algo_strategy)
         # short_window_col = str(selected_short_window) + '_' + algo_strategy
@@ -460,7 +455,6 @@ def main():
           
           fig = draw_candle_stick_chart(stock_hist_df,symbol)
           st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-          st.write('4-3-1 candle reversal') 
     
     st.divider()
 
@@ -470,24 +464,24 @@ def main():
     # ###################################################
     with tab[3]:    
       st.subheader("News on the selected stocks")
-      # for symbol in known_options:
-      #   st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
-      #   st.subheader(st.session_state.page_subheader)
-      #   yf_data = yf.Ticker(symbol) #initiate the ticker
-      #   stock_news_df = get_stk_news(yf_data)
-      #   # st.write(stock_news_df)
-      #   st.data_editor(
-      #       stock_news_df,
-      #       column_config={
-      #           "link": st.column_config.LinkColumn(
-      #               "News Link", #display_text="Open profile"
-      #           ),
-      #       },
-      #       hide_index=True,
-      #   )
+      for symbol in known_options:
+        st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+        st.subheader(st.session_state.page_subheader)
+        yf_data = yf.Ticker(symbol) #initiate the ticker
+        stock_news_df = get_stk_news(yf_data)
+        # st.write(stock_news_df)
+        st.data_editor(
+            stock_news_df,
+            column_config={
+                "link": st.column_config.LinkColumn(
+                    "News Link", #display_text="Open profile"
+                ),
+            },
+            hide_index=True,
+        )
       # st.write("News")
       # st.write(stock_news_df.to_html(escape=False, index=True), unsafe_allow_html=True)
-      # st.divider()
+      st.divider()
       
     # ###################################################
     # Volatility Indicators
@@ -527,7 +521,9 @@ def main():
 
     with tab[5]:
       st.subheader("Change Log")
+      st.write("Implemented Moving Averages EMA strategy.")
       st.write("Ability to add more stocks to the existing watchlist from the universe of all stocks allowed by the app.")
+      st.write("Added 4-3-1 Candle Reversal Strategy.")
 
   return
 
