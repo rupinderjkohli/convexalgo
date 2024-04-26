@@ -523,10 +523,10 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   df = df.fillna(0)
   # print(df.head())
   df_evaluate = df[['Open','Close', 'High', 'Low']]
-  df_evaluate['t3'] = df_evaluate['Close'].shift(3)
-  df_evaluate['t2'] = df_evaluate['Close'].shift(2)
-  df_evaluate['t1'] = df_evaluate['Close'].shift(1)
-  df_evaluate['t0'] = df_evaluate['Close']
+  df_evaluate['t3'] = df_evaluate['Close'].shift(4)
+  df_evaluate['t2'] = df_evaluate['Close'].shift(3)
+  df_evaluate['t1'] = df_evaluate['Close'].shift(2)
+  df_evaluate['t0'] = df_evaluate['Close'].shift(1)
   
   df_evaluate = df_evaluate.fillna(0)
   
@@ -546,9 +546,9 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   # close of 4th greater than close of 3rd
   # close of 3rd greater than close of 2nd -
   # close of 2nd less than close of 1st
-  df_evaluate['strategy_431_long'] = ((df['Close'].shift(3) > df['Close'].shift(2)) &
-              (df['Close'].shift(2) > df['Close'].shift(1)) &
-              (df['Close'].shift(1) < df['Close'].shift(0))
+  df_evaluate['strategy_431_long'] = ((df['Close'].shift(4) > df['Close'].shift(3)) &
+              (df['Close'].shift(3) > df['Close'].shift(2)) &
+              (df['Close'].shift(2) < df['Close'].shift(1))
               )
   
   # for short
@@ -556,9 +556,9 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   # close of 3rd less than close of 2nd -
   # close of 2nd higher than close of 1st
 
-  df_evaluate['strategy_431_short'] = ((df['Close'].shift(3) < df['Close'].shift(2)) &
-              (df['Close'].shift(2) < df['Close'].shift(1)) &
-              (df['Close'].shift(1) > df['Close'].shift(0))
+  df_evaluate['strategy_431_short'] = ((df['Close'].shift(4) < df['Close'].shift(3)) &
+              (df['Close'].shift(3) < df['Close'].shift(2)) &
+              (df['Close'].shift(2) > df['Close'].shift(1))
               )
   
   # print(position)
