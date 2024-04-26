@@ -386,11 +386,16 @@ def main():
           df_strategy_431 = stock_hist_df # (stock_hist_df[stock_hist_df["strategy_431"] == True])
           
           # st.write(df_strategy_431[['Open', 'High', 'Low', 'Close','candle_type','position','strategy_431']])
-          st.write(df_strategy_431) #[['Open', 'High', 'Low', 'Close','candle_type','position','strategy_431']])
+          st.write(df_strategy_431[['High', 'Low', 'Open', 'Close','candle_type','strategy_431_long','strategy_431_short']])
+          st.write(df_strategy_431)
           
-          st.write("filtered data")
-          df_strategy_431_F = (stock_hist_df[stock_hist_df["strategy_431"] == True])
-          st.write(df_strategy_431_F)
+          st.write("filtered data - strategy_431_long")
+          df_strategy_431_long = (stock_hist_df[stock_hist_df["strategy_431_long"] == True])
+          st.write(df_strategy_431_long)
+          
+          st.write("filtered data - strategy_431_short")
+          df_strategy_431_short = (stock_hist_df[stock_hist_df["strategy_431_short"] == True])
+          st.write(df_strategy_431_short)
    
         
     # ###################################################
