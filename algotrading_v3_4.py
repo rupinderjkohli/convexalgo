@@ -8,6 +8,8 @@ Original file is located at
 """
 from algotrading_helper import *
 from algotrading_visualisations import *
+from algotrading_class import *
+
 from pathlib import Path
 
 pd.options.display.float_format = '${:,.2f}'.format
@@ -18,17 +20,18 @@ def main():
      
   # """### Select Stock and Time interval"""
   # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01Home.py
-  new_ticker_list = []
+  # new_ticker_list = []
   
-  base_symbol_list = ["PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
-  # if (ticker_list.isna()):
-  #   ticker_list = []
+  # new_ticker = add_ticker()
   
-  # using set() to remove duplicated from list
-  symbol_list = base_symbol_list + new_ticker_list
+  base_symbol_list = ["MSFT","PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
+  symbol_list = base_symbol_list # new_ticker_list
   
-  
-  # symbol_list = list(set(symbol_list))
+  # NSE: TATAPOWER: Tata Power Company Ltd
+  # NSE: TATAINVEST: Tata Investment Corporation Ltd
+
+  ma_list = ["SMA", "EMA"]
+  algo_list = ["3-Candle Reversal"]
   
   # user selected list of tickers
   # load_user_selected_options()
@@ -64,7 +67,7 @@ def main():
   
   # trading strategy selection
   algo_strategy = st.sidebar.selectbox(
-      'Select Moving Average Strategy', options=['SMA', 'EMA'], index=1)
+      'Select Algo Strategy', options=['SMA', 'EMA', "3-Candle Reversal"], index=2)
   selected_short_window =  st.sidebar.number_input(":gray[Short Window]", step = 1, value=5)  
   selected_long_window =  st.sidebar.number_input(":gray[Long Window]", step = 1, value=8)   
 
@@ -112,7 +115,7 @@ def main():
       dash_2 = st.container()
       with dash_2:
         
-          title = "Moving Average Strategy: " + algo_strategy
+          title = "Strategy: " + algo_strategy
           st.subheader(title)
           st.divider()
           
@@ -122,123 +125,149 @@ def main():
           quick_explore_df = pd.DataFrame() 
           etf_info = pd.DataFrame()
           etf_data = {} # dictionary
-          
-          short_window_col = str(selected_short_window) + '_' + algo_strategy
-          long_window_col = str(selected_long_window) + '_' + algo_strategy  
-                   
-          for symbol in known_options:
-              # st.subheader(symbol)
-              stock_name =  symbol
-              yf_data = yf.Ticker(symbol) #initiate the ticker
-              stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-              stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
-                                        stock_hist_df,
-                                        selected_short_window,
-                                        selected_long_window,
-                                        algo_strategy,
-                                        True)
-              
-              
-              # put this to a new tab on click of the button
-              # ###################################################
-              # st.write((stock_df.sort_index(ascending=False)[:10])) 
-              
-              etf_data[symbol] = stock_df
-              
-              # previous_triggers_list = previous_triggers
-              previous_triggers = previous_triggers.reset_index()
-              
-              stock_day_close = get_current_price(symbol, selected_period, selected_interval)
-              stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
-              stock_trigger_at = df_pos.index.max()
-              stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
-              
-              # (buy order) profit order is + if trigger is Buy; loss order is - if trigger is Buy 
-              # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
-              
-              if (stock_trigger_state == "Buy"):
-                stock_stop_loss_atr = (stock_price_at_trigger - df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-                stock_take_profit_atr = (stock_price_at_trigger + 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-              elif (stock_trigger_state == "Sell"):
-                stock_stop_loss_atr = (stock_price_at_trigger + df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-                stock_take_profit_atr = (stock_price_at_trigger - 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-              
-              stock_ema_p1 = df_pos.loc[df_pos.index == df_pos.index.max(), short_window_col].to_list()[0]
-              stock_ema_p2 = df_pos.loc[df_pos.index == df_pos.index.max(), long_window_col].to_list()[0]
-              
-              stock_atr_ma = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
-              
-              stock_view_details = etf_data[symbol]
-              stock_previous_triggers = previous_triggers.Datetime.astype(str).to_list() #df_pos.Position[:6]#.to_list()
-              
-              for variable in ["symbol",
-                               "stock_trigger_at",
-                               "stock_trigger_state",
-                               "stock_price_at_trigger",
-                               "stock_stop_loss_atr",
-                               "stock_take_profit_atr",
-                               "stock_atr_ma",
-                               "stock_ema_p1",
-                               "stock_ema_p2",
-                               "stock_previous_triggers"
-                              ]:
-                quick_explore[variable] = eval(variable)
-              x = pd.DataFrame([quick_explore])
+         
+          if any(ma in algo_strategy for ma in ma_list):
+            # print("TAB1: Moving Average Strategy")
+            short_window_col = str(selected_short_window) + '_' + algo_strategy
+            long_window_col = str(selected_long_window) + '_' + algo_strategy  
+            for symbol in known_options:
+                # st.subheader(symbol)
+                stock_name =  symbol
+                yf_data = yf.Ticker(symbol) #initiate the ticker
+                stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+                  
+                stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
+                                          stock_hist_df,
+                                          selected_short_window,
+                                          selected_long_window,
+                                          algo_strategy,
+                                          True)
                 
-              quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
-          quick_explore_df = quick_explore_df.sort_values(by = ['stock_trigger_at'], ascending=False)
-          # quick_explore_df = quick_explore_df.set_index(['symbol'])
-          
-          st.data_editor(
-          quick_explore_df,
-          column_config={"stock_take_profit_atr": st.column_config.NumberColumn(
-              "Take Profit Price",
-              format="%.2f",
-          ),
-                         "stock_stop_loss_atr": st.column_config.NumberColumn(
-              "Stop Loss Price",
-              format="%.2f",
-          ),
-                         "stock_price_at_trigger": st.column_config.NumberColumn(
-              "Trigger Price",
-              format="%.2f",
-          ),
-                         "stock_atr_ma": st.column_config.NumberColumn(
-              "ATR MA",
-              format="%.2f",
-          ),
-                         "stock_previous_triggers": st.column_config.ListColumn(
-              "Previous Triggers",
-              width=None,
-          ),
-                         "stock_trigger_at": st.column_config.DatetimeColumn(
-            "Trigger Time",
-            format="DD MMM YYYY, HH:MM"
+                
+                # put this to a new tab on click of the button
+                # ###################################################
+                # st.write((stock_df.sort_index(ascending=False)[:10])) 
+                
+                etf_data[symbol] = stock_df
+                
+                # previous_triggers_list = previous_triggers
+                previous_triggers = previous_triggers.reset_index()
+                
+                stock_day_close = get_current_price(symbol, selected_period, selected_interval)
+                stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
+                stock_trigger_at = df_pos.index.max()
+                stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
+                
+                # (buy order) profit order is + if trigger is Buy; loss order is - if trigger is Buy 
+                # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
+                
+                if (stock_trigger_state == "Buy"):
+                  stock_stop_loss_atr = (stock_price_at_trigger - df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+                  stock_take_profit_atr = (stock_price_at_trigger + 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+                elif (stock_trigger_state == "Sell"):
+                  stock_stop_loss_atr = (stock_price_at_trigger + df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+                  stock_take_profit_atr = (stock_price_at_trigger - 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+                
+                stock_ema_p1 = df_pos.loc[df_pos.index == df_pos.index.max(), short_window_col].to_list()[0]
+                stock_ema_p2 = df_pos.loc[df_pos.index == df_pos.index.max(), long_window_col].to_list()[0]
+                
+                stock_atr_ma = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
+                
+                stock_view_details = etf_data[symbol]
+                # stock_previous_triggers = previous_triggers.index.astype(str).to_list() #df_pos.Position[:6]#.to_list()
+                
+                for variable in ["symbol",
+                                "stock_trigger_at",
+                                "stock_trigger_state",
+                                "stock_price_at_trigger",
+                                "stock_stop_loss_atr",
+                                "stock_take_profit_atr",
+                                "stock_atr_ma",
+                                "stock_ema_p1",
+                                "stock_ema_p2",
+                                # "stock_previous_triggers"
+                                ]:
+                  quick_explore[variable] = eval(variable)
+                x = pd.DataFrame([quick_explore])
+                  
+                quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
+            quick_explore_df = quick_explore_df.sort_values(by = ['stock_trigger_at'], ascending=False)
+            # quick_explore_df = quick_explore_df.set_index(['symbol'])
+            # print(quick_explore_df)
+            
+            st.data_editor(
+            quick_explore_df,
+            column_config={"stock_trigger_state": st.column_config.TextColumn(
+                "Trigger",
+                width="small"
             ),
-                         "stock_ema_p1": st.column_config.NumberColumn(
-              "EMA P1",
-              format="%.2f",
-          ),
-                         "stock_ema_p2": st.column_config.NumberColumn(
-              "EMA P2",
-              format="%.2f",
-          ),
-              # "stock_view_details": st.column_config.LinkColumn
-              # (
-              #     "Stock Details",
-              #     help="The top trending Streamlit apps",
-              #     max_chars=100,
-              #     display_text="view table",
-              #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
-              # ),
-              
-          },
-          hide_index=True,
-          )
-  
-          st.divider()
+                           "stock_take_profit_atr": st.column_config.NumberColumn(
+                "Take Profit Price",
+                format="%.2f",
+            ),
+                          "stock_stop_loss_atr": st.column_config.NumberColumn(
+                "Stop Loss Price",
+                format="%.2f",
+            ),
+                          "stock_price_at_trigger": st.column_config.NumberColumn(
+                "Trigger Price",
+                format="%.2f",
+            ),
+                          "stock_atr_ma": st.column_config.NumberColumn(
+                "ATR MA",
+                format="%.2f",
+            ),
+            #               "stock_previous_triggers": st.column_config.ListColumn(
+            #     "Previous Triggers",
+            #     # width="medium",
+            # ),
+                          "stock_trigger_at": st.column_config.DatetimeColumn(
+              "Trigger Time",
+              format="DD MMM YYYY, HH:MM"
+              ),
+                          "stock_ema_p1": st.column_config.NumberColumn(
+                "EMA P1",
+                format="%.2f",
+            ),
+                          "stock_ema_p2": st.column_config.NumberColumn(
+                "EMA P2",
+                format="%.2f",
+            ),
+                # "stock_view_details": st.column_config.LinkColumn
+                # (
+                #     "Stock Details",
+                #     help="The top trending Streamlit apps",
+                #     max_chars=100,
+                #     display_text="view table",
+                #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
+                # ),
+                
+            },
+            hide_index=True,
+            )
+    
+            st.divider()
+            # return
           # st.write(etf_data["NVDA"])
-          
+          elif (any(algo in algo_strategy for algo in algo_list)):
+            # st.write(algo_strategy) 
+            
+            # st.write("TAB1: 3-candle reversal Strategy")           
+            for symbol in known_options:
+                # st.subheader(symbol)
+                stock_name =  symbol
+                print(stock_name)
+                yf_data = yf.Ticker(symbol) #initiate the ticker
+                # print(yf_data)
+                stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+                # print(stock_hist_df.head())
+                candle_reversal_431(symbol,
+                        stock_hist_df,
+                        selected_short_window,
+                        selected_long_window,
+                        algo_strategy)
+            # print("post candle_reversal_431")
+                 
         
     # ###################################################
     # List View: 
@@ -247,98 +276,239 @@ def main():
     with tab[1]:
       
       # get stock metrics
-        
-      for symbol in known_options:
-        st.subheader(symbol)
-        try:
+      # print(algo_strategy)
+      # st.write(algo_strategy)
+  
+      if any(ma in algo_strategy for ma in ma_list):
+        # print("TAB2: Moving Average Strategy")
+        short_window_col = str(selected_short_window) + '_' + algo_strategy
+        long_window_col = str(selected_long_window) + '_' + algo_strategy  
+        # st.write(short_window_col) 
+        for symbol in known_options:
+          st.subheader(symbol)
+          try:
+            yf_data = yf.Ticker(symbol) #initiate the ticker
+            etf_summary_info = get_all_stock_info(yf_data)
+            stock_caption = ("exchange: "+etf_summary_info.exchange[0]
+                        + "; currency: "+etf_summary_info.currency[0])
+                    
+            st.caption(stock_caption)
+            
+            stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+          
+            stock_hist_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
+                                        stock_hist_df,
+                                        selected_short_window,
+                                        selected_long_window,
+                                        algo_strategy,
+                                        True)  
+            
+            df_pos.reset_index(inplace=True)
+            df_pos = df_pos.sort_index(ascending=False)
+            
+            buy_trigger = len(df_pos[df_pos['Position']=='Buy'])
+            sell_trigger = len(df_pos[df_pos['Position']=='Sell'])
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with st.container(): # chart_container(chart_data):
+              toast_message = (":red["
+                                +"Fetching information for " 
+                                + etf_summary_info.shortName[0] 
+                                + " "+ symbol
+                                +"]"
+                        )
+              st.toast(toast_message, icon='🏃')  
+              # time.sleep(1)            
+              col1.metric(label="Close", value= etf_summary_info.previousClose , delta=None)
+              col1.metric(label="Open", value= etf_summary_info.open , delta=None) 
+              col2.metric(label="Day Low", value= etf_summary_info.dayLow)
+              col2.metric(label="Day High", value= etf_summary_info.dayHigh)
+              col3.metric(label="52 week Low", value= etf_summary_info.fiftyTwoWeekLow)
+              col3.metric(label="52 week High", value= etf_summary_info.fiftyTwoWeekHigh)
+              col4.metric(label="Buy (period)", value= buy_trigger)
+              col4.metric(label="Sell (period)", value= sell_trigger)
+              
+              expander = st.expander("Ticker trading prompts")
+              
+              days=1  
+              cutoff_date = df_pos['Datetime'].iloc[0] - pd.Timedelta(days=days)
+              
+              df1 = df_pos[df_pos['Datetime'] > cutoff_date]
+              # print ("state till cutoff_date")
+              
+              df1.Datetime = df1.Datetime.dt.strftime('%Y/%m/%d %H:%M')
+              
+              # ToDo: Show more columns as per the Summary tab
+              expander.write(df1[['Datetime','Close', 'Position']]) 
+          except:
+            print('Error loading stock data for ' + symbol)
+            return None 
+              
+      elif (any(algo in algo_strategy for algo in algo_list)): 
+        # st.write(algo_strategy) 
+        # st.write("TAB2: 3-Candle Reversal Strategy") 
+        for symbol in known_options:
+          # st.subheader(symbol)
+          stock_name =  symbol
+          st.write(stock_name)
           yf_data = yf.Ticker(symbol) #initiate the ticker
-          etf_summary_info = get_all_stock_info(yf_data)
-          stock_caption = ("exchange: "+etf_summary_info.exchange[0]
-                      + "; currency: "+etf_summary_info.currency[0])
-                  
-          st.caption(stock_caption)
-          
+          # print(yf_data)
           stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+          # stock_hist_df = stock_hist_df.reset_index()
+          stock_hist_df['candle_type'] = np.where(stock_hist_df['Open'] < stock_hist_df['Close'], "green", "red") 
+          stock_hist_df['candle_length'] = stock_hist_df['High'] - stock_hist_df['Low']
+          stock_hist_df['bodyLength'] = abs(stock_hist_df['Open'] - stock_hist_df['Close'])
+          
+          fig = draw_candle_stick_chart(stock_hist_df,symbol)
+          st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+          
+          # # """Calculate and return the length of lower shadow or wick."""
+          stock_hist_df['lowerWick'] = np.where(stock_hist_df['Open'] <= stock_hist_df['Close'], 
+                                                stock_hist_df['Open'], 
+                                                stock_hist_df['Close']) - stock_hist_df['Low']
+          #(stock_hist_df['Open'] if (stock_hist_df['Open'] <= stock_hist_df['Close']) else stock_hist_df['Close']) - stock_hist_df['Low']
+          
+          # # """Calculate and return the length of upper shadow or wick."""                
+          stock_hist_df['upperWick'] = stock_hist_df['High'] - np.where(stock_hist_df['Open'] >= stock_hist_df['Close'], 
+                                                stock_hist_df['Open'], 
+                                                stock_hist_df['Close'])
+          # stock_hist_df['upperWick'] = stock_hist_df['High'] - (stock_hist_df['Open'] if stock_hist_df['Open'] >= stock_hist_df['Close'] else stock_hist_df['Close'])
+          
+          
+          # st.write(stock_hist_df.sort_index(ascending=False)[['Open','Close', 'candle_type']])
+          
+          
+          # stock_hist_df = stock_hist_df.apply(is_candle_properties)
+          
+          # stock_hist_df["candle_type"] = (stock_hist_df["candle_type"].is_bearish())
+          # stock_hist_df["candle_type"] = (stock_hist_df["candle_type"].is_bullish())
         
-          stock_hist_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
-                                      stock_hist_df,
-                                      selected_short_window,
-                                      selected_long_window,
-                                      algo_strategy,
-                                      True)  
+          # print("stock_hist_df.index.values")
+          # print(stock_hist_df.index.values)
+          # candle_obj = CandleStick({"open":12, 
+          #                           "close":13,
+          #                           "high":22,
+          #                           "low":10,
+          #                           "volume":200
+          #                           # pd.datetime("2024-04-22 09:30:00")
+          #                           })
           
-          df_pos.reset_index(inplace=True)
-          df_pos = df_pos.sort_index(ascending=False)
+          # self.open = data["open"]
+          # self.close = data["close"]
+          # self.high = data["high"]
+          # self.low = data["low"]
+          # self.volume = data["volume"]
+          # self.date = data["date"]
           
-          buy_trigger = len(df_pos[df_pos['Position']=='Buy'])
-          sell_trigger = len(df_pos[df_pos['Position']=='Sell'])
+          # print(candle_obj)
+          # print(candle_obj.is_bearish())
+          # print(candle_obj.is_bullish())
           
-          col1, col2, col3, col4 = st.columns(4)
+          # df = candle_reversal_431(symbol,
+          #         stock_hist_df,
+          #         selected_short_window,
+          #         selected_long_window,
+          #         algo_strategy) 
+          # st.write(df.sort_index(ascending=False)[['Open','Close', 
+          #                                          'candle_type', 
+          #                                          'strategy_431_corrected',
+          #                                          'strategy_431_c1c2',
+          #                                          'strategy_431_c1c3']])
           
-          with st.container(): # chart_container(chart_data):
-            toast_message = (":red["
-                              +"Fetching information for " 
-                              + etf_summary_info.shortName[0] 
-                              + " "+ symbol
-                              +"]"
-                      )
-            st.toast(toast_message, icon='🏃')  
-            # time.sleep(1)            
-            col1.metric(label="Close", value= etf_summary_info.previousClose , delta=None)
-            col1.metric(label="Open", value= etf_summary_info.open , delta=None) 
-            col2.metric(label="Day Low", value= etf_summary_info.dayLow)
-            col2.metric(label="Day High", value= etf_summary_info.dayHigh)
-            col3.metric(label="52 week Low", value= etf_summary_info.fiftyTwoWeekLow)
-            col3.metric(label="52 week High", value= etf_summary_info.fiftyTwoWeekHigh)
-            col4.metric(label="Buy (period)", value= buy_trigger)
-            col4.metric(label="Sell (period)", value= sell_trigger)
-            
-            expander = st.expander("Ticker trading prompts")
-            
-            days=1  
-            cutoff_date = df_pos['Datetime'].iloc[0] - pd.Timedelta(days=days)
-            
-            df1 = df_pos[df_pos['Datetime'] > cutoff_date]
-            # print ("state till cutoff_date")
-            
-            df1.Datetime = df1.Datetime.dt.strftime('%Y/%m/%d %H:%M')
-            
-            # ToDo: Show more columns as per the Summary tab
-            expander.write(df1[['Datetime','Close', 'Position']]) 
-            
-            
-        except:
-          print('Error loading stock data for ' + symbol)
-          return None 
+          st.write("3 white soldiers")
+          # strategy_431(
+          #        stock_hist_df, #to find the prev 3 candles
+          #        )
+          
+          # print(stock_hist_df.columns)
+          stock_hist_df["white_soldiers"] = candle_three_white_soldiers(stock_hist_df)
+          
+          df_white_soldiers = (stock_hist_df[stock_hist_df["white_soldiers"] == True])
+          st.write(df_white_soldiers[['Open', 'High', 'Low', 'Close','candle_type']])
+          
+          # df_strategy_431, position = candle_four_three_one_soldiers(stock_hist_df, False)
+          
+          stock_hist_df = candle_four_three_one_soldiers(stock_hist_df, False)
+          
+          df_strategy_431 = stock_hist_df # (stock_hist_df[stock_hist_df["strategy_431"] == True])
+          
+          # st.write(df_strategy_431[['Open', 'High', 'Low', 'Close','candle_type','position','strategy_431']])
+          st.write(df_strategy_431) #[['Open', 'High', 'Low', 'Close','candle_type','position','strategy_431']])
+          
+          st.write("filtered data")
+          df_strategy_431_F = (stock_hist_df[stock_hist_df["strategy_431"] == True])
+          st.write(df_strategy_431_F)
    
         
     # ###################################################
     # Charts: 
     # # of stocks being watched; 
     # ###################################################
-    with tab[2]:    
-      for symbol in known_options:
-        yf_data = yf.Ticker(symbol) #initiate the ticker
+    with tab[2]:  
+      # st.write(algo_strategy) 
+      # st.write("IN TAB 3")
+      if any(ma in algo_strategy for ma in ma_list):
+        # print("TAB3: Moving Average Strategy", algo_strategy)
+        # short_window_col = str(selected_short_window) + '_' + algo_strategy
+        # long_window_col = str(selected_long_window) + '_' + algo_strategy   
+        for symbol in known_options:
+          yf_data = yf.Ticker(symbol) #initiate the ticker
+          
+          st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+          st.subheader(st.session_state.page_subheader)
+          # st.write(yf_data)
+          # st.write(symbol)
+          st.write("Historical data per period (Showing EMA-5day period vs EMA-10day period)")
+          
+          # st.write("(Showing EMA-5day period vs EMA-10day period)")
+          stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
         
-        st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
-        st.subheader(st.session_state.page_subheader)
-        # st.write(yf_data)
-        # st.write(symbol)
-        st.write("Historical data per period (Showing EMA-5day period vs EMA-10day period)")
+          stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
+                                          stock_hist_df,
+                                          selected_short_window,
+                                          selected_long_window,
+                                          algo_strategy,
+                                          False)
+          # Plot!
+          # Create and display the bar chart in the second column
+          fig = draw_candle_stick_triggers(symbol, 
+                                          stock_df,
+                                          selected_short_window,
+                                          selected_long_window,
+                                          algo_strategy)
+          st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+          
+          # use streamlit light weight charts
+          lw_charts_snapshot(symbol, 
+                            stock_hist_df, 
+                            algo_strategy,
+                            selected_short_window,
+                            selected_long_window,
+                            False)
         
-        # st.write("(Showing EMA-5day period vs EMA-10day period)")
-        stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-        
-        # use streamlit light weight charts
-        lw_charts_snapshot(symbol, 
-                           stock_hist_df, 
-                           algo_strategy,
-                           selected_short_window,
-                           selected_long_window,
-                           False)
-        
-       
-        st.divider()
+      elif (any(algo in algo_strategy for algo in algo_list)): 
+        # st.write(algo_strategy) 
+        # st.write("3-Candle Reversal Strategy") 
+        for symbol in known_options:
+          # st.subheader(symbol)
+          stock_name =  symbol
+          # print(stock_name)
+          yf_data = yf.Ticker(symbol) #initiate the ticker
+          # print(yf_data)
+          stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+          # print(stock_hist_df.head())
+          
+          fig = draw_candle_stick_chart(stock_hist_df,symbol)
+          st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+          
+          candle_reversal_431(symbol,
+                  stock_hist_df,
+                  selected_short_window,
+                  selected_long_window,
+                  algo_strategy)    
+    
+    st.divider()
 
     # ###################################################
     # Details: 
@@ -370,10 +540,14 @@ def main():
     # ###################################################
     with tab[4]:    
       st.subheader("Customise Stocks list")
-      # new_element = st.text_input("Add a new symbol:", "")
+      # new_ticker_list = add_ticker()
+      # new_element = st.text_input("Add a new symbol:", "ABB")
       # symbol_list.append(str(new_element))
+      # base_symbol_list = symbol_list
       # print(symbol_list)
-      
+      # # st.button("Update Ticker", type="primary")
+      # if st.button("Update Ticker"):
+      #     streamlit_js_eval(js_expressions="parent.window.location.reload()")
   
       # ticker_list = ""
       # ticker_list = st.text_area(":red[enter the ticker list seperated with commas]"

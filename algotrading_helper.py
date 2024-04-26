@@ -31,6 +31,8 @@ from plotly.subplots import make_subplots
 
 
 import streamlit as st      #install
+from streamlit_js_eval import streamlit_js_eval
+
 # from streamlit_autorefresh import st_autorefresh
 # from schedule import every, repeat, run_pending
 import streamlit_extras #.metric_cards #import style_metric_cards # beautify metric card with css
@@ -46,6 +48,7 @@ from base64 import b64encode
 
 from millify import millify # shortens values (10_000 ---> 10k)
 
+from algotrading_class import *
 
 # from IPython.core.display import HTML # note the library
 # from tabulate import tabulate
@@ -122,7 +125,9 @@ def get_all_stock_info(ticker):
 def get_hist_info(ticker, period, interval):
   # get historical market data
   # print(ticker, period, interval)
-  hist = ticker.history(period=period, interval=interval)
+  hist = ticker.history(period=period, interval=interval, 
+                        # back_adjust=True, 
+                        auto_adjust=True)
 
   return hist
 
@@ -178,270 +183,6 @@ def get_stk_news(ticker):
 
 # https://coderzcolumn.com/tutorials/data-science/candlestick-chart-in-python-mplfinance-plotly-bokeh#2
 
-# ##########################################################  
-# Purpose: 
-# ##########################################################
-def draw_candle_stick_chart(df,symbol):
-  candlestick = go.Candlestick(
-                            x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
-                            open=df['Open'],
-                            high=df['High'],
-                            low=df['Low'],
-                            close=df['Close'],
-                            #increasing_line_color= 'green', decreasing_line_color= 'red'
-                            )
-
-
-  fig = go.Figure(data=[candlestick])
-
-  fig.update_layout(
-      xaxis_rangeslider_visible=True,
-      #width=800, height=600,
-      title=symbol,
-      yaxis_title= symbol 
-  )
-  #fig.show()
-  return fig
-
-def draw_candle_stick_chart_ma(df, symbol):
-  candlestick = go.Candlestick(
-                            x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
-                            open=df['Open'],
-                            high=df['High'],
-                            low=df['Low'],
-                            close=df['Close'],
-                            #increasing_line_color= 'green', decreasing_line_color= 'red'
-                            )
-  sma = go.Scatter(x=df.index,
-                  y=df["SMA"],
-                  #yaxis="y1",
-                  name="SMA",
-                  # fillcolor = 'black',
-
-                  )
-  ema_5day = go.Scatter(x=df.index,
-                   y=df["EMA_5day"],
-                   name="EMA_5day"
-                  )
-
-  ema_10day = go.Scatter(x=df.index,
-                   y=df["EMA_10day"],
-                   name="EMA_10day"
-                  )
-
-  fig = go.Figure(data=[candlestick, sma, ema_5day, ema_10day])
-
-  # fig = go.Figure(data=[candlestick])
-
-  fig.update_layout(
-      xaxis_rangeslider_visible=True,
-      #width=800, height=600,
-      title= symbol,
-      yaxis_title= symbol # selected ticker
-  )
-  # fig.show()
-  return fig
-
-# ##########################################################  
-# Purpose: 
-# ##########################################################
-def draw_candle_stick_triggers(df, symbol, short_window, long_window, algo_strategy):
-  
-  # https://plotly.com/python/reference/scattergl/
-  # column names for long and short moving average columns
-  # print("draw_candle_stick_triggers")
-  # print(df.info())
-  short_window_col = str(short_window) + '_' + algo_strategy
-  long_window_col = str(long_window) + '_' + algo_strategy
-
-  candlestick = go.Candlestick(
-                              x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
-                              open=df['Open'],
-                              high=df['High'],
-                              low=df['Low'],
-                              close=df['Close'],
-                              #increasing_line_color= 'green', decreasing_line_color= 'red'8
-                              )
-
-  short_window = go.Scatter(x=df.index,
-                    y=df[short_window_col],
-                    name=short_window_col,
-                    # fillcolor = 'azure'
-                  )
-
-  long_window = go.Scatter(x=df.index,
-                    y=df[long_window_col],
-                    name=long_window_col
-                  )
-
-  # plot 'buy' signals
-  N = 100000
-  position_buy = go.Scattergl(x=df[df['Position'] == 1].index,
-                    y=df[short_window_col][df['Position'] == 1],
-                    name="Buy",
-                    mode='markers',
-                    marker=dict(
-                        color=np.random.randn(N),
-                        colorscale='greens',
-                        line_width=1,
-                        symbol = 'triangle-up',
-                        size = 10
-                        )
-                  )
-
-  # plot 'sell' signals
-  position_sell = go.Scattergl(x=df[df['Position'] == -1].index,
-                            y=df[long_window_col][df['Position'] == -1],
-                            name = 'sell',
-                            mode='markers',
-                            marker=dict(
-                              color= np.random.randn(N+1000),
-                              colorscale='reds',
-                              line_width=1,
-                              symbol = 'triangle-down',
-                              size = 10
-                              # hovertext = df_hist['Open','Close','High','Low']
-                              )
-                            )
-
-  # # plot ‘buy’ signals
-  # plt.plot(df_hist[df_hist['Position'] == 1].index,
-  #          df_hist['EMA_p1'][df_hist['Position'] == 1],
-  #          '^', markersize = 15, color = 'g', label = 'buy')
-  # # plot ‘sell’ signals
-  # plt.plot(df_hist[df_hist['Position'] == -1].index,
-  #          df_hist['EMA_p2'][df_hist['Position'] == -1],
-  #          'v', markersize = 15, color = 'r', label = 'sell')
-
-  # # plot 'buy' signals
-  # position_buy = go.Scatter(x=df_hist[df_hist['Position'] == 1].index,
-  #          df_hist['EMA_5day'][df_hist['Position'] == 1],
-  #          '^', markersize = 15, color = 'c', label = 'buy')
-
-  # # plot 'sell' signals
-  # position_sell = go.Scatter(df_hist[df_hist['Position'] == -1].index,
-  #          df_hist['EMA_10day'][df_hist['Position'] == -1],
-  #          'v', markersize = 15, color = 'k', label = 'sell')
-
-  fig = go.Figure(data=[candlestick, short_window, long_window
-                        , position_buy, position_sell
-                        ])
-
-  # fig = go.Figure(data=[candlestick])
-  
-  fig.update_layout(
-      xaxis_rangeslider_visible=True,
-      #width=800, height=600,
-      # title= symbol #  "NVDA, Today - Dec 2023",
-      yaxis_title= symbol #'NVDA Stock'
-  )
-  # fig.show()
-  return fig
-
-# ##########################################################  
-# Purpose: 
-# ##########################################################
-def sma_trigger_plot(df):
-  import plotly.express as px
-  df = df.reset_index()
-  
-  plt.figure(figsize = (20,10))
-  # plot close price, short-term and long-term moving averages 
-  df['Close'].plot(color = 'k', label= 'Close') 
-  df['SMA_p1'].plot(color = 'b',label = 'SMA_p1') 
-  df['SMA_p2'].plot(color = 'g', label = 'SMA_p2')
-  
-  # fig = px.line(df, x="Datetime", y="Close", title='Close')
-  
-  # st.plotly_chart(fig, theme="streamlit")
-  
-  # plot ‘buy’ signals
-  go_long = df[df['SMA_Position'] == 1].index, df['SMA_p1'][df['SMA_Position'] == 1]
-  # print("go_long")
-  # print(go_long)
-  
-  # plot ‘sell’ signals
-  go_short = df[df['SMA_Position'] == -1].index, df['SMA_p2'][df['SMA_Position'] == -1]
-  # print("go_short")
-  # print(go_short)
-  
-  
-  return 
-
-# ##########################################################  
-# Purpose: 
-# ##########################################################
-def plot_stk_hist(df):
-  # print("plotting Data and Histogram")
-  plt.figure(figsize=(12, 5))
-  plt.plot(df.Close, color='green')
-  plt.plot(df.Open, color='red')
-  plt.ylabel("Counts")
-  plt.xlabel("Date")
-
-  return
-
-# ##########################################################  
-# Purpose: 
-# ##########################################################
-def sparkline(df, col): #, Avg):
-    fig = go.Figure()
-
-    # Plot the Close price
-    fig.add_trace(go.Scatter(x=df.index, y=df[col], line_color='blue', line_width=1))
-
-    # # Plot the Avg line
-    # fig.add_hline(y=ewm, line_color='indianred', line_width=1)
-
-    # hide and lock down axes
-    fig.update_xaxes(visible=False) #, fixedrange=True)
-    fig.update_yaxes(visible=True, #fixedrange=True,
-                     autorange=True,
-                     anchor="free",
-                     autoshift=True)
-
-    # plt.ylim()
-
-    # strip down the rest of the plot
-    fig.update_layout(
-        # template=TEMPLATE,
-        width=250,
-        height=80,
-        showlegend=False,
-        margin=dict(t=1,l=1,b=1,r=1)
-    )
-
-    # disable the modebar for such a small plot - fig.show commented out for debugging purposes
-    # fig.show(config=dict(displayModeBar=False))
-
-    png = plotly.io.to_image(fig)
-
-    png_base64 = base64.b64encode(png).decode() #('ascii')
-    # png_base64 = pybase64.b64encode(fig.to_image()).decode('utf-8') #'ascii')
-    # display(png_base64)
-    
-    #decode base64 string data
-    # decoded_data = base64.b64decode(fig.to_image()).decode('utf-8')
-    
-    # print(type(png_base64))
-    sparkline_url = '<img src="data:image/png;pybase64,{}"/>'.format(png_base64)
-    # print(type(sparkline_url))
-    # print (sparkline_url)
-    
-    #open file with base64 string data
-    # file = open('file1.txt', 'rb')
-    # encoded_data = file.read()
-    # file.close()
-    #decode base64 string data
-    decoded_data=pybase64.b64decode((png_base64))
-    #write the decoded data back to original format in  file
-    img_file = open('image.jpeg', 'wb')
-    img_file.write(decoded_data)
-    img_file.close()
-
-    #print ('<img src="data:image/png;base64,{}"/>'.format(png_base64))
-    return png_base64 #png_base64 #('<img src="data:image/png;base64,{}"/>'.format(decoded_data))
-    # return ('<img src="data:/png;pybase64,{}"/>'.format(png_base64))
 
 # ##########################################################  
 # Purpose: 
@@ -452,7 +193,7 @@ def MovingAverageCrossStrategy(symbol,
                                long_window, 
                                moving_avg, 
                                display_table = True):
-    
+    # st.write("IN MovingAverageCrossStrategy")
     '''
     The function takes the stock symbol, time-duration of analysis, 
     look-back periods and the moving-average type(SMA or EMA) as input 
@@ -516,10 +257,11 @@ def MovingAverageCrossStrategy(symbol,
     # BEGIN: DEBUG_INFO
     st.write(symbol)
     st.write("base data")
-    stock_df = stock_df.reset_index()
-    stock_df.Datetime = stock_df.Datetime.dt.strftime('%Y/%m/%d %H:%M')
+    # stock_df = stock_df.reset_index()
+    # stock_df.Datetime = stock_df.Datetime.dt.strftime('%Y/%m/%d %H:%M')
+    stock_df.index = stock_df.index.strftime('%Y/%m/%d %H:%M')
     st.write(stock_df.sort_index(ascending=False)[:10])
-    stock_df = stock_df.set_index('Datetime')
+    # stock_df = stock_df.set_index('Datetime')
     
     # END: DEBUG_INFO
     # #########################
@@ -661,7 +403,211 @@ def calculate_atr_buy_sell(data):
   
   return data, buy_long, sell_short
 
+      
+      
+def candle_reversal_431(symbol,
+                        stock_hist_df,
+                        selected_short_window,
+                        selected_long_window,
+                        algo_strategy):
+  # st.write("Algo Strategy: ", algo_strategy)
+  # If ((close of previous candle(c1) > Close of the candle before (c2))
+  # AND (close of the candle before (c2) is > the close of candle before (c3))
+  # AND (last candle (c0) close < close of c1)
+  # AND (last candle(c0) close > low of c2)
+  # AND (last candle close < last candle open)
+  # )
+  st.write("candle_reversal_431")
+  # st.write("reference: https://www.investopedia.com/trading/candlestick-charting-what-is-it/")
+  # st.write(stock_hist_df.sort_index(ascending=False)[:10]) 
+  df = stock_hist_df.sort_index(ascending=False)
+  for i in range(len(df)):
+    if (i<(len(df))-4):
+      df['strategy_431'] = df.apply(lambda row: "long" if row['Close'] < row['Open'] else "short", axis=1)
+    #   break
+    # else:
+    #   # if stock_hist_df[i, 3] < stock_hist_df[i - 1, 3]
+      # st.write(i, df.iloc[i].Close, df.iloc[i+1].Close, df.iloc[i+ 2].Close)
+      # if (df.iloc[i+1].Close > df.iloc[i+2].Close):
+      #   st.write(i, df.iloc[i+1].Close, df.iloc[i+2].Close,
+      #            "close of previous candle(c1) > Close of the candle before (c2) ")
+      
+      # 4/22 c0-10:45; c1-10:40; c2-10:35; c3-10:30
+      
+      # if ((df.iloc[i+2].Close > df.iloc[i+3].Close) #(close of previous candle(c1) > Close of the candle before (c2)
+      #     & (df.iloc[i+1].Close > df.iloc[i+1].Close) #(close of the candle before (c2) is > the close of candle before (c3))
+      #     & (df.iloc[i+1].Close < df.iloc[i+2].Close) #(last candle (c0) close < close of c1)
+      #     & (df.iloc[i+1].Close > df.iloc[i+3].Close) #(last candle(c0) close > low of c2)
+      #     &  (df.iloc[i+2].Close < df.iloc[i+2].Open) #(last candle close < last candle open)
+      #     ):
+      #   st.write("Buy - Go Long",
+      #            i+1, df.index[i+1], df.iloc[i+1].Close, df.iloc[i+2].Close, df.iloc[i+ 3].Close)
+      
+      # If 
+      # close of previous candle(c1) > Close of the candle before (c2) 
+      # and 
+      # close of the candle before (c2) is > the close of candle before (c3) 
+      # and 
+      # last candle (c0) close < close of c1 
+      # and 
+      # last candle(c0) close > low of c2 
+      # and 
+      # last candle close < last candle open
+      # if((df.iloc[i+2].Close < df.iloc[i+1].Close)
+      #    & (df.iloc[i+1].Close < df.iloc[i].Close)):
+      #   df['strategy_431'] = str("go_long")
+      #   st.write([i, df.iloc[i].Close,df.iloc[i+1].Close,df.iloc[i+2].Close, df['strategy_431'][i]])
+      # df['strategy_431'] = df.apply(lambda row: row['A'] == row['B'] == row['C'], axis=1)
+  # df['strategy_431'] = df['Close'].apply("go_long" if (x.diff(periods=1) > 0 
+  #                                                      and x.diff(periods=2) > 0)
+  #                                               else "short")
+  # df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
+  df['strategy_431_c1c2'] = df['Close'].diff(periods=1)
+  df['strategy_431_c1c3'] = df['Close'].diff(periods=2)
+  df['strategy_431_corrected'] = np.where(df['Close'].diff(periods=1) < df['Close'].diff(periods=2), "long", 'short')
+  
+  # prev_candle = df.iloc[idx + 1 * -1] 
+    
+  return df
 
-def add_ticker():
-  ticker = ['ABB']
-  return ticker
+# Bullish Candle — Green / Bull / Long CandleStick
+# Bearish Candle — Red / Bear / Short CandleStick
+# https://medium.com/@letspython3.x/learn-and-implement-candlestick-patterns-python-6de09854fa3e
+def is_candle_properties(df):
+  # st.write(open, close)
+  # df['candle_type'] = np.where(df['Open'] < df['Close'], "green", "red") 
+  df['candle_length'] = df['High'] - df['Low']
+  df['bodyLength'] = abs(df['Open'] - df['Close'])
+  """Calculate and return the length of lower shadow or wick."""
+  df['lowerWick'] = (df['Open'] if df['Open'] <= df['Close'] else df['Close']) - df['Low']
+  """Calculate and return the length of upper shadow or wick."""                
+  df['upperWick'] = df['High'] - (df['Open'] if df['Open'] >= df['Close'] else df['Close'])
+
+  return df
+
+# def is_bearish(self):
+#     return self.open > self.close
+
+# from stolgo.candlestick import CandleStick
+# candle_test = CandleStick()
+# is_be = candle_test.is_bullish_engulfing(dfs)
+
+def strategy_431(
+  # symbol,
+                 df, #to find the prev 3 candles
+                #  candle_obj,
+                #  is_sorted, #if the df is sorted in reverse order of dates
+                 
+                #  selected_short_window,
+                #  selected_long_window,
+                #  algo_strategy
+                 ):
+  
+  # If ((close of previous candle(c1) > Close of the candle before (c2))
+  # AND (close of the candle before (c2) is > the close of candle before (c3))
+  # AND (last candle (c0) close < close of c1)
+  # AND (last candle(c0) close > low of c2)
+  # AND (last candle close < last candle open)
+  
+  # for long - three white soldiers
+  # https://trendspider.com/learning-center/thestrat-candlestick-patterns-a-traders-guide/
+  # https://www.babypips.com/learn/forex/triple-candlestick-patterns
+  # https://bullishbears.com/3-bar-reversal-pattern/
+
+  # close of 4th less than close of 3rd - define the trend; should be same - down / up
+  # close of 3rd less than close of 2nd - define the trend
+  # 1st candle should now close below the close of the second
+  
+  # first candle = candle at the top of the frame (now - 5 min (interval)
+  # second candle is now - 10 min (interval *2
+  # third candle is now - 15 min (interval * 3)
+  # fourth candle is now - 20 min (interval * 4)
+  
+  # for short 
+  # close of 3rd less than close of 2nd
+  # close of 2nd less than close of 1st
+  
+  df_3_whites = candle_three_white_soldiers(df)
+  st.write(df_3_whites)
+  return
+
+# https://eodhd.com/financial-academy/technical-analysis-examples/practical-guide-to-automated-detection-trading-patterns-with-python
+# 
+def candle_three_white_soldiers(df) -> pd.Series:
+  """*** Candlestick Detected: Three White Soldiers ("Strong - Reversal - Bullish Pattern - Up")"""
+
+  # Fill NaN values with 0
+  df = df.fillna(0)
+
+  return (
+      ((df["Open"] > df["Open"].shift(1)) & (df["Open"] < df["Close"].shift(1)))
+      & (df["Close"] > df["High"].shift(1))
+      & (df["High"] - np.maximum(df["Open"], df["Close"]) < (abs(df["Open"] - df["Close"])))
+      & ((df["Open"].shift(1) > df["Open"].shift(2)) & (df["Open"].shift(1) < df["Close"].shift(2)))
+      & (df["Close"].shift(1) > df["High"].shift(2))
+      & (
+          df["High"].shift(1) - np.maximum(df["Open"].shift(1), df["Close"].shift(1))
+          < (abs(df["Open"].shift(1) - df["Close"].shift(1)))
+      )
+  )
+
+
+def candle_three_black_crows(df) -> pd.Series:
+  """* Candlestick Detected: Three Black Crows ("Strong - Reversal - Bearish Pattern - Down")"""
+
+  # Fill NaN values with 0
+  df = df.fillna(0)
+
+  return (
+      ((df["Open"] < df["Open"].shift(1)) & (df["Open"] > df["Close"].shift(1)))
+      & (df["Close"] < df["Low"].shift(1))
+      & (df["Low"] - np.maximum(df["Open"], df["Close"]) < (abs(df["Open"] - df["Close"])))
+      & ((df["Open"].shift(1) < df["Open"].shift(2)) & (df["Open"].shift(1) > df["Close"].shift(2)))
+      & (df["Close"].shift(1) < df["Low"].shift(2))
+      & (
+          df["Low"].shift(1) - np.maximum(df["Open"].shift(1), df["Close"].shift(1))
+          < (abs(df["Open"].shift(1) - df["Close"].shift(1)))
+      )
+  )
+  
+  
+def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
+  """*** Candlestick Detected: Three White Soldiers ("Strong - Reversal - Bullish Pattern - Up")
+  # close of 4th less than close of 3rd - define the trend; should be same - down / up
+  # close of 3rd less than close of 2nd - define the trend
+  # 1st candle should now close below the close of the second
+  """
+  if(~is_sorted):
+    df = df.sort_index(ascending = False)
+  # Fill NaN values with 0
+  df = df.fillna(0)
+  # print(df.head())
+  df_evaluate = df[['Open','Close', 'High', 'Low']]
+  df_evaluate['t3'] = df_evaluate['Close'].shift(3)
+  df_evaluate['t2'] = df_evaluate['Close'].shift(2)
+  df_evaluate['t1'] = df_evaluate['Close'].shift(1)
+  df_evaluate['t0'] = df_evaluate['Close'].shift(0)
+  
+  df_evaluate = df_evaluate.fillna(0)
+  
+  df_evaluate['candle_type'] = np.where(df_evaluate['Open'] - df_evaluate['Close']<0, "Green", "Red")
+  # close of 4th less than close of 3rd - define the trend; should be same - down / up
+  df_evaluate['trend_4_R'] = np.where ((df_evaluate['Close'].shift(3) - df_evaluate['Close'].shift(2))<0, "Up" , "Down")
+  # close of 3rd less than close of 2nd - define the trend
+  df_evaluate['trend_3_R'] = np.where ((df_evaluate['Close'].shift(2) - df_evaluate['Close'].shift(1))<0, "Up" , "Down")
+  # 1st candle should now close below the close of the second
+  df_evaluate['trend_1_R'] = np.where ((df_evaluate['Close'].shift(0) - df_evaluate['Close'].shift(1))<0, "Up" , "Down")
+  
+  df_evaluate['trend_4'] = df_evaluate['Close'].shift(3) - df_evaluate['Close'].shift(2)
+  df_evaluate['trend_3'] = df_evaluate['Close'].shift(2) - df_evaluate['Close'].shift(1) 
+  df_evaluate['trend_1'] = df_evaluate['Close'].shift(1) - df_evaluate['Close'].shift(0) 
+  
+  df_evaluate['strategy_431'] = ((df['Close'].shift(3) < df['Close'].shift(2)) &
+              (df['Close'].shift(2) < df['Close'].shift(1)) &
+              (df['Close'].shift(1) < df['Close'].shift(0))
+              )
+  
+  # print(position)
+  
+
+  return df_evaluate #, position

@@ -23,18 +23,18 @@ from algotrading_helper import * #MovingAverageCrossStrategy, timeToTz, unix_tim
 # Purpose: 
 # ##########################################################  
 def lw_charts_snapshot(symbol,
-                       stock_hist_df, 
+                       stock_df, 
                        algo_strategy,
                        selected_short_window,
                        selected_long_window,
                        display_table = False):
 
-    stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
-                                        stock_hist_df,
-                                        selected_short_window,
-                                        selected_long_window,
-                                        algo_strategy,
-                                        False)
+    # stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
+    #                                     stock_hist_df,
+    #                                     selected_short_window,
+    #                                     selected_long_window,
+    #                                     algo_strategy,
+    #                                     False)
     
     
     # column names for long and short moving average columns
@@ -243,3 +243,285 @@ def show_atr(data):
     plt.show()
     st.plotly_chart(fig)
     return
+
+
+# ##########################################################  
+# Purpose: 
+# ##########################################################
+def draw_candle_stick_triggers(symbol, df, short_window, long_window, algo_strategy):
+  
+  # https://plotly.com/python/reference/scattergl/
+  # column names for long and short moving average columns
+  # print("draw_candle_stick_triggers")
+  print(df.info())
+  short_window_col = str(short_window) + '_' + algo_strategy
+  long_window_col = str(long_window) + '_' + algo_strategy
+
+  candlestick = go.Candlestick(
+                              x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
+                              open=df['Open'],
+                              high=df['High'],
+                              low=df['Low'],
+                              close=df['Close'],
+                              #increasing_line_color= 'green', decreasing_line_color= 'red'8
+                              )
+
+  short_window = go.Scatter(x=df.index,
+                    y=df[short_window_col],
+                    name=short_window_col,
+                    # fillcolor = 'azure'
+                  )
+
+  long_window = go.Scatter(x=df.index,
+                    y=df[long_window_col],
+                    name=long_window_col
+                  )
+
+  # plot 'buy' signals
+  N = 100000
+  position_buy = go.Scattergl(x=df[df['Position'] == 1].index,
+                    y=df[short_window_col][df['Position'] == 1],
+                    name="Buy",
+                    mode='markers',
+                    marker=dict(
+                        color=np.random.randn(N),
+                        colorscale='greens',
+                        line_width=1,
+                        symbol = 'triangle-up',
+                        size = 10
+                        )
+                  )
+
+  # plot 'sell' signals
+  position_sell = go.Scattergl(x=df[df['Position'] == -1].index,
+                            y=df[long_window_col][df['Position'] == -1],
+                            name = 'sell',
+                            mode='markers',
+                            marker=dict(
+                              color= np.random.randn(N+1000),
+                              colorscale='reds',
+                              line_width=1,
+                              symbol = 'triangle-down',
+                              size = 10
+                              # hovertext = df_hist['Open','Close','High','Low']
+                              )
+                            )
+
+  # # plot ‘buy’ signals
+  # plt.plot(df_hist[df_hist['Position'] == 1].index,
+  #          df_hist['EMA_p1'][df_hist['Position'] == 1],
+  #          '^', markersize = 15, color = 'g', label = 'buy')
+  # # plot ‘sell’ signals
+  # plt.plot(df_hist[df_hist['Position'] == -1].index,
+  #          df_hist['EMA_p2'][df_hist['Position'] == -1],
+  #          'v', markersize = 15, color = 'r', label = 'sell')
+
+  # # plot 'buy' signals
+  # position_buy = go.Scatter(x=df_hist[df_hist['Position'] == 1].index,
+  #          df_hist['EMA_5day'][df_hist['Position'] == 1],
+  #          '^', markersize = 15, color = 'c', label = 'buy')
+
+  # # plot 'sell' signals
+  # position_sell = go.Scatter(df_hist[df_hist['Position'] == -1].index,
+  #          df_hist['EMA_10day'][df_hist['Position'] == -1],
+  #          'v', markersize = 15, color = 'k', label = 'sell')
+
+  fig = go.Figure(data=[candlestick, short_window, long_window
+                        , position_buy, position_sell
+                        ])
+
+  # fig = go.Figure(data=[candlestick])
+  
+  fig.update_layout(
+      xaxis_rangeslider_visible=True,
+      width=800, height=900,
+      # title= symbol #  "NVDA, Today - Dec 2023",
+      yaxis_title= symbol #'NVDA Stock'
+  )
+  
+  fig.update_xaxes(rangebreaks=[
+        dict(bounds=[16, 9], pattern="hour"), #hide hours outside of 9am-5pm
+        dict(bounds=["sat", "mon"])
+    ])
+  
+  # fig.show()
+  return fig
+
+# ##########################################################  
+# Purpose: 
+# ##########################################################
+def sma_trigger_plot(df):
+  import plotly.express as px
+  df = df.reset_index()
+  
+  plt.figure(figsize = (20,10))
+  # plot close price, short-term and long-term moving averages 
+  df['Close'].plot(color = 'k', label= 'Close') 
+  df['SMA_p1'].plot(color = 'b',label = 'SMA_p1') 
+  df['SMA_p2'].plot(color = 'g', label = 'SMA_p2')
+  
+  # fig = px.line(df, x="Datetime", y="Close", title='Close')
+  
+  # st.plotly_chart(fig, theme="streamlit")
+  
+  # plot ‘buy’ signals
+  go_long = df[df['SMA_Position'] == 1].index, df['SMA_p1'][df['SMA_Position'] == 1]
+  # print("go_long")
+  # print(go_long)
+  
+  # plot ‘sell’ signals
+  go_short = df[df['SMA_Position'] == -1].index, df['SMA_p2'][df['SMA_Position'] == -1]
+  # print("go_short")
+  # print(go_short)
+  
+  
+  return 
+
+# ##########################################################  
+# Purpose: 
+# ##########################################################
+def plot_stk_hist(df):
+  # print("plotting Data and Histogram")
+  plt.figure(figsize=(12, 5))
+  plt.plot(df.Close, color='green')
+  plt.plot(df.Open, color='red')
+  plt.ylabel("Counts")
+  plt.xlabel("Date")
+
+  return
+
+# ##########################################################  
+# Purpose: 
+# ##########################################################
+def sparkline(df, col): #, Avg):
+    fig = go.Figure()
+
+    # Plot the Close price
+    fig.add_trace(go.Scatter(x=df.index, y=df[col], line_color='blue', line_width=1))
+
+    # # Plot the Avg line
+    # fig.add_hline(y=ewm, line_color='indianred', line_width=1)
+
+    # hide and lock down axes
+    fig.update_xaxes(visible=False) #, fixedrange=True)
+    fig.update_yaxes(visible=True, #fixedrange=True,
+                     autorange=True,
+                     anchor="free",
+                     autoshift=True)
+
+    # plt.ylim()
+
+    # strip down the rest of the plot
+    fig.update_layout(
+        # template=TEMPLATE,
+        width=250,
+        height=80,
+        showlegend=False,
+        margin=dict(t=1,l=1,b=1,r=1)
+    )
+
+    # disable the modebar for such a small plot - fig.show commented out for debugging purposes
+    # fig.show(config=dict(displayModeBar=False))
+
+    png = plotly.io.to_image(fig)
+
+    png_base64 = base64.b64encode(png).decode() #('ascii')
+    # png_base64 = pybase64.b64encode(fig.to_image()).decode('utf-8') #'ascii')
+    # display(png_base64)
+    
+    #decode base64 string data
+    # decoded_data = base64.b64decode(fig.to_image()).decode('utf-8')
+    
+    # print(type(png_base64))
+    sparkline_url = '<img src="data:image/png;pybase64,{}"/>'.format(png_base64)
+    # print(type(sparkline_url))
+    # print (sparkline_url)
+    
+    #open file with base64 string data
+    # file = open('file1.txt', 'rb')
+    # encoded_data = file.read()
+    # file.close()
+    #decode base64 string data
+    decoded_data=pybase64.b64decode((png_base64))
+    #write the decoded data back to original format in  file
+    img_file = open('image.jpeg', 'wb')
+    img_file.write(decoded_data)
+    img_file.close()
+
+    #print ('<img src="data:image/png;base64,{}"/>'.format(png_base64))
+    return png_base64 #png_base64 #('<img src="data:image/png;base64,{}"/>'.format(decoded_data))
+    # return ('<img src="data:/png;pybase64,{}"/>'.format(png_base64))
+
+# ##########################################################  
+# Purpose: 
+# ##########################################################
+def draw_candle_stick_chart(df,symbol):
+  candlestick = go.Candlestick(
+                            x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
+                            open=df['Open'],
+                            high=df['High'],
+                            low=df['Low'],
+                            close=df['Close'],
+                            #increasing_line_color= 'green', decreasing_line_color= 'red'
+                            )
+
+
+  fig = go.Figure(data=[candlestick])
+
+  fig.update_layout(
+      xaxis_rangeslider_visible=True,
+      #width=800, height=600,
+      title=symbol,
+      yaxis_title= symbol 
+  )
+  fig.update_xaxes(rangebreaks=[
+        dict(bounds=[16, 9], pattern="hour"), #hide hours outside of 9am-5pm
+        dict(bounds=["sat", "mon"])
+    ])
+  #fig.show()
+  return fig
+
+def draw_candle_stick_chart_ma(df, symbol):
+  candlestick = go.Candlestick(
+                            x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
+                            open=df['Open'],
+                            high=df['High'],
+                            low=df['Low'],
+                            close=df['Close'],
+                            #increasing_line_color= 'green', decreasing_line_color= 'red'
+                            )
+  sma = go.Scatter(x=df.index,
+                  y=df["SMA"],
+                  #yaxis="y1",
+                  name="SMA",
+                  # fillcolor = 'black',
+
+                  )
+  ema_5day = go.Scatter(x=df.index,
+                   y=df["EMA_5day"],
+                   name="EMA_5day"
+                  )
+
+  ema_10day = go.Scatter(x=df.index,
+                   y=df["EMA_10day"],
+                   name="EMA_10day"
+                  )
+
+  fig = go.Figure(data=[candlestick, sma, ema_5day, ema_10day])
+
+  # fig = go.Figure(data=[candlestick])
+
+  fig.update_layout(
+      xaxis_rangeslider_visible=True,
+      #width=800, height=600,
+      title= symbol,
+      yaxis_title= symbol # selected ticker
+  )
+  
+  fig.update_xaxes(rangebreaks=[
+        dict(bounds=[16, 9], pattern="hour"), #hide hours outside of 9am-5pm
+        dict(bounds=["sat", "mon"])
+    ])
+  # fig.show()
+  return fig
+

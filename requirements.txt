@@ -14,3 +14,4 @@ nest_asyncio
 # streamlit_lightweight_charts
 pytz
 lightweight-charts
+streamlit_js_eval
