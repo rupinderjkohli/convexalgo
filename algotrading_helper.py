@@ -403,72 +403,7 @@ def calculate_atr_buy_sell(data):
   
   return data, buy_long, sell_short
 
-      
-      
-def candle_reversal_431(symbol,
-                        stock_hist_df,
-                        selected_short_window,
-                        selected_long_window,
-                        algo_strategy):
-  # st.write("Algo Strategy: ", algo_strategy)
-  # If ((close of previous candle(c1) > Close of the candle before (c2))
-  # AND (close of the candle before (c2) is > the close of candle before (c3))
-  # AND (last candle (c0) close < close of c1)
-  # AND (last candle(c0) close > low of c2)
-  # AND (last candle close < last candle open)
-  # )
-  st.write("candle_reversal_431")
-  # st.write("reference: https://www.investopedia.com/trading/candlestick-charting-what-is-it/")
-  # st.write(stock_hist_df.sort_index(ascending=False)[:10]) 
-  df = stock_hist_df.sort_index(ascending=False)
-  for i in range(len(df)):
-    if (i<(len(df))-4):
-      df['strategy_431'] = df.apply(lambda row: "long" if row['Close'] < row['Open'] else "short", axis=1)
-    #   break
-    # else:
-    #   # if stock_hist_df[i, 3] < stock_hist_df[i - 1, 3]
-      # st.write(i, df.iloc[i].Close, df.iloc[i+1].Close, df.iloc[i+ 2].Close)
-      # if (df.iloc[i+1].Close > df.iloc[i+2].Close):
-      #   st.write(i, df.iloc[i+1].Close, df.iloc[i+2].Close,
-      #            "close of previous candle(c1) > Close of the candle before (c2) ")
-      
-      # 4/22 c0-10:45; c1-10:40; c2-10:35; c3-10:30
-      
-      # if ((df.iloc[i+2].Close > df.iloc[i+3].Close) #(close of previous candle(c1) > Close of the candle before (c2)
-      #     & (df.iloc[i+1].Close > df.iloc[i+1].Close) #(close of the candle before (c2) is > the close of candle before (c3))
-      #     & (df.iloc[i+1].Close < df.iloc[i+2].Close) #(last candle (c0) close < close of c1)
-      #     & (df.iloc[i+1].Close > df.iloc[i+3].Close) #(last candle(c0) close > low of c2)
-      #     &  (df.iloc[i+2].Close < df.iloc[i+2].Open) #(last candle close < last candle open)
-      #     ):
-      #   st.write("Buy - Go Long",
-      #            i+1, df.index[i+1], df.iloc[i+1].Close, df.iloc[i+2].Close, df.iloc[i+ 3].Close)
-      
-      # If 
-      # close of previous candle(c1) > Close of the candle before (c2) 
-      # and 
-      # close of the candle before (c2) is > the close of candle before (c3) 
-      # and 
-      # last candle (c0) close < close of c1 
-      # and 
-      # last candle(c0) close > low of c2 
-      # and 
-      # last candle close < last candle open
-      # if((df.iloc[i+2].Close < df.iloc[i+1].Close)
-      #    & (df.iloc[i+1].Close < df.iloc[i].Close)):
-      #   df['strategy_431'] = str("go_long")
-      #   st.write([i, df.iloc[i].Close,df.iloc[i+1].Close,df.iloc[i+2].Close, df['strategy_431'][i]])
-      # df['strategy_431'] = df.apply(lambda row: row['A'] == row['B'] == row['C'], axis=1)
-  # df['strategy_431'] = df['Close'].apply("go_long" if (x.diff(periods=1) > 0 
-  #                                                      and x.diff(periods=2) > 0)
-  #                                               else "short")
-  # df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
-  df['strategy_431_c1c2'] = df['Close'].diff(periods=1)
-  df['strategy_431_c1c3'] = df['Close'].diff(periods=2)
-  df['strategy_431_corrected'] = np.where(df['Close'].diff(periods=1) < df['Close'].diff(periods=2), "long", 'short')
-  
-  # prev_candle = df.iloc[idx + 1 * -1] 
-    
-  return df
+
 
 # Bullish Candle — Green / Bull / Long CandleStick
 # Bearish Candle — Red / Bear / Short CandleStick

@@ -261,12 +261,8 @@ def main():
                 # print(yf_data)
                 stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
                 # print(stock_hist_df.head())
-                candle_reversal_431(symbol,
-                        stock_hist_df,
-                        selected_short_window,
-                        selected_long_window,
-                        algo_strategy)
-            # print("post candle_reversal_431")
+                st.write('4-3-1 candle reversal')
+                
                  
         
     # ###################################################
@@ -373,53 +369,8 @@ def main():
           stock_hist_df['upperWick'] = stock_hist_df['High'] - np.where(stock_hist_df['Open'] >= stock_hist_df['Close'], 
                                                 stock_hist_df['Open'], 
                                                 stock_hist_df['Close'])
-          # stock_hist_df['upperWick'] = stock_hist_df['High'] - (stock_hist_df['Open'] if stock_hist_df['Open'] >= stock_hist_df['Close'] else stock_hist_df['Close'])
-          
-          
-          # st.write(stock_hist_df.sort_index(ascending=False)[['Open','Close', 'candle_type']])
-          
-          
-          # stock_hist_df = stock_hist_df.apply(is_candle_properties)
-          
-          # stock_hist_df["candle_type"] = (stock_hist_df["candle_type"].is_bearish())
-          # stock_hist_df["candle_type"] = (stock_hist_df["candle_type"].is_bullish())
-        
-          # print("stock_hist_df.index.values")
-          # print(stock_hist_df.index.values)
-          # candle_obj = CandleStick({"open":12, 
-          #                           "close":13,
-          #                           "high":22,
-          #                           "low":10,
-          #                           "volume":200
-          #                           # pd.datetime("2024-04-22 09:30:00")
-          #                           })
-          
-          # self.open = data["open"]
-          # self.close = data["close"]
-          # self.high = data["high"]
-          # self.low = data["low"]
-          # self.volume = data["volume"]
-          # self.date = data["date"]
-          
-          # print(candle_obj)
-          # print(candle_obj.is_bearish())
-          # print(candle_obj.is_bullish())
-          
-          # df = candle_reversal_431(symbol,
-          #         stock_hist_df,
-          #         selected_short_window,
-          #         selected_long_window,
-          #         algo_strategy) 
-          # st.write(df.sort_index(ascending=False)[['Open','Close', 
-          #                                          'candle_type', 
-          #                                          'strategy_431_corrected',
-          #                                          'strategy_431_c1c2',
-          #                                          'strategy_431_c1c3']])
           
           st.write("3 white soldiers")
-          # strategy_431(
-          #        stock_hist_df, #to find the prev 3 candles
-          #        )
           
           # print(stock_hist_df.columns)
           stock_hist_df["white_soldiers"] = candle_three_white_soldiers(stock_hist_df)
@@ -429,6 +380,7 @@ def main():
           
           # df_strategy_431, position = candle_four_three_one_soldiers(stock_hist_df, False)
           
+          st.write("4-3-1 candle reversal")
           stock_hist_df = candle_four_three_one_soldiers(stock_hist_df, False)
           
           df_strategy_431 = stock_hist_df # (stock_hist_df[stock_hist_df["strategy_431"] == True])
@@ -501,12 +453,7 @@ def main():
           
           fig = draw_candle_stick_chart(stock_hist_df,symbol)
           st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-          
-          candle_reversal_431(symbol,
-                  stock_hist_df,
-                  selected_short_window,
-                  selected_long_window,
-                  algo_strategy)    
+          st.write('4-3-1 candle reversal') 
     
     st.divider()
 
