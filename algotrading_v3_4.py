@@ -83,7 +83,7 @@ def main():
     st.write ("Please select a ticker in the sidebar")
     return
   else:
-    tab = st.tabs(["Summary","List View","Visualisations", "Details", "Customization", "Release Notes"])
+    tab = st.tabs(["Summary","List View","Visualisations", "News", "Customization", "Release Notes"])
     # ###################################################
     # Summary: 
     # # of stocks being watched; 
@@ -521,9 +521,10 @@ def main():
 
     with tab[5]:
       st.subheader("Change Log")
-      st.write("Implemented Moving Averages EMA strategy.")
-      st.write("Ability to add more stocks to the existing watchlist from the universe of all stocks allowed by the app.")
-      st.write("Added 4-3-1 Candle Reversal Strategy.")
+      st.write("- Implemented Moving Averages EMA strategy.")
+      st.write("- Ability to add more stocks to the existing watchlist from the universe of all stocks allowed by the app.")
+      st.write("- Added 4-3-1 Candle Reversal Strategy.")
+      st.write("- News about the selected stocks is listed.")
 
   return
 
