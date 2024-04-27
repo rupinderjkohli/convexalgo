@@ -24,8 +24,15 @@ def main():
   
   # new_ticker = add_ticker()
   
-  base_symbol_list = ["MSFT","PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
-  symbol_list = base_symbol_list # new_ticker_list
+  symbol_list = load_config()
+  
+  # print(type(symbol_list))
+  
+  symbol_list = np.sort(symbol_list)
+  # print(symbol_list)
+  
+  # base_symbol_list = ["MSFT","PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
+  # symbol_list = base_symbol_list # new_ticker_list
   
   # NSE: TATAPOWER: Tata Power Company Ltd
   # NSE: TATAINVEST: Tata Investment Corporation Ltd
@@ -493,39 +500,50 @@ def main():
       # symbol_list.append(str(new_element))
       # base_symbol_list = symbol_list
       # print(symbol_list)
-      # # st.button("Update Ticker", type="primary")
       # if st.button("Update Ticker"):
       #     streamlit_js_eval(js_expressions="parent.window.location.reload()")
   
-      # ticker_list = ""
-      # ticker_list = st.text_area(":red[enter the ticker list seperated with commas]"
-      #     )
-
+      ticker_list = ""
+      ticker_list = st.text_area(":red[enter the ticker list seperated with commas]",
+                                 key='new_ticker'
+          )
+      
+      # st.button("Update Ticker", type="primary")
+      
       # st.write(ticker_list)
       # print((type(ticker_list)))
       # st.write(list(ticker_list.split(",")))
-      # symbol_list = base_symbol_list + ticker_list
       
-      # for symbol in known_options:
-      #   yf_data = yf.Ticker(symbol) #initiate the ticker
-      #   st.write(symbol)
-      #   stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-      #   # st.write(stock_hist_df.tail())
-      #   df, buy_signal, sell_signal = calculate_atr_buy_sell(stock_hist_df)
-      #   st.write(df)
+      if (st.button("Update Ticker")):
+        with open('config.properties', 'r', encoding='utf-8') as file: 
+          data = file.readlines() 
         
-        # show_atr(df)
+          # print(data[1]) 
+          data[1] = data[1].replace('\n', '')
+          # print("postsplit", data[1])
+          
+          data[1] = data[1]+","+ticker_list+"\n"
+          # print(data[1])
+          
+          # print(data)
+            
+        with open('config.properties', 'w', encoding='utf-8') as file: 
+          file.writelines(data) 
         
-        
+        ticker_list = ""
+      # del st.session_state[new_ticker]
+      # Clear the input box after hitting enter
+      # st.session_state["new_ticker"] = ""
+      # ticker_list
     
-
     with tab[5]:
       st.subheader("Change Log")
       st.write("- Implemented Moving Averages EMA strategy.")
       st.write("- Ability to add more stocks to the existing watchlist from the universe of all stocks allowed by the app.")
+      st.write("- Add your own stock tickers through the Customisation tab.")
       st.write("- Added 4-3-1 Candle Reversal Strategy.")
       st.write("- News about the selected stocks is listed.")
-
+      
   return
 
 if __name__ == '__main__':

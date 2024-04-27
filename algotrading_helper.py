@@ -48,6 +48,9 @@ from base64 import b64encode
 
 from millify import millify # shortens values (10_000 ---> 10k)
 
+# To read external property file
+from jproperties import Properties
+
 from algotrading_class import *
 
 # from IPython.core.display import HTML # note the library
@@ -82,6 +85,21 @@ pd.set_option('display.max_columns', None,
               'display.max_colwidth', None)
 
 pd.options.display.float_format = '${:,.2f}'.format
+
+
+def load_config():
+  configs = Properties()
+
+  with open('./config.properties', 'rb') as config_file:
+      configs.load(config_file)
+
+  SYMBOLS = configs.get('SYMBOLS').data.split(',') 
+  
+  print("SYMBOLS")
+  print(SYMBOLS)
+  # SYMBOLS = SYMBOLS.sort()
+  return SYMBOLS
+
 
 
 # ##########################################################  

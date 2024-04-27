@@ -340,7 +340,7 @@ def draw_candle_stick_triggers(symbol, df, short_window, long_window, algo_strat
   )
   
   fig.update_xaxes(rangebreaks=[
-        dict(bounds=[16, 9], pattern="hour"), #hide hours outside of 9am-5pm
+        dict(bounds=[16, 9.30], pattern="hour"), #hide hours outside of 9am-5pm
         dict(bounds=["sat", "mon"])
     ])
   
@@ -475,7 +475,7 @@ def draw_candle_stick_chart(df,symbol):
       yaxis_title= symbol 
   )
   fig.update_xaxes(rangebreaks=[
-        dict(bounds=[16, 9], pattern="hour"), #hide hours outside of 9am-5pm
+        dict(bounds=[16, 9.30], pattern="hour"), #hide hours outside of 9am-5pm
         dict(bounds=["sat", "mon"])
     ])
   #fig.show()
@@ -519,7 +519,7 @@ def draw_candle_stick_chart_ma(df, symbol):
   )
   
   fig.update_xaxes(rangebreaks=[
-        dict(bounds=[16, 9], pattern="hour"), #hide hours outside of 9am-5pm
+        dict(bounds=[16, 9.30], pattern="hour"), #hide hours outside of 9am-5pm
         dict(bounds=["sat", "mon"])
     ])
   # fig.show()
