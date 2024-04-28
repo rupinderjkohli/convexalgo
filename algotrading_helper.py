@@ -61,17 +61,7 @@ from algotrading_class import *
 TEMPLATE = 'plotly_dark'
 
 # st.set_page_config(layout='wide', page_title='Stock Dashboard', page_icon=':dollar:')
-st.set_page_config(
-    page_title="Convex Trades Dashboard",
-    page_icon="🧊",
-    layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'Get Help': 'https://convextrades.com/',
-        # 'Report a bug': "mailto:rupinder.johar.kohli@gmail.com",
-        'About': "#An *extremely* cool app displaying your GoTo Trading Dashboard!"
-    }
-  ) 
+
 
 # update every 5 mins
 # st_autorefresh(interval=5 * 60 * 1000, key="dataframerefresh")
@@ -426,15 +416,29 @@ def calculate_atr_buy_sell(data):
 # Bullish Candle — Green / Bull / Long CandleStick
 # Bearish Candle — Red / Bear / Short CandleStick
 # https://medium.com/@letspython3.x/learn-and-implement-candlestick-patterns-python-6de09854fa3e
-def is_candle_properties(df):
+def candle_properties(df):
   # st.write(open, close)
   # df['candle_type'] = np.where(df['Open'] < df['Close'], "green", "red") 
+  # df['candle_length'] = df['High'] - df['Low']
+  # df['bodyLength'] = abs(df['Open'] - df['Close'])
+  # """Calculate and return the length of lower shadow or wick."""
+  # df['lowerWick'] = (df['Open'] if df['Open'] <= df['Close'] else df['Close']) - df['Low']
+  # """Calculate and return the length of upper shadow or wick."""                
+  # df['upperWick'] = df['High'] - (df['Open'] if df['Open'] >= df['Close'] else df['Close'])
+  
+  df['candle_type'] = np.where(df['Open'] < df['Close'], "green", "red") 
   df['candle_length'] = df['High'] - df['Low']
   df['bodyLength'] = abs(df['Open'] - df['Close'])
-  """Calculate and return the length of lower shadow or wick."""
-  df['lowerWick'] = (df['Open'] if df['Open'] <= df['Close'] else df['Close']) - df['Low']
-  """Calculate and return the length of upper shadow or wick."""                
-  df['upperWick'] = df['High'] - (df['Open'] if df['Open'] >= df['Close'] else df['Close'])
+  
+  # # """Calculate and return the length of lower shadow or wick."""
+  df['lowerWick'] = np.where(df['Open'] <= df['Close'], 
+                                        df['Open'], 
+                                        df['Close']) - df['Low']
+  
+  # # """Calculate and return the length of upper shadow or wick."""                
+  df['upperWick'] = df['High'] - np.where(df['Open'] >= df['Close'], 
+                                        df['Open'], 
+                                        df['Close'])
 
   return df
 
@@ -567,8 +571,121 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
               (df['Close'].shift(2) > df['Close'].shift(1))
               )
   
-  # print(position)
+  df_evaluate['position'] = np.where(df_evaluate['strategy_431_short'], "Sell", "Buy")
   
+  return df_evaluate
 
-  return df_evaluate #, position
 
+def summary_four_three_one_soldiers(df):
+    # st.write(df.head())
+    df = candle_four_three_one_soldiers(df, False)
+    df_strategy_431 = df
+    
+    
+    # st.write("filtered data - strategy_431_long")
+    df_strategy_431_long = (df[df["strategy_431_long"] == True])
+    # st.write(df_strategy_431_long.sort_index(ascending=False))
+    
+    # st.write("filtered data - strategy_431_short")
+    df_strategy_431_short = (df[df["strategy_431_short"] == True])
+    # st.write(df_strategy_431_short.sort_index(ascending=False))
+    
+    # stock_price_at_trigger = df_strategy_431_long.loc[df_strategy_431_long.index.max(), "Close"].to_list()[0]
+    # stock_trigger_at = df_pos.index.max()
+    # stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
+    df_summary = df_strategy_431_long[df_strategy_431_long.index == df_strategy_431_long.index.max()]
+    df_summary_short = df_strategy_431_short[df_strategy_431_short.index == df_strategy_431_short.index.max()]
+    df_summary = pd.concat([df_summary, df_summary_short], ignore_index=False)
+    
+    
+    print(df_summary)
+    
+    return df_summary
+    
+    # (buy order) profit order is + if trigger is Buy; loss order is - if trigger is Buy 
+    # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
+    
+    # if (stock_trigger_state == "Buy"):
+    #   stock_stop_loss_atr = (stock_price_at_trigger - df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+    #   stock_take_profit_atr = (stock_price_at_trigger + 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+    # elif (stock_trigger_state == "Sell"):
+    #   stock_stop_loss_atr = (stock_price_at_trigger + df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+    #   stock_take_profit_atr = (stock_price_at_trigger - 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+    
+    # stock_ema_p1 = df_pos.loc[df_pos.index == df_pos.index.max(), short_window_col].to_list()[0]
+    # stock_ema_p2 = df_pos.loc[df_pos.index == df_pos.index.max(), long_window_col].to_list()[0]
+    
+    # stock_atr_ma = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
+    
+    # stock_view_details = etf_data[symbol]
+    # stock_previous_triggers = previous_triggers.index.astype(str).to_list() #df_pos.Position[:6]#.to_list()
+    
+#     for variable in ["symbol",
+#                     "stock_trigger_at",
+#                     "stock_trigger_state",
+#                     "stock_price_at_trigger",
+#                     "stock_stop_loss_atr",
+#                     "stock_take_profit_atr",
+#                     "stock_atr_ma",
+#                     "stock_ema_p1",
+#                     "stock_ema_p2",
+#                     # "stock_previous_triggers"
+#                     ]:
+#       quick_explore[variable] = eval(variable)
+#     x = pd.DataFrame([quick_explore])
+      
+#     quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
+# quick_explore_df = quick_explore_df.sort_values(by = ['stock_trigger_at'], ascending=False)
+# # quick_explore_df = quick_explore_df.set_index(['symbol'])
+# # print(quick_explore_df)
+
+# st.data_editor(
+# quick_explore_df,
+# column_config={"stock_trigger_state": st.column_config.TextColumn(
+#     "Trigger",
+#     width="small"
+# ),
+#                 "stock_take_profit_atr": st.column_config.NumberColumn(
+#     "Take Profit Price",
+#     format="%.2f",
+# ),
+#               "stock_stop_loss_atr": st.column_config.NumberColumn(
+#     "Stop Loss Price",
+#     format="%.2f",
+# ),
+#               "stock_price_at_trigger": st.column_config.NumberColumn(
+#     "Trigger Price",
+#     format="%.2f",
+# ),
+#               "stock_atr_ma": st.column_config.NumberColumn(
+#     "ATR MA",
+#     format="%.2f",
+# ),
+# #               "stock_previous_triggers": st.column_config.ListColumn(
+# #     "Previous Triggers",
+# #     # width="medium",
+# # ),
+#               "stock_trigger_at": st.column_config.DatetimeColumn(
+#   "Trigger Time",
+#   format="DD MMM YYYY, HH:MM"
+#   ),
+#               "stock_ema_p1": st.column_config.NumberColumn(
+#     "EMA P1",
+#     format="%.2f",
+# ),
+#               "stock_ema_p2": st.column_config.NumberColumn(
+#     "EMA P2",
+#     format="%.2f",
+# ),
+#     # "stock_view_details": st.column_config.LinkColumn
+#     # (
+#     #     "Stock Details",
+#     #     help="The top trending Streamlit apps",
+#     #     max_chars=100,
+#     #     display_text="view table",
+#     #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
+#     # ),
+    
+# },
+# hide_index=True,
+# )
