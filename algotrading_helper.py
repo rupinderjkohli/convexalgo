@@ -180,7 +180,11 @@ def sma_buy_sell_trigger(df, sma_p1, sma_p2):
 # ##########################################################
 def get_stk_news(ticker):
 
-  news_df = pd.DataFrame(ticker.news)
+  try:
+    news_df = pd.DataFrame(ticker.news)
+  except:
+    st.write("ERROR")
+    return pd.DataFrame()
 
   # note the new way of creating column
   news_df = news_df.assign(providerPublishTime_n=lambda x: pd.to_datetime(x.providerPublishTime, unit='s'))
