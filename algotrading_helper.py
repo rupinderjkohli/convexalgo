@@ -84,11 +84,13 @@ def load_config():
       configs.load(config_file)
 
   SYMBOLS = configs.get('SYMBOLS').data.split(',') 
+  STOP_LOSS = configs.get('STOP_LOSS')
+  TAKE_PROFIT = configs.get('TAKE_PROFIT')
   
   print("SYMBOLS")
   print(SYMBOLS)
   # SYMBOLS = SYMBOLS.sort()
-  return SYMBOLS
+  return SYMBOLS, STOP_LOSS, TAKE_PROFIT
 
 
 
@@ -258,6 +260,7 @@ def MovingAverageCrossStrategy(symbol,
     if display_table == True:
         df_pos = stock_df[(stock_df['Position'] == 1) | (stock_df['Position'] == -1)]
         df_pos['Position'] = df_pos['Position'].apply(lambda x: 'Buy' if x == 1 else 'Sell')
+        
         previous_triggers = df_pos[['Position']][-6:]
         
     
@@ -267,7 +270,7 @@ def MovingAverageCrossStrategy(symbol,
     st.write("base data")
     # stock_df = stock_df.reset_index()
     # stock_df.Datetime = stock_df.Datetime.dt.strftime('%Y/%m/%d %H:%M')
-    stock_df.index = stock_df.index.strftime('%Y/%m/%d %H:%M')
+    # stock_df.index = stock_df.index.strftime('%Y/%m/%d %H:%M')
     st.write(stock_df.sort_index(ascending=False)[:10])
     # stock_df = stock_df.set_index('Datetime')
     
@@ -598,7 +601,7 @@ def summary_four_three_one_soldiers(df):
     df_summary = pd.concat([df_summary, df_summary_short], ignore_index=False)
     
     
-    print(df_summary)
+    # print(df_summary)
     
     return df_summary
     

@@ -253,7 +253,7 @@ def draw_candle_stick_triggers(symbol, df, short_window, long_window, algo_strat
   # https://plotly.com/python/reference/scattergl/
   # column names for long and short moving average columns
   # print("draw_candle_stick_triggers")
-  print(df.info())
+  # print(df.info())
   short_window_col = str(short_window) + '_' + algo_strategy
   long_window_col = str(long_window) + '_' + algo_strategy
 

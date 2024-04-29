@@ -35,9 +35,11 @@ def main():
   
   # new_ticker = add_ticker()
   
-  symbol_list = load_config()
+  symbol_list, stop_loss, take_profit = load_config()
+  stop_loss_factor = float(stop_loss[0])
+  take_profit_factor = float(take_profit[0])
   
-  # print(type(symbol_list))
+  print(stop_loss_factor)
   
   symbol_list = np.sort(symbol_list)
   # print(symbol_list)
@@ -48,8 +50,11 @@ def main():
   # NSE: TATAPOWER: Tata Power Company Ltd
   # NSE: TATAINVEST: Tata Investment Corporation Ltd
 
+  # convex_trade_algos = ["", "", "4-3-1 candle price reversal"]
   ma_list = ["SMA", "EMA"]
-  algo_list = ["3-Candle Reversal"]
+  algo_list = ["4-3-1 candle price reversal"]
+  convex_trade_algos_list = ma_list + algo_list
+  print(convex_trade_algos_list)
   
   # user selected list of tickers
   # load_user_selected_options()
@@ -85,7 +90,7 @@ def main():
   
   # trading strategy selection
   algo_strategy = st.sidebar.selectbox(
-      'Select Algo Strategy', options=['SMA', 'EMA', "3-Candle Reversal"], index=2)
+      'Select Algo Strategy', options=convex_trade_algos_list, index=2)
   selected_short_window =  st.sidebar.number_input(":gray[Short Window]", step = 1, value=5)  
   selected_long_window =  st.sidebar.number_input(":gray[Long Window]", step = 1, value=8)   
 
@@ -125,7 +130,6 @@ def main():
           col1.metric(label="No. Stocks Watch", value= selected_stocks , delta=None)
           col2.metric(label="Period", value= selected_period , delta=None)
           col3.metric(label="Interval", value= selected_interval , delta=None)
-          # trading_strategy = str(algo_strategy) + '_' + str(selected_short_window) + '_' + str(selected_long_window) + '_crossover'
           col4.metric(label="Trading Strategy", value= algo_strategy , delta=None)
         
       st.divider()
@@ -167,9 +171,10 @@ def main():
                 # st.write((stock_df.sort_index(ascending=False)[:10])) 
                 
                 etf_data[symbol] = stock_df
-                
-                # previous_triggers_list = previous_triggers
-                previous_triggers = previous_triggers.reset_index()
+                # previous_triggers = previous_triggers.sort_values(by='index', ascending=False)
+                previous_triggers_list = previous_triggers.index.strftime('%Y/%m/%d %H:%M')
+                previous_triggers_list = np.sort(previous_triggers_list)[::-1]
+                # print(previous_triggers_list)
                 
                 stock_day_close = get_current_price(symbol, selected_period, selected_interval)
                 stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
@@ -180,11 +185,11 @@ def main():
                 # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
                 
                 if (stock_trigger_state == "Buy"):
-                  stock_stop_loss_atr = (stock_price_at_trigger - df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-                  stock_take_profit_atr = (stock_price_at_trigger + 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+                  stock_stop_loss_atr = stock_price_at_trigger - stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+                  stock_take_profit_atr = (stock_price_at_trigger + take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
                 elif (stock_trigger_state == "Sell"):
-                  stock_stop_loss_atr = (stock_price_at_trigger + df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-                  stock_take_profit_atr = (stock_price_at_trigger - 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+                  stock_stop_loss_atr = (stock_price_at_trigger + stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
+                  stock_take_profit_atr = (stock_price_at_trigger - take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
                 
                 stock_ema_p1 = df_pos.loc[df_pos.index == df_pos.index.max(), short_window_col].to_list()[0]
                 stock_ema_p2 = df_pos.loc[df_pos.index == df_pos.index.max(), long_window_col].to_list()[0]
@@ -192,8 +197,9 @@ def main():
                 stock_atr_ma = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
                 
                 stock_view_details = etf_data[symbol]
-                # stock_previous_triggers = previous_triggers.index.astype(str).to_list() #df_pos.Position[:6]#.to_list()
+                stock_previous_triggers = previous_triggers_list 
                 
+                # st.write(stock_previous_triggers)
                 for variable in ["symbol",
                                 "stock_trigger_at",
                                 "stock_trigger_state",
@@ -203,7 +209,7 @@ def main():
                                 "stock_atr_ma",
                                 "stock_ema_p1",
                                 "stock_ema_p2",
-                                # "stock_previous_triggers"
+                                "stock_previous_triggers"
                                 ]:
                   quick_explore[variable] = eval(variable)
                 x = pd.DataFrame([quick_explore])
@@ -235,10 +241,11 @@ def main():
                 "ATR MA",
                 format="%.2f",
             ),
-            #               "stock_previous_triggers": st.column_config.ListColumn(
-            #     "Previous Triggers",
-            #     # width="medium",
-            # ),
+                          "stock_previous_triggers": st.column_config.ListColumn(
+                "Previous Triggers",
+                # format="DD MMM YYYY, HH:MM"
+                # width="medium",
+            ),
                           "stock_trigger_at": st.column_config.DatetimeColumn(
               "Trigger Time",
               format="DD MMM YYYY, HH:MM"
@@ -420,7 +427,7 @@ def main():
           # # df_strategy_431, position = candle_four_three_one_soldiers(stock_hist_df, False)
           
           # st.write("4-3-1 candle reversal")
-          if (algo_strategy == "3-Candle Reversal" ):
+          if (algo_strategy == "4-3-1 candle price reversal" ):
             stock_hist_df = candle_four_three_one_soldiers(stock_hist_df, False)
             df_strategy_431 = stock_hist_df
             
@@ -508,10 +515,11 @@ def main():
     with tab[3]:    
       st.subheader("News on the selected stocks")
       for symbol in known_options:
-        st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
-        st.subheader(st.session_state.page_subheader)
         yf_data = yf.Ticker(symbol) #initiate the ticker
         stock_news_df = get_stk_news(yf_data)
+        st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+        st.subheader(st.session_state.page_subheader)
+        
         # st.write(stock_news_df)
         st.data_editor(
             stock_news_df,
@@ -577,7 +585,7 @@ def main():
       st.write("- Implemented Moving Averages EMA strategy.")
       st.write("- Ability to add more stocks to the existing watchlist from the universe of all stocks allowed by the app.")
       st.write("- Add your own stock tickers through the Customisation tab.")
-      st.write("- Added 4-3-1 Candle Reversal Strategy.")
+      st.write("- Added 4-3-1 candle price reversal Strategy.")
       st.write("- News about the selected stocks is listed.")
       
   return
