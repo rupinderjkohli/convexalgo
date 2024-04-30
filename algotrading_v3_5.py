@@ -106,7 +106,7 @@ def main():
     st.write ("Please select a ticker in the sidebar")
     return
   else:
-    tab = st.tabs(["Summary","List View","Visualisations", "News", "Customization", "Release Notes"])
+    tab = st.tabs(["Summary","List View","Visualisations", "News", "Customization", "Details","Release Notes"])
     # ###################################################
     # Summary: 
     # # of stocks being watched; 
@@ -117,6 +117,8 @@ def main():
     with tab[0]:    
       # creates the container for page title
       dash_1 = st.container()
+      quick_explore_df_ma = pd.DataFrame()
+      quick_explore_df_431 = pd.DataFrame()
 
       with dash_1:
           st.markdown("<h3 style='text-align: center;'>You are watching</h3>", unsafe_allow_html=True)
@@ -270,6 +272,7 @@ def main():
             },
             hide_index=True,
             )
+            quick_explore_df_ma = quick_explore_df
     
             st.divider()
             # return
@@ -327,8 +330,10 @@ def main():
             },  
             hide_index=True,
             )
-            
-                
+            quick_explore_df_431 = quick_explore_df
+          
+          # quick_explore_summary = pd.concat([quick_explore_df_ma, quick_explore_df_431], ignore_index=True )  
+          # st.write(quick_explore_summary)      
                  
         
     # ###################################################
@@ -342,23 +347,50 @@ def main():
       title = "Strategy: " + algo_strategy
       st.subheader(title)
       st.divider()
-  
-      if any(ma in algo_strategy for ma in ma_list):
-        short_window_col = str(selected_short_window) + '_' + algo_strategy
-        long_window_col = str(selected_long_window) + '_' + algo_strategy  
-        # st.write(short_window_col) 
-        for symbol in known_options:
-          st.subheader(symbol)
-          try:
-            yf_data = yf.Ticker(symbol) #initiate the ticker
-            etf_summary_info = get_all_stock_info(yf_data)
-            stock_caption = ("exchange: "+etf_summary_info.exchange[0]
-                        + "; currency: "+etf_summary_info.currency[0])
-                    
-            st.caption(stock_caption)
-            
-            stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+      
+      for symbol in known_options:
+        # st.subheader(symbol)
+        try:
+          yf_data = yf.Ticker(symbol) #initiate the ticker
+          st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+          st.subheader(st.session_state.page_subheader)
+          etf_summary_info = get_all_stock_info(yf_data)
+          stock_caption = ("exchange: "+etf_summary_info.exchange[0]
+                      + "; currency: "+etf_summary_info.currency[0])
+                  
+          st.caption(stock_caption)
           
+          stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+          col1, col2, col3, col4, col5 = st.columns(5)
+            
+          with st.container(): # chart_container(chart_data):
+            toast_message = (":red["
+                              +"Fetching information for " 
+                              + etf_summary_info.shortName[0] 
+                              + " "+ symbol
+                              +"]"
+                      )
+            st.toast(toast_message, icon='🏃')  
+            # time.sleep(1)            
+            col1.metric(label="Close", value= etf_summary_info.previousClose , delta=None)
+            col1.metric(label="Open", value= etf_summary_info.open , delta=None) 
+            col2.metric(label="Day High", value= etf_summary_info.dayHigh)
+            col2.metric(label="Day Low", value= etf_summary_info.dayLow)
+            col3.metric(label="52 week High", value= etf_summary_info.fiftyTwoWeekHigh)
+            col3.metric(label="52 week Low", value= etf_summary_info.fiftyTwoWeekLow)
+            
+            descriptive_stats = historical_overview(stock_hist_df)
+            # st.write(descriptive_stats)
+            col4.metric(label="Period High", value= descriptive_stats.period_high)
+            col4.metric(label="Period Low", value= descriptive_stats.period_low)
+            # col5.metric(label="Period Deviation", value= descriptive_stats.period_close_std)
+            # col5.metric(label="Period 75%", value= descriptive_stats['75%'])
+            
+            
+          if any(ma in algo_strategy for ma in ma_list):
+            short_window_col = str(selected_short_window) + '_' + algo_strategy
+            long_window_col = str(selected_long_window) + '_' + algo_strategy  
+              
             stock_hist_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
                                         stock_hist_df,
                                         selected_short_window,
@@ -372,25 +404,12 @@ def main():
             buy_trigger = len(df_pos[df_pos['Position']=='Buy'])
             sell_trigger = len(df_pos[df_pos['Position']=='Sell'])
             
-            col1, col2, col3, col4 = st.columns(4)
+            # col1, col2 = st.columns(2)
             
             with st.container(): # chart_container(chart_data):
-              toast_message = (":red["
-                                +"Fetching information for " 
-                                + etf_summary_info.shortName[0] 
-                                + " "+ symbol
-                                +"]"
-                        )
-              st.toast(toast_message, icon='🏃')  
-              # time.sleep(1)            
-              col1.metric(label="Close", value= etf_summary_info.previousClose , delta=None)
-              col1.metric(label="Open", value= etf_summary_info.open , delta=None) 
-              col2.metric(label="Day Low", value= etf_summary_info.dayLow)
-              col2.metric(label="Day High", value= etf_summary_info.dayHigh)
-              col3.metric(label="52 week Low", value= etf_summary_info.fiftyTwoWeekLow)
-              col3.metric(label="52 week High", value= etf_summary_info.fiftyTwoWeekHigh)
-              col4.metric(label="Buy (period)", value= buy_trigger)
-              col4.metric(label="Sell (period)", value= sell_trigger)
+              
+              # col1.metric(label="Buy (period)", value= buy_trigger)
+              # col2.metric(label="Sell (period)", value= sell_trigger)
               
               expander = st.expander("Ticker trading prompts")
               
@@ -404,44 +423,38 @@ def main():
               
               # ToDo: Show more columns as per the Summary tab
               expander.write(df1[['Datetime','Close', 'Position']]) 
-          except:
-            print('Error loading stock data for ' + symbol)
-            return None 
+                  
+          elif (any(algo in algo_strategy for algo in algo_list)): 
+            if (algo_strategy == "4-3-1 candle price reversal" ):
+              stock_hist_df = candle_four_three_one_soldiers(stock_hist_df, False)
+              df_strategy_431 = stock_hist_df
               
-      elif (any(algo in algo_strategy for algo in algo_list)): 
-        for symbol in known_options:
-          stock_name =  symbol
-          # print(algo_strategy)
-          yf_data = yf.Ticker(symbol) #initiate the ticker
-          stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-          # stock_hist_df = stock_hist_df.reset_index()
-          
-          # st.write("3 white soldiers")
-          
-          # # print(stock_hist_df.columns)
-          # stock_hist_df["white_soldiers"] = candle_three_white_soldiers(stock_hist_df)
-          
-          # df_white_soldiers = (stock_hist_df[stock_hist_df["white_soldiers"] == True])
-          # st.write(df_white_soldiers[['Open', 'High', 'Low', 'Close','candle_type']])
-          
-          # # df_strategy_431, position = candle_four_three_one_soldiers(stock_hist_df, False)
-          
-          # st.write("4-3-1 candle reversal")
-          if (algo_strategy == "4-3-1 candle price reversal" ):
-            stock_hist_df = candle_four_three_one_soldiers(stock_hist_df, False)
-            df_strategy_431 = stock_hist_df
+              # st.write(df_strategy_431.sort_index(ascending=False)[['High', 'Low', 'Open', 'Close','strategy_431_long','strategy_431_short']])
+              # st.write(symbol)
+              st.write(df_strategy_431.sort_index(ascending=False))
+              
+              with st.container():
+                expander = st.expander("4-3-1 candle price reversal trading prompts")
+                expander.write("filtered data - strategy_431_long")
+                df_strategy_431_long = (stock_hist_df[stock_hist_df["strategy_431_long"] == True])
+                expander.write(df_strategy_431_long.sort_index(ascending=False))
+                
+                expander.write("filtered data - strategy_431_short")
+                df_strategy_431_short = (stock_hist_df[stock_hist_df["strategy_431_short"] == True])
+                expander.write(df_strategy_431_short.sort_index(ascending=False))
+                
+            elif (algo_strategy == "3 white soldiers" ):
+              st.write("3 white soldiers")
+              
+              # # print(stock_hist_df.columns)
+              # stock_hist_df["white_soldiers"] = candle_three_white_soldiers(stock_hist_df)
+              
+              # df_white_soldiers = (stock_hist_df[stock_hist_df["white_soldiers"] == True])
+              # st.write(df_white_soldiers[['Open', 'High', 'Low', 'Close','candle_type']])
             
-            # st.write(df_strategy_431.sort_index(ascending=False)[['High', 'Low', 'Open', 'Close','strategy_431_long','strategy_431_short']])
-            st.write(symbol)
-            st.write(df_strategy_431.sort_index(ascending=False))
-            
-            st.write("filtered data - strategy_431_long", symbol)
-            df_strategy_431_long = (stock_hist_df[stock_hist_df["strategy_431_long"] == True])
-            st.write(df_strategy_431_long.sort_index(ascending=False))
-            
-            st.write("filtered data - strategy_431_short", symbol)
-            df_strategy_431_short = (stock_hist_df[stock_hist_df["strategy_431_short"] == True])
-            st.write(df_strategy_431_short.sort_index(ascending=False))
+        except:
+              print('Error loading stock data for ' + symbol)
+              return None 
    
         
     # ###################################################
@@ -495,7 +508,8 @@ def main():
         # st.write(algo_strategy) 
         # st.write("3-Candle Reversal Strategy") 
         for symbol in known_options:
-          # st.subheader(symbol)
+          st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+          st.subheader(st.session_state.page_subheader)
           stock_name =  symbol
           # print(stock_name)
           yf_data = yf.Ticker(symbol) #initiate the ticker
@@ -535,9 +549,9 @@ def main():
       st.divider()
       
     # ###################################################
-    # Volatility Indicators
+    # Customisation
     # ###################################################
-    with tab[4]:    
+    with tab[5]:    
       st.subheader("Customise Stocks list")
       # new_ticker_list = add_ticker()
       # new_element = st.text_input("Add a new symbol:", "ABB")
@@ -580,7 +594,49 @@ def main():
       # st.session_state["new_ticker"] = ""
       # ticker_list
     
-    with tab[5]:
+    with tab[4]:
+      # Dictionary to collect data to create a DF later
+      data = {
+          'Symbol': [],
+          'Name': [],
+          'Industry': [],
+          'EPS (fwd)': [],
+          'P/E (fwd)': [],
+          'PEG': [],
+          'FCFY' : [],
+          'PB': [],
+          'ROE' : [],
+          'P/S (trail)': [],
+          'DPR' : [],
+          'DY' : [],
+          'CR' : [],
+          'Beta': [],
+          'Price': [],
+          '52w Low': [],
+          '52w High': []
+          }
+      df_summary_view = pd.DataFrame()
+      for symbol in known_options:
+        # st.subheader(symbol)
+        yf_data = yf.Ticker(symbol) #initiate the ticker
+        # st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
+        # st.subheader(st.session_state.page_subheader)
+        etf_summary_info = get_all_stock_info(yf_data)
+        # st.write(etf_summary_info.T)
+        df_details = etf_summary_info[['symbol', 'shortName','quoteType','financialCurrency',
+                                       'industry','sector','currentPrice','recommendationKey', 
+                                       'fiftyTwoWeekHigh','fiftyTwoWeekLow', 
+                                       'grossMargins','ebitdaMargins']]
+        df_details['52w Range'] = ((df_details['currentPrice'] - df_details['fiftyTwoWeekLow'])/(df_details['fiftyTwoWeekHigh'] - df_details['fiftyTwoWeekLow']))*100
+        
+        df_summary_view = pd.concat([df_summary_view, df_details], ignore_index=True)
+        # Add 52 week price range
+        
+      st.write(df_summary_view)
+      
+        
+      
+    with tab[6]:
       st.subheader("Change Log")
       st.write("- Implemented Moving Averages EMA strategy.")
       st.write("- Ability to add more stocks to the existing watchlist from the universe of all stocks allowed by the app.")

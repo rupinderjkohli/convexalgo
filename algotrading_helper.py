@@ -103,31 +103,32 @@ def get_all_stock_info(ticker):
 
   info = ticker.info
   info_df = pd.DataFrame.from_dict([info])
-  info_df_short = info_df[['symbol', 'shortName', 'exchange', 'quoteType', 'currency',
-                           'previousClose', 'open', 'dayLow', 'dayHigh',
-                          #  'category', 
-                          # 'navPrice',    # dc, don't know why this is failing?
-                          #  'regularMarketPreviousClose', 'regularMarketOpen',
-                          #  'regularMarketDayLow', 'regularMarketDayHigh',
-                           'fiftyTwoWeekLow', 'fiftyTwoWeekHigh', 'fiftyDayAverage',
-                          #  'regularMarketVolume',
-                          #  'twoHundredDayAverage',
-                          #  'trailingPE', 'volume',
-                          #  'averageVolume', 'averageVolume10days',
-                          #  'averageDailyVolume10Day', 'bid', 'ask', 'bidSize', 'askSize', 'yield',
-                          #  'totalAssets', 'trailingAnnualDividendRate',
-                          #  'trailingAnnualDividendYield',
-                          #  'ytdReturn', 'beta3Year', 'fundFamily', 'fundInceptionDate',
-                          #  'legalType', 'threeYearAverageReturn', 'fiveYearAverageReturn',
-                          'underlyingSymbol',
-                          #  'longName', 'firstTradeDateEpochUtc', 
-                          'timeZoneFullName',
-                          #  'timeZoneShortName', 'uuid', 'messageBoardId', 'gmtOffSetMilliseconds',
-                          #  'trailingPegRatio'
-                            ]]
-  info_df_short.reset_index(inplace=True)
+  # info_df_short = info_df[['symbol', 'shortName', 'exchange', 'quoteType', 'currency',
+  #                          'previousClose', 'open', 'dayLow', 'dayHigh',
+  #                          'category', 
+  #                         # 'navPrice',    # dc, don't know why this is failing?
+  #                          'regularMarketPreviousClose', 'regularMarketOpen',
+  #                          'regularMarketDayLow', 'regularMarketDayHigh',
+  #                          'fiftyTwoWeekLow', 'fiftyTwoWeekHigh', 'fiftyDayAverage',
+  #                          'regularMarketVolume',
+  #                          'twoHundredDayAverage',
+  #                          'trailingPE', 'volume',
+  #                          'averageVolume', 'averageVolume10days',
+  #                          'averageDailyVolume10Day', 'bid', 'ask', 'bidSize', 'askSize', 'yield',
+  #                          'totalAssets', 'trailingAnnualDividendRate',
+  #                          'trailingAnnualDividendYield',
+  #                          'ytdReturn', 'beta3Year', 'fundFamily', 'fundInceptionDate',
+  #                          'legalType', 'threeYearAverageReturn', 'fiveYearAverageReturn',
+  #                         'underlyingSymbol',
+  #                          'longName', 'firstTradeDateEpochUtc', 
+  #                         'timeZoneFullName',
+  #                          'timeZoneShortName', 'uuid', 'messageBoardId', 'gmtOffSetMilliseconds',
+  #                          'trailingPegRatio',
+  #                           ]]
+  info_df.reset_index(inplace=True)
+  # info_df_short.reset_index(inplace=True)
   # st.write (info_df_short.to_dict(orient='dict'))
-  return info_df_short
+  return info_df #info_df_short
 
 # ##########################################################  
 # Purpose: 
@@ -696,3 +697,44 @@ def summary_four_three_one_soldiers(df):
 # },
 # hide_index=True,
 # )
+
+# ##########################################################  
+# Purpose: Basic EDA
+# ##########################################################
+def historical_overview(df): 
+  df_overview = {}
+  df_overview_df = pd.DataFrame() 
+  # print(df.columns)
+  
+  # df_overview = pd.DataFrame(df['Open','Close'].describe(include='all'))
+  # print(df.describe())
+  
+  period_high = df['High'].mean()
+  period_low = df['Low'].mean()
+  
+  # print(df['Open'].min(), df['Open'].max(), df['Open'].std())
+  period_close_min = df['Close'].min()
+  period_close_max = df['Close'].max()
+  period_close_std = df['Close'].std()
+  
+  period_open_max = df['Open'].max()
+  period_open_min = df['Open'].min()
+  period_open_std = df['Open'].std()
+  
+  for variable in ["period_close_min",
+                  "period_close_max",
+                  "period_close_std",
+                  "period_open_min",
+                  "period_open_min",
+                  "period_open_std",
+                  "period_high",
+                  "period_low"
+                  ]:
+    df_overview[variable] = eval(variable)
+    # print(df_overview)
+  df_overview_df = pd.DataFrame([df_overview])
+  # print(x)
+  
+  # df_overview_df = pd.concat([x, df_overview], ignore_index=True)
+  
+  return df_overview_df

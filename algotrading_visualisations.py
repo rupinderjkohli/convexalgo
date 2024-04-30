@@ -449,7 +449,7 @@ def sparkline(df, col): #, Avg):
     img_file.close()
 
     #print ('<img src="data:image/png;base64,{}"/>'.format(png_base64))
-    return png_base64 #png_base64 #('<img src="data:image/png;base64,{}"/>'.format(decoded_data))
+    return fig #png_base64 #png_base64 #('<img src="data:image/png;base64,{}"/>'.format(decoded_data))
     # return ('<img src="data:/png;pybase64,{}"/>'.format(png_base64))
 
 # ##########################################################  
