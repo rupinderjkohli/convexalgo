@@ -106,7 +106,7 @@ def main():
     st.write ("Please select a ticker in the sidebar")
     return
   else:
-    tab = st.tabs(["Summary","List View","Visualisations", "News", "Customization", "Details","Release Notes"])
+    tab = st.tabs(["Summary","List View","Visualisations", "News", "Details", "Customization","Release Notes"])
     # ###################################################
     # Summary: 
     # # of stocks being watched; 
