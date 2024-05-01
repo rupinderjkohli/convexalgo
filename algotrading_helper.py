@@ -222,21 +222,39 @@ def MovingAverageCrossStrategy(symbol,
     # moving_avg - (str)the type of moving average to use ('SMA' or 'EMA')
     # display_table - (bool)whether to display the date and price table at buy/sell positions(True/False)
 
-    # column names for long and short moving average columns
-    short_window_col = str(short_window) + '_' + moving_avg
-    long_window_col = str(long_window) + '_' + moving_avg  
-  
+    df_pos = pd.DataFrame()
+    previous_triggers = pd.DataFrame()
+    
     if moving_avg == 'SMA':
+        # column names for long and short moving average columns
+        short_window_col = str(short_window) + '_' + moving_avg
+        long_window_col = str(long_window) + '_' + moving_avg
+        
+        # ema_period1
+          
         # Create a short simple moving average column
         stock_df[short_window_col] = stock_df['Close'].rolling(window = short_window, min_periods = 1).mean()
 
         # Create a long simple moving average column
         stock_df[long_window_col] = stock_df['Close'].rolling(window = long_window, min_periods = 1).mean()
+        
+        # create a new column 'Signal' such that if faster moving average is greater than slower moving average 
+        # then set Signal as 1 else 0.
+        stock_df['Signal'] = 0.0  
+        stock_df['Signal'] = np.where(stock_df[short_window_col] > stock_df[long_window_col], 1.0, 0.0) 
 
-    elif moving_avg == 'EMA':
+        # create a new column 'Position' which is a day-to-day difference of the 'Signal' column. 
+        stock_df['Position'] = stock_df['Signal'].diff()
+
+    elif (moving_avg == 'EMA' or moving_avg == 'EMA 1-2 candle price continuation'):
+        
+        # column names for long and short moving average columns
+        short_window_col = str(short_window) + '_' + moving_avg
+        long_window_col = str(long_window) + '_' + moving_avg
+        
         # Create short exponential moving average column
         stock_df[short_window_col] = stock_df['Close'].ewm(span = short_window, adjust = True).mean()
-
+        
         # Create a long exponential moving average column
         stock_df[long_window_col] = stock_df['Close'].ewm(span = long_window, adjust = True).mean()
         
@@ -244,14 +262,15 @@ def MovingAverageCrossStrategy(symbol,
         # Determine Stop-Loss Order
         # A stop-loss order is a request to a broker to sell stocks at a certain price. 
         # These orders aid in minimizing an investor’s loss in a security position.
+        
+        # create a new column 'Signal' such that if faster moving average is greater than slower moving average 
+        # then set Signal as 1 else 0.
+        stock_df['Signal'] = 0.0  
+        stock_df['Signal'] = np.where(stock_df[short_window_col] > stock_df[long_window_col], 1.0, 0.0) 
 
-    # create a new column 'Signal' such that if faster moving average is greater than slower moving average 
-    # then set Signal as 1 else 0.
-    stock_df['Signal'] = 0.0  
-    stock_df['Signal'] = np.where(stock_df[short_window_col] > stock_df[long_window_col], 1.0, 0.0) 
-
-    # create a new column 'Position' which is a day-to-day difference of the 'Signal' column. 
-    stock_df['Position'] = stock_df['Signal'].diff()
+        # create a new column 'Position' which is a day-to-day difference of the 'Signal' column. 
+        stock_df['Position'] = stock_df['Signal'].diff()
+        
     
     # ########################################
     # plot close price, short-term and long-term moving averages
@@ -275,7 +294,7 @@ def MovingAverageCrossStrategy(symbol,
     st.write("base data")
     # stock_df = stock_df.reset_index()
     # stock_df.Datetime = stock_df.Datetime.dt.strftime('%Y/%m/%d %H:%M')
-    # stock_df.index = stock_df.index.strftime('%Y/%m/%d %H:%M')
+    stock_df.index = stock_df.index.strftime('%Y/%m/%d %H:%M')
     st.write(stock_df.sort_index(ascending=False)[:10])
     # stock_df = stock_df.set_index('Datetime')
     
@@ -610,93 +629,7 @@ def summary_four_three_one_soldiers(df):
     
     return df_summary
     
-    # (buy order) profit order is + if trigger is Buy; loss order is - if trigger is Buy 
-    # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
-    
-    # if (stock_trigger_state == "Buy"):
-    #   stock_stop_loss_atr = (stock_price_at_trigger - df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-    #   stock_take_profit_atr = (stock_price_at_trigger + 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-    # elif (stock_trigger_state == "Sell"):
-    #   stock_stop_loss_atr = (stock_price_at_trigger + df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-    #   stock_take_profit_atr = (stock_price_at_trigger - 2*df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-    
-    # stock_ema_p1 = df_pos.loc[df_pos.index == df_pos.index.max(), short_window_col].to_list()[0]
-    # stock_ema_p2 = df_pos.loc[df_pos.index == df_pos.index.max(), long_window_col].to_list()[0]
-    
-    # stock_atr_ma = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
-    
-    # stock_view_details = etf_data[symbol]
-    # stock_previous_triggers = previous_triggers.index.astype(str).to_list() #df_pos.Position[:6]#.to_list()
-    
-#     for variable in ["symbol",
-#                     "stock_trigger_at",
-#                     "stock_trigger_state",
-#                     "stock_price_at_trigger",
-#                     "stock_stop_loss_atr",
-#                     "stock_take_profit_atr",
-#                     "stock_atr_ma",
-#                     "stock_ema_p1",
-#                     "stock_ema_p2",
-#                     # "stock_previous_triggers"
-#                     ]:
-#       quick_explore[variable] = eval(variable)
-#     x = pd.DataFrame([quick_explore])
-      
-#     quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
-# quick_explore_df = quick_explore_df.sort_values(by = ['stock_trigger_at'], ascending=False)
-# # quick_explore_df = quick_explore_df.set_index(['symbol'])
-# # print(quick_explore_df)
-
-# st.data_editor(
-# quick_explore_df,
-# column_config={"stock_trigger_state": st.column_config.TextColumn(
-#     "Trigger",
-#     width="small"
-# ),
-#                 "stock_take_profit_atr": st.column_config.NumberColumn(
-#     "Take Profit Price",
-#     format="%.2f",
-# ),
-#               "stock_stop_loss_atr": st.column_config.NumberColumn(
-#     "Stop Loss Price",
-#     format="%.2f",
-# ),
-#               "stock_price_at_trigger": st.column_config.NumberColumn(
-#     "Trigger Price",
-#     format="%.2f",
-# ),
-#               "stock_atr_ma": st.column_config.NumberColumn(
-#     "ATR MA",
-#     format="%.2f",
-# ),
-# #               "stock_previous_triggers": st.column_config.ListColumn(
-# #     "Previous Triggers",
-# #     # width="medium",
-# # ),
-#               "stock_trigger_at": st.column_config.DatetimeColumn(
-#   "Trigger Time",
-#   format="DD MMM YYYY, HH:MM"
-#   ),
-#               "stock_ema_p1": st.column_config.NumberColumn(
-#     "EMA P1",
-#     format="%.2f",
-# ),
-#               "stock_ema_p2": st.column_config.NumberColumn(
-#     "EMA P2",
-#     format="%.2f",
-# ),
-#     # "stock_view_details": st.column_config.LinkColumn
-#     # (
-#     #     "Stock Details",
-#     #     help="The top trending Streamlit apps",
-#     #     max_chars=100,
-#     #     display_text="view table",
-#     #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
-#     # ),
-    
-# },
-# hide_index=True,
-# )
+  
 
 # ##########################################################  
 # Purpose: Basic EDA
@@ -738,3 +671,62 @@ def historical_overview(df):
   # df_overview_df = pd.concat([x, df_overview], ignore_index=True)
   
   return df_overview_df
+
+
+def ema_continual(symbol, 
+                  stock_df,
+                  short_window,
+                  long_window, 
+                  moving_avg, 
+                  # display_table = True
+                  ):
+    
+    # column names for long and short moving average columns
+    short_window_col = str(short_window) + '_' + moving_avg
+    long_window_col = str(long_window) + '_' + moving_avg
+        
+    # #########################
+    # BEGIN: DEBUG_INFO
+    st.write(symbol)
+    
+    stock_df['ema_5above8'] = (stock_df[short_window_col] > stock_df[long_window_col])
+    
+    stock_df['t0_close_aboveema5'] = ((stock_df['Close'].shift(1) > stock_df[short_window_col]) &
+                                       ((stock_df['Low'].shift(1) < stock_df[short_window_col]) |
+                                       (stock_df['Low'].shift(1) < stock_df[long_window_col])) &
+                                       (stock_df['Close'].shift(1) <  stock_df['High'].shift(1)) & 
+                                       (stock_df['Close'].shift(1) <  stock_df['High'].shift(2)))
+    
+    stock_df['t0_low_belowema5'] = (((stock_df['Low'].shift(2) < stock_df[short_window_col]) |
+                                       (stock_df['Low'].shift(2) < stock_df[long_window_col])) &
+                                       (stock_df['High'].shift(2) > stock_df[short_window_col]))
+    
+    stock_df['ema_continual_long'] = ((stock_df[short_window_col] > stock_df[long_window_col]) & #Ema 5 is above Ema  8
+                                      # Last candle (C0) closes above ema5 with low below ema 5 or ema 8 (green candle) and 
+                                      # close of C0 candle is less than high of the last two candles
+                                      ((stock_df['Close'].shift(1) > stock_df[short_window_col]) &
+                                       ((stock_df['Low'].shift(1) < stock_df[short_window_col]) |
+                                       (stock_df['Low'].shift(1) < stock_df[long_window_col])) &
+                                       (stock_df['Close'].shift(1) <  stock_df['High'].shift(1)) & 
+                                       (stock_df['Close'].shift(1) <  stock_df['High'].shift(2))) &
+                                      # Low of Candle before C0 (C1) < ema 5 or <  ema 8 
+                                      # with high above ema 5(red candle) 
+                                      (((stock_df['Low'].shift(2) < stock_df[short_window_col]) |
+                                       (stock_df['Low'].shift(2) < stock_df[long_window_col])) &
+                                       (stock_df['High'].shift(2) > stock_df[short_window_col]))
+                                      )
+    
+    st.write("EMA 1-2 candle price continuation")
+    st.write(stock_df.sort_index(ascending=False)[['High', 'Low', 'Close', 
+       '5_EMA 1-2 candle price continuation',
+       '8_EMA 1-2 candle price continuation', 'Signal', 'Position', 
+       'ema_5above8','t0_close_aboveema5','t0_low_belowema5','ema_continual_long']])
+    
+    # ((stock_df['Close'].shift(4) > stock_df['Close'].shift(3)) &
+    #           (stock_df['Close'].shift(3) > stock_df['Close'].shift(2)) &
+    #           (stock_df['Close'].shift(2) < stock_df['Close'].shift(1))
+    #           )
+    
+    # END: DEBUG_INFO
+    # #########################
+    return stock_df

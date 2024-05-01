@@ -51,7 +51,7 @@ def main():
   # NSE: TATAINVEST: Tata Investment Corporation Ltd
 
   # convex_trade_algos = ["", "", "4-3-1 candle price reversal"]
-  ma_list = ["SMA", "EMA"]
+  ma_list = ["SMA", "EMA","EMA 1-2 candle price continuation"]
   algo_list = ["4-3-1 candle price reversal"]
   convex_trade_algos_list = ma_list + algo_list
   print(convex_trade_algos_list)
@@ -152,6 +152,7 @@ def main():
          
           if any(ma in algo_strategy for ma in ma_list):
             # print("TAB1: Moving Average Strategy")
+            
             short_window_col = str(selected_short_window) + '_' + algo_strategy
             long_window_col = str(selected_long_window) + '_' + algo_strategy  
             for symbol in known_options:
@@ -159,7 +160,7 @@ def main():
                 stock_name =  symbol
                 yf_data = yf.Ticker(symbol) #initiate the ticker
                 stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-                  
+                # print(algo_strategy)  
                 stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
                                           stock_hist_df,
                                           selected_short_window,
@@ -167,114 +168,122 @@ def main():
                                           algo_strategy,
                                           True)
                 
-                
-                # put this to a new tab on click of the button
-                # ###################################################
-                # st.write((stock_df.sort_index(ascending=False)[:10])) 
-                
-                etf_data[symbol] = stock_df
-                # previous_triggers = previous_triggers.sort_values(by='index', ascending=False)
-                previous_triggers_list = previous_triggers.index.strftime('%Y/%m/%d %H:%M')
-                previous_triggers_list = np.sort(previous_triggers_list)[::-1]
-                # print(previous_triggers_list)
-                
-                stock_day_close = get_current_price(symbol, selected_period, selected_interval)
-                stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
-                stock_trigger_at = df_pos.index.max()
-                stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
-                
-                # (buy order) profit order is + if trigger is Buy; loss order is - if trigger is Buy 
-                # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
-                
-                if (stock_trigger_state == "Buy"):
-                  stock_stop_loss_atr = stock_price_at_trigger - stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-                  stock_take_profit_atr = (stock_price_at_trigger + take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
-                elif (stock_trigger_state == "Sell"):
-                  stock_stop_loss_atr = (stock_price_at_trigger + stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
-                  stock_take_profit_atr = (stock_price_at_trigger - take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
-                
-                stock_ema_p1 = df_pos.loc[df_pos.index == df_pos.index.max(), short_window_col].to_list()[0]
-                stock_ema_p2 = df_pos.loc[df_pos.index == df_pos.index.max(), long_window_col].to_list()[0]
-                
-                stock_atr_ma = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
-                
-                stock_view_details = etf_data[symbol]
-                stock_previous_triggers = previous_triggers_list 
-                
-                # st.write(stock_previous_triggers)
-                for variable in ["symbol",
-                                "stock_trigger_at",
-                                "stock_trigger_state",
-                                "stock_price_at_trigger",
-                                "stock_stop_loss_atr",
-                                "stock_take_profit_atr",
-                                "stock_atr_ma",
-                                "stock_ema_p1",
-                                "stock_ema_p2",
-                                "stock_previous_triggers"
-                                ]:
-                  quick_explore[variable] = eval(variable)
-                x = pd.DataFrame([quick_explore])
+                if (algo_strategy == 'EMA 1-2 candle price continuation'):
+                  stock_df = ema_continual(symbol,stock_df,selected_short_window,
+                                          selected_long_window,algo_strategy)
                   
-                quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
-            quick_explore_df = quick_explore_df.sort_values(by = ['stock_trigger_at'], ascending=False)
-            # quick_explore_df = quick_explore_df.set_index(['symbol'])
-            # print(quick_explore_df)
-            
-            st.data_editor(
-            quick_explore_df,
-            column_config={"stock_trigger_state": st.column_config.TextColumn(
-                "Trigger",
-                width="small"
-            ),
-                           "stock_take_profit_atr": st.column_config.NumberColumn(
-                "Take Profit Price",
-                format="%.2f",
-            ),
-                          "stock_stop_loss_atr": st.column_config.NumberColumn(
-                "Stop Loss Price",
-                format="%.2f",
-            ),
-                          "stock_price_at_trigger": st.column_config.NumberColumn(
-                "Trigger Price",
-                format="%.2f",
-            ),
-                          "stock_atr_ma": st.column_config.NumberColumn(
-                "ATR MA",
-                format="%.2f",
-            ),
-                          "stock_previous_triggers": st.column_config.ListColumn(
-                "Previous Triggers",
-                # format="DD MMM YYYY, HH:MM"
-                # width="medium",
-            ),
-                          "stock_trigger_at": st.column_config.DatetimeColumn(
-              "Trigger Time",
-              format="DD MMM YYYY, HH:MM"
-              ),
-                          "stock_ema_p1": st.column_config.NumberColumn(
-                "EMA P1",
-                format="%.2f",
-            ),
-                          "stock_ema_p2": st.column_config.NumberColumn(
-                "EMA P2",
-                format="%.2f",
-            ),
-                # "stock_view_details": st.column_config.LinkColumn
-                # (
-                #     "Stock Details",
-                #     help="The top trending Streamlit apps",
-                #     max_chars=100,
-                #     display_text="view table",
-                #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
-                # ),
+                if (~df_pos.empty & ~previous_triggers.empty):  
+                  # put this to a new tab on click of the button
+                  # ###################################################
+                  # st.write((stock_df.sort_index(ascending=False)[:10])) 
+                  
+                  etf_data[symbol] = stock_df
+                  # previous_triggers = previous_triggers.sort_values(by='index', ascending=False)
+                  previous_triggers_list = previous_triggers.index.strftime('%Y/%m/%d %H:%M')
+                  previous_triggers_list = np.sort(previous_triggers_list)[::-1]
+                  # print(previous_triggers_list)
+                  
+                  stock_day_close = get_current_price(symbol, selected_period, selected_interval)
+                  stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
+                  stock_trigger_at = df_pos.index.max()
+                  stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
+                  
+                  # (buy order) profit order is + if trigger is Buy; loss order is - if trigger is Buy 
+                  # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
+                  
+                  if (stock_trigger_state == "Buy"):
+                    stock_stop_loss_atr = stock_price_at_trigger - stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+                    stock_take_profit_atr = (stock_price_at_trigger + take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
+                  elif (stock_trigger_state == "Sell"):
+                    stock_stop_loss_atr = (stock_price_at_trigger + stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
+                    stock_take_profit_atr = (stock_price_at_trigger - take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
+                  
+                  stock_ema_p1 = df_pos.loc[df_pos.index == df_pos.index.max(), short_window_col].to_list()[0]
+                  stock_ema_p2 = df_pos.loc[df_pos.index == df_pos.index.max(), long_window_col].to_list()[0]
+                  
+                  stock_atr_ma = df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"].to_list()[0]
+                  
+                  stock_view_details = etf_data[symbol]
+                  stock_previous_triggers = previous_triggers_list 
+                  
+                  # st.write(stock_previous_triggers)
+                  for variable in ["symbol",
+                                  "stock_trigger_at",
+                                  "stock_trigger_state",
+                                  "stock_price_at_trigger",
+                                  "stock_stop_loss_atr",
+                                  "stock_take_profit_atr",
+                                  "stock_atr_ma",
+                                  "stock_ema_p1",
+                                  "stock_ema_p2",
+                                  "stock_previous_triggers"
+                                  ]:
+                    quick_explore[variable] = eval(variable)
+                  x = pd.DataFrame([quick_explore])
+                    
+                  quick_explore_df = pd.concat([x, quick_explore_df], ignore_index=True)
+                quick_explore_df = quick_explore_df.sort_values(by = ['stock_trigger_at'], ascending=False)
+                # quick_explore_df = quick_explore_df.set_index(['symbol'])
+                # print(quick_explore_df)
                 
-            },
-            hide_index=True,
-            )
-            quick_explore_df_ma = quick_explore_df
-    
-            st.divider()
+                st.data_editor(
+                quick_explore_df,
+                column_config={"stock_trigger_state": st.column_config.TextColumn(
+                    "Trigger",
+                    width="small"
+                ),
+                              "stock_take_profit_atr": st.column_config.NumberColumn(
+                    "Take Profit Price",
+                    format="%.2f",
+                ),
+                              "stock_stop_loss_atr": st.column_config.NumberColumn(
+                    "Stop Loss Price",
+                    format="%.2f",
+                ),
+                              "stock_price_at_trigger": st.column_config.NumberColumn(
+                    "Trigger Price",
+                    format="%.2f",
+                ),
+                              "stock_atr_ma": st.column_config.NumberColumn(
+                    "ATR MA",
+                    format="%.2f",
+                ),
+                              "stock_previous_triggers": st.column_config.ListColumn(
+                    "Previous Triggers",
+                    # format="DD MMM YYYY, HH:MM"
+                    # width="medium",
+                ),
+                              "stock_trigger_at": st.column_config.DatetimeColumn(
+                  "Trigger Time",
+                  format = "YYYY-MM-DD HH:mm"
+                    # format="DD MMM YYYY, HH:MM"
+                  ),
+                              "stock_ema_p1": st.column_config.NumberColumn(
+                    "EMA P1",
+                    format="%.2f",
+                ),
+                              "stock_ema_p2": st.column_config.NumberColumn(
+                    "EMA P2",
+                    format="%.2f",
+                ),
+                    # "stock_view_details": st.column_config.LinkColumn
+                    # (
+                    #     "Stock Details",
+                    #     help="The top trending Streamlit apps",
+                    #     max_chars=100,
+                    #     display_text="view table",
+                    #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
+                    # ),
+                    
+                },
+                hide_index=True,
+                )
+                quick_explore_df_ma = quick_explore_df
+                
+                
+        
+                st.divider()
+              # if dataframe is not empty
             # return
           # st.write(etf_data["NVDA"])
           elif (any(algo in algo_strategy for algo in algo_list)):
@@ -632,7 +641,7 @@ def main():
         df_summary_view = pd.concat([df_summary_view, df_details], ignore_index=True)
         # Add 52 week price range
         
-      st.write(df_summary_view)
+      st.write(df_summary_view.sort_values(by='symbol',ascending=True))
       
         
       
