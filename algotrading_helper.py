@@ -716,11 +716,50 @@ def ema_continual(symbol,
                                        (stock_df['High'].shift(2) > stock_df[short_window_col]))
                                       )
     
-    st.write("EMA 1-2 candle price continuation")
+    stock_df['ema_5below8'] = (stock_df[short_window_col] < stock_df[long_window_col]) 
+                               
+                                      # Last candle (C0) closes above ema5 with low below ema 5 or ema 8 (green candle) and 
+                                      # close of C0 candle is less than high of the last two candles
+    stock_df['t0_close_belowema5'] = ((stock_df['Close'].shift(1) < stock_df[short_window_col]) &
+                                       ((stock_df['High'].shift(1) > stock_df[short_window_col]) |
+                                       (stock_df['High'].shift(1) > stock_df[long_window_col])) &
+                                       (stock_df['Close'].shift(1) >  stock_df['Low'].shift(1)) & 
+                                       (stock_df['Close'].shift(1) >  stock_df['Low'].shift(2)))
+    
+                                      # Low of Candle before C0 (C1) < ema 5 or <  ema 8 
+                                      # with high above ema 5(red candle) 
+    stock_df['t0_low_aboveema5'] =  (((stock_df['High'].shift(2) > stock_df[short_window_col]) |
+                                       (stock_df['High'].shift(2) > stock_df[long_window_col])) &
+                                       (stock_df['Low'].shift(2) < stock_df[short_window_col]))
+                                      
+    
+    stock_df['ema_continual_short'] = ((stock_df[short_window_col] < stock_df[long_window_col]) & #Ema 5 is above Ema  8
+                                      # Last candle (C0) closes above ema5 with low below ema 5 or ema 8 (green candle) and 
+                                      # close of C0 candle is less than high of the last two candles
+                                      ((stock_df['Close'].shift(1) < stock_df[short_window_col]) &
+                                       ((stock_df['High'].shift(1) > stock_df[short_window_col]) |
+                                       (stock_df['High'].shift(1) > stock_df[long_window_col])) &
+                                       (stock_df['Close'].shift(1) >  stock_df['Low'].shift(1)) & 
+                                       (stock_df['Close'].shift(1) >  stock_df['Low'].shift(2))) &
+                                      # Low of Candle before C0 (C1) < ema 5 or <  ema 8 
+                                      # with high above ema 5(red candle) 
+                                      (((stock_df['High'].shift(2) > stock_df[short_window_col]) |
+                                       (stock_df['High'].shift(2) > stock_df[long_window_col])) &
+                                       (stock_df['Low'].shift(2) < stock_df[short_window_col]))
+                                      )
+    
+    
+    st.write("EMA 1-2 candle price continuation - LONG")
     st.write(stock_df.sort_index(ascending=False)[['High', 'Low', 'Close', 
        '5_EMA 1-2 candle price continuation',
        '8_EMA 1-2 candle price continuation', 'Signal', 'Position', 
        'ema_5above8','t0_close_aboveema5','t0_low_belowema5','ema_continual_long']])
+    
+    st.write("EMA 1-2 candle price continuation - SHORT")
+    st.write(stock_df.sort_index(ascending=False)[['High', 'Low', 'Close', 
+       '5_EMA 1-2 candle price continuation',
+       '8_EMA 1-2 candle price continuation', 'Signal', 'Position', 
+       'ema_5below8','t0_close_belowema5','t0_low_aboveema5','ema_continual_short']])
     
     # ((stock_df['Close'].shift(4) > stock_df['Close'].shift(3)) &
     #           (stock_df['Close'].shift(3) > stock_df['Close'].shift(2)) &
