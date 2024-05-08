@@ -450,6 +450,8 @@ def display_watchlist():
   
   user_sel_list = load_user_selected_options()
   
+  st.session_state.user_watchlist = user_sel_list
+  
   return user_sel_list
 
 def customize(expander):
@@ -770,15 +772,125 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
   
   
   
-def stock_status():
+async def stock_status(known_options, selected_algos, selected_period, selected_interval):
   # generate stocks list view
-  # st.write("hello")
+  # st.write(known_options, selected_algos, selected_period, selected_interval)
   
+  # await asyncio.sleep(1)
+  for symbol in known_options:
+    # get ticker data
+    yf_data = yf.Ticker(symbol) #initiate the ticker
+    st.write("fetching status for: ", symbol )
+    stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+    
+    # func1 = strategy_sma(symbol,
+    #              stock_hist_df,
+    #              selected_period, 
+    #              selected_interval,
+    #              algo_strategy = "SMA",
+    #              selected_short_window = 5,
+    #              selected_long_window = 8
+    #              )
+    # st.write(func1)
+    
+    status_strategy_ema = await strategy_ema(symbol,
+                 stock_hist_df,
+                 selected_period, 
+                 selected_interval,
+                 algo_strategy = "EMA",
+                 selected_short_window = 5,
+                 selected_long_window = 8,
+                 is_summary = False,
+                 )
+    # EMA quick_explore + the following columns
+    # stock_df[short_window_col]; stock_df[long_window_col]
+    # stock_df['Signal']; stock_df['Position']
+    # print("status_strategy_ema")
+    # print(status_strategy_ema.columns)
+    # print()
+    # status_strategy_ema
+    # Index(['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',
+    #    '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma',
+    #    'stop_loss_atr', 'take_profit_atr'],
+    #   dtype='object')
+    status_strategy_ema = status_strategy_ema[['Close', 
+       '5_EMA', '8_EMA', 'Signal', 'Position', 'atr_ma',
+       'stop_loss_atr', 'take_profit_atr']]
+    # st.write("EMA", status_strategy_ema.sort_index(ascending=False))
+    
+    status_strategy_ema_continual = await strategy_ema_continual(symbol,
+                                 stock_hist_df,
+                                 selected_period, 
+                                 selected_interval,
+                                 algo_strategy = "EMA 1-2 candle price",
+                                 selected_short_window = 5,
+                                 selected_long_window = 8,
+                                 is_summary = False,
+                                 )
+    # ema_continual + the following columns
+    # stock_df['ema_5above8'];stock_df['t0_close_aboveema5'];stock_df['t0_low_belowema5'];stock_df['ema_continual_long'];
+    # stock_df['ema_5below8'];stock_df['t0_close_belowema5'];stock_df['t0_low_aboveema5'];stock_df['ema_continual_short']
+    # print("status_strategy_ema_continual")
+    # print(status_strategy_ema_continual.columns)
+    # print()
+    # Index(['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',
+    #    '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma',
+    #    'stop_loss_atr', 'take_profit_atr', '5_EMA 1-2 candle price',
+    #    '8_EMA 1-2 candle price', 'ema_5above8', 't0_close_aboveema5',
+    #    't0_low_belowema5', 'ema_continual_long', 'ema_5below8',
+    #    't0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short'],
+    #   dtype='object')
+    status_strategy_ema_continual = status_strategy_ema_continual[['Close', 
+       '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma',
+       'stop_loss_atr', 'take_profit_atr', '5_EMA 1-2 candle price',
+       '8_EMA 1-2 candle price', 'ema_5above8', 't0_close_aboveema5',
+       't0_low_belowema5', 'ema_continual_long', 'ema_5below8',
+       't0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short']]
+    # st.write("EMA 1-2 candle price", status_strategy_ema_continual.sort_index(ascending=False))
+    
+    
+    status_strategy_431_reversal = await strategy_431_reversal(symbol,
+                                 stock_hist_df,
+                                 selected_period, 
+                                 selected_interval,
+                                 is_summary = False,
+                                 algo_strategy = "4-3-1 candle price reversal",
+                                 )
+    
+    # print("status_strategy_431_reversal")
+    # print(status_strategy_431_reversal.columns)
+    # print()
+    # Index(['Open', 'Close', 'High', 'Low', 'strategy_431_long',
+    #    'strategy_431_short', 'position', 'atr', 'atr_ma', 'stop_loss_atr',
+    #    'take_profit_atr'],
+    #   dtype='object')
+    status_strategy_431_reversal = status_strategy_431_reversal[['Close', 'High', 'Low', 'strategy_431_long',
+       'strategy_431_short', 'position', 'atr', 'atr_ma', 'stop_loss_atr',
+       'take_profit_atr']]
+    # st.write("4-3-1 candle price reversal", status_strategy_431_reversal.sort_index(ascending=False))
+    
+    st.write("---")
+    
+    # Merge on index and selected columns
+    status_ema_merged_df = pd.merge(status_strategy_ema, #[selected_columns_df1], 
+                                    status_strategy_ema_continual, #[selected_columns_df2], 
+                                    left_index=True, right_index=True)
+    status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
+                                    status_strategy_431_reversal, #[selected_columns_df2], 
+                                    left_index=True, right_index=True)
+
+    st.write(status_ema_merged_df.sort_index(ascending=False))
+    st.write("---")
+    
   return
   
 
 def show_trading_charts():
-  # show visualizations
+  # known_options, 
+  #                             selected_algos, 
+  #                             period, 
+  #                             interval,):
+  # # show visualizations
   # st.write("hello")
   
   return
@@ -824,7 +936,8 @@ async def algo_trading_summary(symbol,
                  selected_interval,
                  algo_strategy = "SMA",
                  selected_short_window = 5,
-                 selected_long_window = 8
+                 selected_long_window = 8,
+                 is_summary = True,
                  )
     func2 = strategy_ema(symbol,
                  stock_hist_df,
@@ -833,6 +946,7 @@ async def algo_trading_summary(symbol,
                  algo_strategy = "EMA",
                  selected_short_window = 5,
                  selected_long_window = 8,
+                 is_summary = True,
                  )
     
     func3 = strategy_ema_continual(symbol,
@@ -842,13 +956,16 @@ async def algo_trading_summary(symbol,
                                  algo_strategy = "EMA 1-2 candle price",
                                  selected_short_window = 5,
                                  selected_long_window = 8,
+                                 is_summary = True,
                                  )
     
     func4 = strategy_431_reversal(symbol,
                                  stock_hist_df,
                                  selected_period, 
                                  selected_interval,
+                                 is_summary = True,
                                  algo_strategy = "4-3-1 candle price reversal",
+                                 
                                  )
     
     # results = await asyncio.gather(extracted_functions[0], extracted_functions[1])

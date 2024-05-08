@@ -148,16 +148,23 @@ def main():
     start_time = time.time()
     
     known_options = display_watchlist()
-    print("known_options")
+    # print("known_options")
     print(known_options, st.session_state.selected_algos)
     
-    asyncio.run (signals_view(known_options, 
+    asyncio.run (signals_view(st.session_state.user_watchlist, # known_options, 
                               st.session_state.selected_algos, 
                               st.session_state.period, 
                               st.session_state.interval ))
     
     end_time = time.time()
     execution_time = end_time - start_time
+    
+    # if st.button("Generate Trading Chart"):
+    #     show_trading_charts()
+    
+    # Hyperlink to generate trading chart
+    if st.markdown("[Generate Trading Charts](show_trading_charts())"):
+        show_trading_charts()
     
     # time check begin
     for variable in ["process_name","execution_time", "start_time", "end_time"]:
@@ -170,7 +177,11 @@ def main():
     process_name = "Status"
     start_time = time.time()
     
-    stock_status()
+    asyncio.run (stock_status(st.session_state.user_watchlist, # known_options, 
+                              st.session_state.selected_algos, 
+                              st.session_state.period, 
+                              st.session_state.interval))
+    # stock_status()
     
     end_time = time.time()
     execution_time = end_time - start_time
@@ -188,7 +199,13 @@ def main():
     process_name = "Trading Charts"
     start_time = time.time()
     
+    known_options = display_watchlist()
+    
     show_trading_charts()
+      # st.session_state.user_watchlist, #known_options, 
+      #                         st.session_state.selected_algos, 
+      #                         st.session_state.period, 
+      #                         st.session_state.interval) # known_options
     
     end_time = time.time()
     execution_time = end_time - start_time
