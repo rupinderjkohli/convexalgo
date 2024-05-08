@@ -1,11 +1,14 @@
 from algotrading_helper import *
 from algotrading_visualisations import *
+from algotrading_algos import *
 from algotrading_class import *
+
 
 from pathlib import Path
 
-pd.options.display.float_format = '${:,.2f}'.format
+pd.options.display.float_format = '{:,.2f}'.format
 
+from streamlit_option_menu import option_menu
 import streamlit.components.v1 as components
 
 def main():
@@ -22,76 +25,215 @@ def main():
   )    
   # """### Select Stock and Time interval"""
   # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01Home.py
-  # new_ticker_list = []
   
-  # new_ticker = add_ticker()
+  # # Initialize SessionState
+  # session_state = SessionState(selected_algos="")
   
-  symbol_list = load_config()
-  
-  # print(type(symbol_list))
+  # load the default ticker list
+  refresh = False
+  symbol_list, period, interval, stop_loss, take_profit,trading_strategy_ma,trading_strategy_trend = load_config(refresh)
   
   symbol_list = np.sort(symbol_list)
-  # print(symbol_list)
+  st.session_state.period = period[0]
+  st.session_state.interval = interval[0]
+  st.session_state.stop_loss_factor = float(stop_loss[0])
+  st.session_state.take_profit_factor = float(take_profit[0])
   
-  # base_symbol_list = ["MSFT","PLTR","TSLA","NVDA","AMZN", "NFLX","BA","GS","SPY","QQQ","IWM","SMH","RSP"]
-  # symbol_list = base_symbol_list # new_ticker_list
   
-  # NSE: TATAPOWER: Tata Power Company Ltd
-  # NSE: TATAINVEST: Tata Investment Corporation Ltd
-
-  ma_list = ["SMA", "EMA"]
-  algo_list = ["3-Candle Reversal"]
+  # st.session_state.period = PERIOD
+  # st.session_state.interval = INTERVAL
+  # st.session_state.stop_loss = STOP_LOSS
+  # st.session_state.take_profit = TAKE_PROFIT 
+  # st.session_state.moving_average = MOVING_AVERAGE
+  # st.session_state.trend_based = TREND_BASED 
+  
+  ma_list = trading_strategy_ma #["SMA", "EMA","EMA 1-2 candle price continuation"]
+  algo_list = trading_strategy_trend #["4-3-1 candle price reversal"]
+  convex_trade_algos_list = ma_list + algo_list
+  
+  # List of algo functions
+  algo_functions = [strategy_sma, strategy_ema, strategy_ema_continual, strategy_431_reversal]
+  
+  algo_functions_map = (((convex_trade_algos_list, algo_functions)))
+  st.session_state.algo_functions_map = algo_functions_map
+  
+  print(convex_trade_algos_list)
+  
+  process_time = {}
+  process_time_df = pd.DataFrame()
   
   # user selected list of tickers
-  # load_user_selected_options()
   user_sel_list = []
   
   # load_user_selected_options()
-  
   user_sel_list = load_user_selected_options()
+  
   print(user_sel_list)
   
-  # ticker selection
-  st.sidebar.header("Choose your Stock filter: ")
-  ticker = st.sidebar.multiselect('Choose Ticker', options=symbol_list,
-                                help = 'Select a ticker', 
-                                key='ticker_list',
-                                max_selections=8,
-                                default= user_sel_list, #["TSLA"],
-                                placeholder="Choose an option",
-                                # on_change=update_selection(),
-                                )
-  print(ticker)
-  print(st.session_state)
-  known_options = ticker
-  save_user_selected_options(ticker)
   
-  # period selection
-  selected_period = st.sidebar.selectbox(
-      'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'], index=1)
+  # if "shared" not in st.session_state:
+  #  st.session_state["shared"] = True
+
+  # if len(known_options) == 0:
+  #   st.write ("Please select a ticker in the sidebar")
+  #   return
+  # else:
+  #     st.write("home page")
   
-  # interval selection
-  selected_interval = st.sidebar.selectbox(
-      'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'], index=2)
+  # st.write("# Welcome to Streamlit! 👋")
   
-  # trading strategy selection
-  algo_strategy = st.sidebar.selectbox(
-      'Select Algo Strategy', options=['SMA', 'EMA', "3-Candle Reversal"], index=2)
-  selected_short_window =  st.sidebar.number_input(":gray[Short Window]", step = 1, value=5)  
-  selected_long_window =  st.sidebar.number_input(":gray[Long Window]", step = 1, value=8)   
+  # 5. Add on_change callback
+  # st.write(st.session_state)
+  if('main_menu' not in st.session_state):
+    st.session_state['main_menu'] = st.session_state.get('main_menu', 0)
+  # st.write(st.session_state)  
+  
+  def on_change(key):
+      selection = st.session_state[key]
+      # st.write(f"Selection changed to {selection}")
+      
+  with st.sidebar:
+    choose = option_menu("Convex Algos", ["Setup Day", "Signals", "Status", "Trading Charts", "Change Logs"],
+                         icons=['house', 'camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill'],
+                         menu_icon="app-indicator", default_index=0,
+                         styles={
+                          "container": {"padding": "5!important", "background-color": "#fafafa"},
+                          "icon": {"color": "orange", "font-size": "25px"}, 
+                          "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
+                          "nav-link-selected": {"background-color": "#02ab21"},
+                      },
+                         key='main_menu',
+                         on_change=on_change
+    )
+    
+    # 4. Manual item selection
+    if st.session_state.get('main_menu', 0):
+        # st.session_state['main_menu'] = (st.session_state.get('main_menu', 0) ) #+ 1) % 4
+        manual_select = st.session_state['main_menu']
+        # st.write(manual_select)
+    else:
+        manual_select = None
+        
+  # st.sidebar.success("Setup your trading day")
 
-  #         Valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
-  # Either Use period parameter or use start and end
-  #     interval : str
-  #         Valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
+  if (manual_select == "Setup Day" ):
+    process_name = "Setup Day"
+    start_time = time.time()
+    known_options, selected_algos = setup_day(user_sel_list, 
+                                              st.session_state.period, 
+                                              st.session_state.interval, 
+                                              symbol_list, 
+                                              algo_functions_map)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    
+    # time check begin
+    for variable in ["process_name","execution_time", "start_time", "end_time"]:
+        process_time[variable] = eval(variable)
+    x = pd.DataFrame([process_time])
+    process_time_df = pd.concat([x, process_time_df], ignore_index=True)
+    # time check end
+    # print(known_options)
+    
+    # if(selected_algos not in st.session_state):
+    #   st.session_state[selected_algos] = st.session_state.get(selected_algos, selected_algos)
+    # print(st.session_state)  
+    # Store the selected option in session state
+    st.session_state.selected_algos = selected_algos
+    
+  elif (manual_select == "Signals" ):
+    st.header("Trading Signals View")
+    
+    process_name = "Signals"
+    start_time = time.time()
+    
+    known_options = display_watchlist()
+    # print("known_options")
+    print(known_options, st.session_state.selected_algos)
+    
+    asyncio.run (signals_view(st.session_state.user_watchlist, # known_options, 
+                              st.session_state.selected_algos, 
+                              st.session_state.period, 
+                              st.session_state.interval ))
+    
+    end_time = time.time()
+    execution_time = end_time - start_time
+    
+    # if st.button("Generate Trading Chart"):
+    #     show_trading_charts()
+    
+    # Hyperlink to generate trading chart
+    if st.markdown("[Generate Trading Charts](show_trading_charts())"):
+        show_trading_charts()
+    
+    # time check begin
+    for variable in ["process_name","execution_time", "start_time", "end_time"]:
+        process_time[variable] = eval(variable)
+    x = pd.DataFrame([process_time])
+    process_time_df = pd.concat([x, process_time_df], ignore_index=True)
+    
+  elif (manual_select == "Status" ):
+    st.write("Shows the current status of all strategies against all stocks")
+    process_name = "Status"
+    start_time = time.time()
+    
+    asyncio.run (stock_status(st.session_state.user_watchlist, # known_options, 
+                              st.session_state.selected_algos, 
+                              st.session_state.period, 
+                              st.session_state.interval))
+    # stock_status()
+    
+    end_time = time.time()
+    execution_time = end_time - start_time
+    
+    # time check begin
+    for variable in ["process_name","execution_time", "start_time", "end_time"]:
+        process_time[variable] = eval(variable)
+    x = pd.DataFrame([process_time])
+    process_time_df = pd.concat([x, process_time_df], ignore_index=True)
+    
+  elif (manual_select == "Trading Charts" ):
+    st.write("Display all charts with their candlestick charts")
+    st.write("Display specific chart with their candlestick charts")
+    
+    process_name = "Trading Charts"
+    start_time = time.time()
+    
+    known_options = display_watchlist()
+    
+    show_trading_charts()
+      # st.session_state.user_watchlist, #known_options, 
+      #                         st.session_state.selected_algos, 
+      #                         st.session_state.period, 
+      #                         st.session_state.interval) # known_options
+    
+    end_time = time.time()
+    execution_time = end_time - start_time
+    
+    # time check begin
+    for variable in ["process_name","execution_time", "start_time", "end_time"]:
+        process_time[variable] = eval(variable)
+    x = pd.DataFrame([process_time])
+    process_time_df = pd.concat([x, process_time_df], ignore_index=True)
+  
+  elif (manual_select == "Change Logs" ):
+    # st.write("Change Logs")
+    process_name = "Change Logs"
+    start_time = time.time()
+    
+    show_change_logs()
+    
+    end_time = time.time()
+    execution_time = end_time - start_time
+    
+    # time check begin
+    for variable in ["process_name","execution_time", "start_time", "end_time"]:
+        process_time[variable] = eval(variable)
+    x = pd.DataFrame([process_time])
+    process_time_df = pd.concat([x, process_time_df], ignore_index=True)
+  
+  print (process_time_df)
+  return
 
-  ema_period1 = selected_short_window
-  ema_period2 = selected_long_window
-  if "shared" not in st.session_state:
-   st.session_state["shared"] = True
-
-  if len(known_options) == 0:
-    st.write ("Please select a ticker in the sidebar")
-    return
-  else:
-      st.write("home page")
+if __name__ == '__main__':
+  main()
