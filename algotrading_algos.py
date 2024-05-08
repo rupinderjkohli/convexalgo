@@ -30,6 +30,18 @@ from jproperties import Properties
 # # Enable tracemalloc
 # tracemalloc.start()
 
+# async def func_a():
+#     print("Function A is running")
+#     await asyncio.sleep(1)
+#     print("Function A is done")
+#     return "Function A"
+
+# async def func_b():
+#     print("Function B is running")
+#     await asyncio.sleep(1)
+#     print("Function B is done")
+#     return "Function B"
+
 async def strategy_sma(symbol,
                  stock_hist_df,
                  selected_period, 
@@ -37,7 +49,6 @@ async def strategy_sma(symbol,
                  algo_strategy,
                  selected_short_window,
                  selected_long_window,
-                 is_summary,
                  ):
     
     print("processing strategy_sma ", symbol)
@@ -48,7 +59,8 @@ async def strategy_sma(symbol,
                                                                     stock_hist_df,
                                                                     selected_short_window,
                                                                     selected_long_window,
-                                                                    algo_strategy,)
+                                                                    algo_strategy,
+                                                                    True)
     trading_snapshot_sma = await trading_signals_view(symbol,
                                                  algo_strategy,
                                                  stock_df,
@@ -57,15 +69,10 @@ async def strategy_sma(symbol,
                                                  selected_period,
                                                  selected_interval,
                                                  short_window_col, 
-                                                 long_window_col,
-                                                 is_summary,)
+                                                 long_window_col)
     
     
-    if (is_summary):
-        return_snapshot = trading_snapshot_sma
-    else: return_snapshot = stock_df
-    return return_snapshot
-    # return trading_snapshot_sma
+    return trading_snapshot_sma
   
   
 async def strategy_ema(symbol,
@@ -74,8 +81,7 @@ async def strategy_ema(symbol,
                  selected_interval,
                  algo_strategy,
                  selected_short_window,
-                 selected_long_window,
-                 is_summary,
+                 selected_long_window
                  ):
     await asyncio.sleep(1)
     print("processing strategy_ema ", symbol)
@@ -94,16 +100,10 @@ async def strategy_ema(symbol,
                                                  selected_period,
                                                  selected_interval,
                                                  short_window_col,
-                                                 long_window_col,
-                                                 is_summary,)
+                                                 long_window_col)
     
     
-    if (is_summary):
-        return_snapshot = trading_snapshot_ema
-    else: return_snapshot = stock_df
-    return return_snapshot
-    
-    # return trading_snapshot_ema
+    return trading_snapshot_ema
     
   
 async def strategy_ema_continual(symbol,
@@ -112,8 +112,7 @@ async def strategy_ema_continual(symbol,
                                  selected_interval,
                                  algo_strategy,
                                  selected_short_window,
-                                 selected_long_window,
-                                 is_summary,
+                                 selected_long_window
                                  ):
     await asyncio.sleep(1)
     print("processing strategy_ema_continual ", symbol)
@@ -125,7 +124,7 @@ async def strategy_ema_continual(symbol,
                                                                     algo_strategy,
                                                                     True)
     
-    stock_ema_continual_df = ema_continual(symbol,
+    stock_df = ema_continual(symbol,
                              stock_df,
                              selected_short_window,
                              selected_long_window,
@@ -136,29 +135,22 @@ async def strategy_ema_continual(symbol,
      
     trading_snapshot_ema_continual = await trading_signals_view(symbol,
                                                  algo_strategy,
-                                                 stock_ema_continual_df,
+                                                 stock_df,
                                                  df_pos,
                                                  previous_triggers,
                                                  selected_period,
                                                  selected_interval,
                                                  short_window_col,
-                                                 long_window_col,
-                                                 is_summary,)
-    
-    if (is_summary):
-        return_snapshot = trading_snapshot_ema_continual
-    else: return_snapshot = stock_ema_continual_df
-    return return_snapshot
+                                                 long_window_col)
     
     
+    return trading_snapshot_ema_continual
   
 async def strategy_431_reversal(symbol,
                                 stock_hist_df,
                                 selected_period, 
                                 selected_interval,
-                                is_summary,
-                                algo_strategy = "4-3-1 candle price reversal",
-                                ):
+                                algo_strategy = "4-3-1 candle price reversal",):
     print("processing strategy_431_reversal ", symbol)
     await asyncio.sleep(1)
     # Collate high level stats on the data
@@ -172,28 +164,30 @@ async def strategy_431_reversal(symbol,
                                     selected_interval,
                                     algo_strategy = "4-3-1 candle price reversal",)
 
+    #   trading_snapshot_ema_continual = await trading_signals_view(symbol,
+    #                                                  algo_strategy,
+    #                                                  df_431_reversal_summary,
+    #                                                  df_pos = [],
+    #                                                  previous_triggers,
+    #                                                  selected_period,
+    #                                                  selected_interval,
+    #                                                  short_window_col,
+    #                                                  long_window_col)
+
     # st.write(df_four_three_one_soldiers.sort_index(ascending=False))
     stock_trigger_at = df_four_three_one_soldiers.index.max()
     stock_trigger_state = df_four_three_one_soldiers.loc[df_four_three_one_soldiers.index ==  stock_trigger_at, "position"].to_list()[0]
     stock_price_at_trigger = df_four_three_one_soldiers.loc[df_four_three_one_soldiers.index ==  stock_trigger_at, "Close"].to_list()[0]
     
-    # df_four_three_one_soldiers, buy_short, sell_long = calculate_atr_buy_sell(df_four_three_one_soldiers)
+    df_four_three_one_soldiers, buy_short, sell_long = calculate_atr_buy_sell(df_four_three_one_soldiers)
     
     if (stock_trigger_state == "Buy"):
         stock_stop_loss_atr = stock_price_at_trigger - st.session_state.stop_loss_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"]).to_list()[0]
         stock_take_profit_atr = (stock_price_at_trigger + st.session_state.take_profit_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
-
-        # df_four_three_one_soldiers['stop_loss_atr'] = df_four_three_one_soldiers.Close - st.session_state.stop_loss_factor * df_four_three_one_soldiers.atr_ma
-        # df_four_three_one_soldiers['take_profit_atr'] = df_four_three_one_soldiers.Close + st.session_state.take_profit_factor * df_four_three_one_soldiers.atr_ma
-    
     elif (stock_trigger_state == "Sell"):
         stock_stop_loss_atr = (stock_price_at_trigger + st.session_state.stop_loss_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
         stock_take_profit_atr = (stock_price_at_trigger - st.session_state.take_profit_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
 
-        # df_four_three_one_soldiers['stop_loss_atr'] = df_four_three_one_soldiers.Close + st.session_state.stop_loss_factor * df_four_three_one_soldiers.atr_ma
-        # df_four_three_one_soldiers['take_profit_atr'] = df_four_three_one_soldiers.Close - st.session_state.take_profit_factor * df_four_three_one_soldiers.atr_ma
-          
-            
     # stock_ema_p1 = df_pos.loc[df_pos.index == df_pos.index.max(), short_window_col].to_list()[0]
     # stock_ema_p2 = df_pos.loc[df_pos.index == df_pos.index.max(), long_window_col].to_list()[0]
 
@@ -206,6 +200,7 @@ async def strategy_431_reversal(symbol,
     previous_triggers_list = previous_triggers.index.strftime('%Y/%m/%d %H:%M')
     previous_triggers_list = np.sort(previous_triggers_list)[::-1]
     stock_previous_triggers = previous_triggers_list 
+    
     
     for variable in ["symbol",
                                 "stock_trigger_at",
@@ -223,10 +218,7 @@ async def strategy_431_reversal(symbol,
                   
     # st.write(quick_explore)
     
-    if (is_summary):
-        return_snapshot = quick_explore
-    else: return_snapshot = df_four_three_one_soldiers
-    return return_snapshot
+    return quick_explore #df_four_three_one_soldiers
       
 
 async def trading_signals_view(symbol, 
@@ -237,8 +229,7 @@ async def trading_signals_view(symbol,
                           selected_period, 
                           selected_interval,
                           short_window_col, 
-                          long_window_col,
-                          is_summary,
+                          long_window_col
                           ):
     # Collate high level stats on the data
     quick_explore = {}
@@ -270,18 +261,9 @@ async def trading_signals_view(symbol,
         if (stock_trigger_state == "Buy"):
             stock_stop_loss_atr = stock_price_at_trigger - st.session_state.stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
             stock_take_profit_atr = (stock_price_at_trigger + st.session_state.take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
-            
-            etf_data[symbol]['stop_loss_atr'] = stock_df.Close - st.session_state.stop_loss_factor * stock_df.atr_ma
-            etf_data[symbol]['take_profit_atr'] = stock_df.Close + st.session_state.take_profit_factor * stock_df.atr_ma
-        
         elif (stock_trigger_state == "Sell"):
             stock_stop_loss_atr = (stock_price_at_trigger + st.session_state.stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
             stock_take_profit_atr = (stock_price_at_trigger - st.session_state.take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
-            
-            etf_data[symbol]['stop_loss_atr'] = stock_df.Close + st.session_state.stop_loss_factor * stock_df.atr_ma
-            etf_data[symbol]['take_profit_atr'] = stock_df.Close - st.session_state.take_profit_factor * stock_df.atr_ma
-        
-        
         
         stock_ema_p1 = df_pos.loc[df_pos.index == df_pos.index.max(), short_window_col].to_list()[0]
         stock_ema_p2 = df_pos.loc[df_pos.index == df_pos.index.max(), long_window_col].to_list()[0]
@@ -293,7 +275,8 @@ async def trading_signals_view(symbol,
         
         # st.write(stock_previous_triggers)
         for variable in ["symbol",
-                         "stock_trigger_at",
+                         "algo_strategy",
+                        "stock_trigger_at",
                         "stock_trigger_state",
                         "stock_price_at_trigger",
                         "stock_stop_loss_atr",
@@ -301,7 +284,6 @@ async def trading_signals_view(symbol,
                         "stock_atr_ma",
                         "stock_ema_p1",
                         "stock_ema_p2",
-                        "algo_strategy",
                         "stock_previous_triggers"
                         ]:
             quick_explore[variable] = eval(variable)
@@ -313,15 +295,8 @@ async def trading_signals_view(symbol,
     # print(quick_explore_df)
     
     await asyncio.sleep(1)
-    # st.subheader("stock_view_details")
-    # st.write(stock_view_details.sort_index(ascending=False))
     
-    if (is_summary):
-        return_snapshot = quick_explore
-    else: return_snapshot = stock_view_details
-    
-    return return_snapshot
-    # return quick_explore #quick_explore_df
+    return quick_explore #quick_explore_df
 
 # ##########################################################  
 # Purpose: 
@@ -603,7 +578,7 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
 #   df_evaluate['t0'] = df_evaluate['Close'].shift(1)
   
   df_evaluate = df_evaluate.fillna(0)
-        
+  
   # for long
   # close of 4th greater than close of 3rd
   # close of 3rd greater than close of 2nd -
@@ -623,21 +598,8 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
               (df['Close'].shift(2) > df['Close'].shift(1))
               )
   
-  df_evaluate['position'] = np.where(df_evaluate['strategy_431_long'], "Buy", "Sell")
   df_evaluate['position'] = np.where(df_evaluate['strategy_431_short'], "Sell", "Buy")
   
-  df_evaluate, buy_short, sell_long = calculate_atr_buy_sell(df_evaluate)
-  
-  if any(df_evaluate['position'] == "Buy"):
-      df_evaluate['stop_loss_atr'] = df_evaluate.Close - st.session_state.stop_loss_factor * df_evaluate.atr_ma
-      df_evaluate['take_profit_atr'] = df_evaluate.Close + st.session_state.take_profit_factor * df_evaluate.atr_ma
-    
-  elif any(df_evaluate['position'] == "Sell"):
-      df_evaluate['stop_loss_atr'] = df_evaluate.Close + st.session_state.stop_loss_factor * df_evaluate.atr_ma
-      df_evaluate['take_profit_atr'] = df_evaluate.Close - st.session_state.take_profit_factor * df_evaluate.atr_ma
-  
-#   st.write("df_evaluate['position']")
-#   st.write(df_evaluate)
   return df_evaluate
 
 
@@ -648,16 +610,16 @@ async def strategy_four_three_one_soldiers(symbol,
                                  algo_strategy = "4-3-1 candle price reversal",):
     # st.write(df.head())
     
-    df_strategy_431 = candle_four_three_one_soldiers(df, False)
-    # df_strategy_431 = df
+    df = candle_four_three_one_soldiers(df, False)
+    df_strategy_431 = df
     
     await asyncio.sleep(1)
     # st.write("filtered data - strategy_431_long")
-    df_strategy_431_long = (df_strategy_431[df_strategy_431["strategy_431_long"] == True])
+    df_strategy_431_long = (df[df["strategy_431_long"] == True])
     # st.write(df_strategy_431_long.sort_index(ascending=False))
     
     # st.write("filtered data - strategy_431_short")
-    df_strategy_431_short = (df_strategy_431[df_strategy_431["strategy_431_short"] == True])
+    df_strategy_431_short = (df[df["strategy_431_short"] == True])
     # st.write(df_strategy_431_short.sort_index(ascending=False))
     
     # stock_price_at_trigger = df_strategy_431_long.loc[df_strategy_431_long.index.max(), "Close"].to_list()[0]
@@ -674,6 +636,6 @@ async def strategy_four_three_one_soldiers(symbol,
     df_summary = pd.concat([df_summary, df_summary_short], ignore_index=False)
     
     # st.write(df_summary)
-    return df_strategy_431 #df_summary
+    return df_summary
     
  
