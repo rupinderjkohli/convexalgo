@@ -18,4 +18,3 @@ streamlit_js_eval
 streamlit-authenticator
 jproperties
 streamlit-option-menu
-futures
