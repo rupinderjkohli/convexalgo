@@ -23,7 +23,18 @@ from algotrading_helper import * #MovingAverageCrossStrategy, timeToTz, unix_tim
 # ##########################################################  
 # Purpose: 
 # ##########################################################  
-def show_trading_charts():
+def show_trading_charts(known_options, 
+                              selected_algos, 
+                              period, 
+                              interval,):
+  st.write("show_trading_charts")
+  # for symbol in known_options:
+  #   lw_charts_snapshot(symbol,
+  #                       stock_df, 
+  #                       algo_strategy,
+  #                       selected_short_window,
+  #                       selected_long_window,
+  #                       display_table = False)
   return
   
 # ##########################################################  

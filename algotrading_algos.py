@@ -172,13 +172,22 @@ async def strategy_431_reversal(symbol,
                                     selected_interval,
                                     algo_strategy = "4-3-1 candle price reversal",)
 
-    st.write("df_four_three_one_soldiers")
-    st.write(df_four_three_one_soldiers.sort_index(ascending=False))
+    # st.write("df_four_three_one_soldiers")
+    # Get the index of the row where the column value is "Buy" or "Sell"
+    # buy_sell_index = (df_four_three_one_soldiers == "Buy") | (df_four_three_one_soldiers == "Sell")
+    # index_of_buy_sell = buy_sell_index.idxmax(axis=1)
+    # st.write(index_of_buy_sell)
     stock_trigger_at = df_four_three_one_soldiers.index.max()
+    # stock_trigger_at = df_four_three_one_soldiers.index.index_of_buy_sell()
+    
     stock_trigger_state = df_four_three_one_soldiers.loc[df_four_three_one_soldiers.index ==  stock_trigger_at, "position"].to_list()[0]
     stock_price_at_trigger = df_four_three_one_soldiers.loc[df_four_three_one_soldiers.index ==  stock_trigger_at, "Close"].to_list()[0]
     
     # df_four_three_one_soldiers, buy_short, sell_long = calculate_atr_buy_sell(df_four_three_one_soldiers)
+    
+    # st.write("df_four_three_one_soldiers.columns")
+    # print(df_four_three_one_soldiers.columns)
+    # st.write(stock_trigger_state)
     
     if (stock_trigger_state == "Buy"):
         stock_stop_loss_atr = stock_price_at_trigger - st.session_state.stop_loss_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"]).to_list()[0]
@@ -405,6 +414,10 @@ def MovingAverageCrossStrategy(symbol,
     previous_triggers = pd.DataFrame()
     
     stock_df, buy_short, sell_long = calculate_atr_buy_sell(stock_df)
+    #   RK_0509: corrected the 'Position parameter of the trading signal 
+    stock_df['Position_c'] = np.where(stock_df['Position']==1, 'Buy', 
+                                     np.where(stock_df['Position']==-1, 'Sell', None))
+  
     
     if display_table == True:
         df_pos = stock_df[(stock_df['Position'] == 1) | (stock_df['Position'] == -1)]
@@ -492,67 +505,69 @@ def ema_continual(symbol,
     # #########################
     # BEGIN: DEBUG_INFO
     # st.write(symbol)
+    ema_continual_df = stock_df
+    ema_continual_df['ema_5above8'] = (ema_continual_df[short_window_col] > ema_continual_df[long_window_col])
     
-    stock_df['ema_5above8'] = (stock_df[short_window_col] > stock_df[long_window_col])
+    ema_continual_df['t0_close_aboveema5'] = ((ema_continual_df['Close'].shift(1) > ema_continual_df[short_window_col]) &
+                                       ((ema_continual_df['Low'].shift(1) < ema_continual_df[short_window_col]) |
+                                       (ema_continual_df['Low'].shift(1) < ema_continual_df[long_window_col])) &
+                                       (ema_continual_df['Close'].shift(1) <  ema_continual_df['High'].shift(1)) & 
+                                       (ema_continual_df['Close'].shift(1) <  ema_continual_df['High'].shift(2)))
     
-    stock_df['t0_close_aboveema5'] = ((stock_df['Close'].shift(1) > stock_df[short_window_col]) &
-                                       ((stock_df['Low'].shift(1) < stock_df[short_window_col]) |
-                                       (stock_df['Low'].shift(1) < stock_df[long_window_col])) &
-                                       (stock_df['Close'].shift(1) <  stock_df['High'].shift(1)) & 
-                                       (stock_df['Close'].shift(1) <  stock_df['High'].shift(2)))
+    ema_continual_df['t0_low_belowema5'] = (((ema_continual_df['Low'].shift(2) < ema_continual_df[short_window_col]) |
+                                       (ema_continual_df['Low'].shift(2) < ema_continual_df[long_window_col])) &
+                                       (ema_continual_df['High'].shift(2) > ema_continual_df[short_window_col]))
     
-    stock_df['t0_low_belowema5'] = (((stock_df['Low'].shift(2) < stock_df[short_window_col]) |
-                                       (stock_df['Low'].shift(2) < stock_df[long_window_col])) &
-                                       (stock_df['High'].shift(2) > stock_df[short_window_col]))
-    
-    stock_df['ema_continual_long'] = ((stock_df[short_window_col] > stock_df[long_window_col]) & #Ema 5 is above Ema  8
+    ema_continual_df['ema_continual_long'] = ((ema_continual_df[short_window_col] > ema_continual_df[long_window_col]) & #Ema 5 is above Ema  8
                                       # Last candle (C0) closes above ema5 with low below ema 5 or ema 8 (green candle) and 
                                       # close of C0 candle is less than high of the last two candles
-                                      ((stock_df['Close'].shift(1) > stock_df[short_window_col]) &
-                                       ((stock_df['Low'].shift(1) < stock_df[short_window_col]) |
-                                       (stock_df['Low'].shift(1) < stock_df[long_window_col])) &
-                                       (stock_df['Close'].shift(1) <  stock_df['High'].shift(1)) & 
-                                       (stock_df['Close'].shift(1) <  stock_df['High'].shift(2))) &
+                                      ((ema_continual_df['Close'].shift(1) > ema_continual_df[short_window_col]) &
+                                       ((ema_continual_df['Low'].shift(1) < ema_continual_df[short_window_col]) |
+                                       (ema_continual_df['Low'].shift(1) < ema_continual_df[long_window_col])) &
+                                       (ema_continual_df['Close'].shift(1) <  ema_continual_df['High'].shift(1)) & 
+                                       (ema_continual_df['Close'].shift(1) <  ema_continual_df['High'].shift(2))) &
                                       # Low of Candle before C0 (C1) < ema 5 or <  ema 8 
                                       # with high above ema 5(red candle) 
-                                      (((stock_df['Low'].shift(2) < stock_df[short_window_col]) |
-                                       (stock_df['Low'].shift(2) < stock_df[long_window_col])) &
-                                       (stock_df['High'].shift(2) > stock_df[short_window_col]))
+                                      (((ema_continual_df['Low'].shift(2) < ema_continual_df[short_window_col]) |
+                                       (ema_continual_df['Low'].shift(2) < ema_continual_df[long_window_col])) &
+                                       (ema_continual_df['High'].shift(2) > ema_continual_df[short_window_col]))
                                       )
     
-    stock_df['ema_5below8'] = (stock_df[short_window_col] < stock_df[long_window_col]) 
+    ema_continual_df['ema_5below8'] = (ema_continual_df[short_window_col] < ema_continual_df[long_window_col]) 
                                
                                       # Last candle (C0) closes above ema5 with low below ema 5 or ema 8 (green candle) and 
                                       # close of C0 candle is less than high of the last two candles
-    stock_df['t0_close_belowema5'] = ((stock_df['Close'].shift(1) < stock_df[short_window_col]) &
-                                       ((stock_df['High'].shift(1) > stock_df[short_window_col]) |
-                                       (stock_df['High'].shift(1) > stock_df[long_window_col])) &
-                                       (stock_df['Close'].shift(1) >  stock_df['Low'].shift(1)) & 
-                                       (stock_df['Close'].shift(1) >  stock_df['Low'].shift(2)))
+    ema_continual_df['t0_close_belowema5'] = ((ema_continual_df['Close'].shift(1) < ema_continual_df[short_window_col]) &
+                                       ((ema_continual_df['High'].shift(1) > ema_continual_df[short_window_col]) |
+                                       (ema_continual_df['High'].shift(1) > ema_continual_df[long_window_col])) &
+                                       (ema_continual_df['Close'].shift(1) >  ema_continual_df['Low'].shift(1)) & 
+                                       (ema_continual_df['Close'].shift(1) >  ema_continual_df['Low'].shift(2)))
     
                                       # Low of Candle before C0 (C1) < ema 5 or <  ema 8 
                                       # with high above ema 5(red candle) 
-    stock_df['t0_low_aboveema5'] =  (((stock_df['High'].shift(2) > stock_df[short_window_col]) |
-                                       (stock_df['High'].shift(2) > stock_df[long_window_col])) &
-                                       (stock_df['Low'].shift(2) < stock_df[short_window_col]))
+    ema_continual_df['t0_low_aboveema5'] =  (((ema_continual_df['High'].shift(2) > ema_continual_df[short_window_col]) |
+                                       (ema_continual_df['High'].shift(2) > ema_continual_df[long_window_col])) &
+                                       (ema_continual_df['Low'].shift(2) < ema_continual_df[short_window_col]))
                                       
     
-    stock_df['ema_continual_short'] = ((stock_df[short_window_col] < stock_df[long_window_col]) & #Ema 5 is above Ema  8
+    ema_continual_df['ema_continual_short'] = ((ema_continual_df[short_window_col] < ema_continual_df[long_window_col]) & #Ema 5 is above Ema  8
                                       # Last candle (C0) closes above ema5 with low below ema 5 or ema 8 (green candle) and 
                                       # close of C0 candle is less than high of the last two candles
-                                      ((stock_df['Close'].shift(1) < stock_df[short_window_col]) &
-                                       ((stock_df['High'].shift(1) > stock_df[short_window_col]) |
-                                       (stock_df['High'].shift(1) > stock_df[long_window_col])) &
-                                       (stock_df['Close'].shift(1) >  stock_df['Low'].shift(1)) & 
-                                       (stock_df['Close'].shift(1) >  stock_df['Low'].shift(2))) &
+                                      ((ema_continual_df['Close'].shift(1) < ema_continual_df[short_window_col]) &
+                                       ((ema_continual_df['High'].shift(1) > ema_continual_df[short_window_col]) |
+                                       (ema_continual_df['High'].shift(1) > ema_continual_df[long_window_col])) &
+                                       (ema_continual_df['Close'].shift(1) >  ema_continual_df['Low'].shift(1)) & 
+                                       (ema_continual_df['Close'].shift(1) >  ema_continual_df['Low'].shift(2))) &
                                       # Low of Candle before C0 (C1) < ema 5 or <  ema 8 
                                       # with high above ema 5(red candle) 
-                                      (((stock_df['High'].shift(2) > stock_df[short_window_col]) |
-                                       (stock_df['High'].shift(2) > stock_df[long_window_col])) &
-                                       (stock_df['Low'].shift(2) < stock_df[short_window_col]))
+                                      (((ema_continual_df['High'].shift(2) > ema_continual_df[short_window_col]) |
+                                       (ema_continual_df['High'].shift(2) > ema_continual_df[long_window_col])) &
+                                       (ema_continual_df['Low'].shift(2) < ema_continual_df[short_window_col]))
                                       )
     
-    
+    #   RK_0509: corrected the 'Position parameter of the trading signal 
+    ema_continual_df['position'] = np.where(ema_continual_df['ema_continual_long'], 'Buy', 
+                                     np.where(ema_continual_df['ema_continual_short'], 'Sell', None))
     # st.write("EMA 1-2 candle price continuation - LONG")
     # st.write(stock_df.sort_index(ascending=False)[['High', 'Low', 'Close', 
     #    '5_EMA 1-2 candle price continuation',
@@ -572,7 +587,7 @@ def ema_continual(symbol,
     
     # END: DEBUG_INFO
     # #########################
-    return stock_df
+    return ema_continual_df
 
 def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   """
@@ -629,8 +644,21 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
               (df['Close'].shift(2) > df['Close'].shift(1))
               )
   
-#   df_evaluate['position'] = np.where(df_evaluate['strategy_431_long'], "Buy", "n")
-  df_evaluate['position'] = np.where(df_evaluate['strategy_431_short'], "Sell", "Buy")
+#   RK_0509: corrected the 'Position parameter of the trading signal 
+  df_evaluate['position'] = np.where(df_evaluate['strategy_431_long'], 'Buy', 
+                                     np.where(df_evaluate['strategy_431_short'], 'Sell', None))
+  
+#   st.write("df_evaluate['corrected_position']")
+#   st.write("---")
+#   st.write(df_evaluate[['Close', 't3', 't2', 't1', 't0',
+#        'strategy_431_long_c1', 'strategy_431_long_c2', 'strategy_431_long_c3',
+#        'strategy_431_long', 'strategy_431_short_c1', 'strategy_431_short_c2',
+#        'strategy_431_short_c3', 'strategy_431_short', 
+#        'position',
+       
+#        ]].sort_index(ascending=False))
+#   st.write("---")
+#   st.write("---")
   
   df_evaluate, buy_short, sell_long = calculate_atr_buy_sell(df_evaluate)
   
@@ -642,14 +670,13 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
       df_evaluate['stop_loss_atr'] = df_evaluate.Close + st.session_state.stop_loss_factor * df_evaluate.atr_ma
       df_evaluate['take_profit_atr'] = df_evaluate.Close - st.session_state.take_profit_factor * df_evaluate.atr_ma
   
-  st.write("df_evaluate['position']")
-  st.write("---")
-  st.write(df_evaluate.sort_index(ascending=False))
-  st.write("---")
-  st.write("---")
+#   st.write("df_evaluate['position']")
+#   st.write("---")
+#   st.write(df_evaluate.sort_index(ascending=False))
+#   st.write("---")
+#   st.write("---")
   return df_evaluate
-
-
+    
 async def strategy_four_three_one_soldiers(symbol,
                                  df,
                                  selected_period, 
@@ -683,6 +710,7 @@ async def strategy_four_three_one_soldiers(symbol,
     df_summary = pd.concat([df_summary, df_summary_short], ignore_index=False)
     
     # st.write(df_summary)
-    return df_strategy_431 #df_summary
+    # return df_strategy_431 #df_summary
+    return df_summary #returns the filtered data only
     
  

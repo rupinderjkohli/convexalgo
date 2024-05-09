@@ -85,7 +85,7 @@ def main():
   # 5. Add on_change callback
   # st.write(st.session_state)
   if('main_menu' not in st.session_state):
-    st.session_state['main_menu'] = st.session_state.get('main_menu', 0)
+    st.session_state['main_menu'] = st.session_state.get('main_menu', 1)
   # st.write(st.session_state)  
   
   def on_change(key):
@@ -107,12 +107,12 @@ def main():
     )
     
     # 4. Manual item selection
-    if st.session_state.get('main_menu', 0):
+    if st.session_state.get('main_menu', 1):
         # st.session_state['main_menu'] = (st.session_state.get('main_menu', 0) ) #+ 1) % 4
         manual_select = st.session_state['main_menu']
         # st.write(manual_select)
     else:
-        manual_select = None
+        manual_select = st.session_state.get('main_menu', 1) #None
         
   # st.sidebar.success("Setup your trading day")
 
@@ -164,7 +164,11 @@ def main():
     
     # Hyperlink to generate trading chart
     if st.markdown("[Generate Trading Charts](show_trading_charts())"):
-        show_trading_charts()
+      st.write("show the charts")
+        # show_trading_charts(st.session_state.user_watchlist, #known_options, 
+        #                       st.session_state.selected_algos, 
+        #                       st.session_state.period, 
+        #                       st.session_state.interval) # known_options)
     
     # time check begin
     for variable in ["process_name","execution_time", "start_time", "end_time"]:
@@ -201,11 +205,10 @@ def main():
     
     known_options = display_watchlist()
     
-    show_trading_charts()
-      # st.session_state.user_watchlist, #known_options, 
-      #                         st.session_state.selected_algos, 
-      #                         st.session_state.period, 
-      #                         st.session_state.interval) # known_options
+    show_trading_charts(st.session_state.user_watchlist, #known_options, 
+                              st.session_state.selected_algos, 
+                              st.session_state.period, 
+                              st.session_state.interval) # known_options
     
     end_time = time.time()
     execution_time = end_time - start_time

@@ -783,6 +783,9 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     st.write("fetching status for: ", symbol )
     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
     
+    status_trading_signal_details = {} # dictionary 
+    
+    
     # func1 = strategy_sma(symbol,
     #              stock_hist_df,
     #              selected_period, 
@@ -802,20 +805,20 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                  selected_long_window = 8,
                  is_summary = False,
                  )
+    # status_trading_signal_details[symbol] = status_strategy_ema
     # EMA quick_explore + the following columns
     # stock_df[short_window_col]; stock_df[long_window_col]
     # stock_df['Signal']; stock_df['Position']
-    # print("status_strategy_ema")
-    # print(status_strategy_ema.columns)
-    # print()
+    print("status_strategy_ema")
+    print(status_strategy_ema.columns)
+    print()
     # status_strategy_ema
     # Index(['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',
-    #    '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma',
-    #    'stop_loss_atr', 'take_profit_atr'],
+      #  '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma', 'Position_c',
+      #  'stop_loss_atr', 'take_profit_atr'],
     #   dtype='object')
-    status_strategy_ema = status_strategy_ema[['Close', 
-       '5_EMA', '8_EMA', 'Signal', 'Position', 'atr_ma',
-       'stop_loss_atr', 'take_profit_atr']]
+    status_strategy_ema = status_strategy_ema [[ 
+       '5_EMA', '8_EMA', 'Position_c',]]
     # st.write("EMA", status_strategy_ema.sort_index(ascending=False))
     
     status_strategy_ema_continual = await strategy_ema_continual(symbol,
@@ -827,25 +830,24 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                  selected_long_window = 8,
                                  is_summary = False,
                                  )
+    # status_trading_signal_details[symbol] = status_strategy_ema_continual
     # ema_continual + the following columns
     # stock_df['ema_5above8'];stock_df['t0_close_aboveema5'];stock_df['t0_low_belowema5'];stock_df['ema_continual_long'];
     # stock_df['ema_5below8'];stock_df['t0_close_belowema5'];stock_df['t0_low_aboveema5'];stock_df['ema_continual_short']
-    # print("status_strategy_ema_continual")
-    # print(status_strategy_ema_continual.columns)
-    # print()
+    print("status_strategy_ema_continual")
+    print(status_strategy_ema_continual.columns)
+    print()
     # Index(['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',
-    #    '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma',
-    #    'stop_loss_atr', 'take_profit_atr', '5_EMA 1-2 candle price',
-    #    '8_EMA 1-2 candle price', 'ema_5above8', 't0_close_aboveema5',
-    #    't0_low_belowema5', 'ema_continual_long', 'ema_5below8',
-    #    't0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short'],
+      #  '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma', 'position_c',
+      #  'stop_loss_atr', 'take_profit_atr', '5_EMA 1-2 candle price',
+      #  '8_EMA 1-2 candle price', 'ema_5above8', 't0_close_aboveema5',
+      #  't0_low_belowema5', 'ema_continual_long', 'ema_5below8',
+      #  't0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short'],
     #   dtype='object')
-    status_strategy_ema_continual = status_strategy_ema_continual[['Close', 
-       '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma',
-       'stop_loss_atr', 'take_profit_atr', '5_EMA 1-2 candle price',
-       '8_EMA 1-2 candle price', 'ema_5above8', 't0_close_aboveema5',
-       't0_low_belowema5', 'ema_continual_long', 'ema_5below8',
-       't0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short']]
+    status_strategy_ema_continual = status_strategy_ema_continual[[ 
+       '5_EMA 1-2 candle price','8_EMA 1-2 candle price',  
+       'ema_5above8','t0_close_aboveema5','t0_low_belowema5', 'ema_continual_long', 
+       'ema_5below8','t0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short','position']]
     # st.write("EMA 1-2 candle price", status_strategy_ema_continual.sort_index(ascending=False))
     
     
@@ -856,35 +858,39 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                  is_summary = False,
                                  algo_strategy = "4-3-1 candle price reversal",
                                  )
-    
+    # status_trading_signal_details[symbol] = status_strategy_431_reversal
     print("status_strategy_431_reversal")
     print(status_strategy_431_reversal.columns)
     print()
-    # Index(['Open', 'Close', 'High', 'Low', 'strategy_431_long',
-    #    'strategy_431_short', 'position', 'atr', 'atr_ma', 'stop_loss_atr',
-    #    'take_profit_atr'],
+    # ['Open', 'Close', 'High', 'Low', 't3', 't2', 't1', 't0',
+      #  'strategy_431_long_c1', 'strategy_431_long_c2', 'strategy_431_long_c3',
+      #  'strategy_431_long', 'strategy_431_short_c1', 'strategy_431_short_c2',
+      #  'strategy_431_short_c3', 'strategy_431_short', 'position', 'atr',
+      #  'atr_ma', 'stop_loss_atr', 'take_profit_atr']
     #   dtype='object')
-    status_strategy_431_reversal = status_strategy_431_reversal
-    # [['Close', 'strategy_431_long_c1',
-    #    'strategy_431_long_c2', 'strategy_431_long_c3', 'strategy_431_long',
-    #    'strategy_431_short_c1', 'strategy_431_short_c2',
-    #    'strategy_431_short_c3', 'strategy_431_short', 'atr', 'position',
-    #    'atr_ma', 'stop_loss_atr', 'take_profit_atr']]
+    status_strategy_431_reversal = status_strategy_431_reversal[['strategy_431_long_c1',
+       'strategy_431_long_c2', 'strategy_431_long_c3', 'strategy_431_long',
+       'strategy_431_short_c1', 'strategy_431_short_c2',
+       'strategy_431_short_c3', 'strategy_431_short','position',]]
     # st.write("4-3-1 candle price reversal", status_strategy_431_reversal.sort_index(ascending=False))
     
     st.write("---")
     
     # Merge on index and selected columns
+    status_ema_merged_df = pd.DataFrame()
     status_ema_merged_df = pd.merge(status_strategy_ema, #[selected_columns_df1], 
                                     status_strategy_ema_continual, #[selected_columns_df2], 
-                                    left_index=True, right_index=True)
+                                    left_index=True, right_index=True, how='outer')
     status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
                                     status_strategy_431_reversal, #[selected_columns_df2], 
-                                    left_index=True, right_index=True)
+                                    left_index=True, right_index=True, how='outer')
 
     st.write(status_ema_merged_df.sort_index(ascending=False))
     st.write("---")
     
+  # # for symbol in known_options:
+  # #   st.write(status_trading_signal_details[symbol] ) 
+  # st.write(status_trading_signal_details)  
   return
   
 
