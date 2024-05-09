@@ -19,6 +19,13 @@ import matplotlib.pyplot as plt
 
 from algotrading_helper import * #MovingAverageCrossStrategy, timeToTz, unix_timestamp
 
+
+# ##########################################################  
+# Purpose: 
+# ##########################################################  
+def show_trading_charts():
+  return
+  
 # ##########################################################  
 # Purpose: 
 # ##########################################################  
@@ -29,13 +36,6 @@ def lw_charts_snapshot(symbol,
                        selected_long_window,
                        display_table = False):
 
-    # stock_df, df_pos, previous_triggers = MovingAverageCrossStrategy(symbol,
-    #                                     stock_hist_df,
-    #                                     selected_short_window,
-    #                                     selected_long_window,
-    #                                     algo_strategy,
-    #                                     False)
-    
     
     # column names for long and short moving average columns
     short_window_col = str(selected_short_window) + '_' + algo_strategy
