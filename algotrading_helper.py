@@ -638,16 +638,16 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
     # st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
     # st.subheader(st.session_state.page_subheader)
     
-    # generate summary
-    etf_summary_info = get_all_stock_info(yf_data)
-    # st.write(etf_summary_info.T)
-    df_details = etf_summary_info[['symbol', 'shortName','quoteType','financialCurrency',
-                                    'industry','sector','currentPrice','recommendationKey', 
-                                    'fiftyTwoWeekHigh','fiftyTwoWeekLow', 
-                                    'grossMargins','ebitdaMargins']]
-    df_details['52w Range'] = ((df_details['currentPrice'] - df_details['fiftyTwoWeekLow'])/(df_details['fiftyTwoWeekHigh'] - df_details['fiftyTwoWeekLow']))*100
+    # # generate summary
+    # etf_summary_info = get_all_stock_info(yf_data)
+    # # st.write(etf_summary_info.T)
+    # df_details = etf_summary_info[['symbol', 'shortName','quoteType','financialCurrency',
+    #                                 'industry','sector','currentPrice','recommendationKey', 
+    #                                 'fiftyTwoWeekHigh','fiftyTwoWeekLow', 
+    #                                 'grossMargins','ebitdaMargins']]
+    # df_details['52w Range'] = ((df_details['currentPrice'] - df_details['fiftyTwoWeekLow'])/(df_details['fiftyTwoWeekHigh'] - df_details['fiftyTwoWeekLow']))*100
     
-    df_summary_view = pd.concat([df_summary_view, df_details], ignore_index=True)
+    # df_summary_view = pd.concat([df_summary_view, df_details], ignore_index=True)
     # Add 52 week price range
     
     # generate trading summary
