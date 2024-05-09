@@ -172,7 +172,8 @@ async def strategy_431_reversal(symbol,
                                     selected_interval,
                                     algo_strategy = "4-3-1 candle price reversal",)
 
-    # st.write(df_four_three_one_soldiers.sort_index(ascending=False))
+    st.write("df_four_three_one_soldiers")
+    st.write(df_four_three_one_soldiers.sort_index(ascending=False))
     stock_trigger_at = df_four_three_one_soldiers.index.max()
     stock_trigger_state = df_four_three_one_soldiers.loc[df_four_three_one_soldiers.index ==  stock_trigger_at, "position"].to_list()[0]
     stock_price_at_trigger = df_four_three_one_soldiers.loc[df_four_three_one_soldiers.index ==  stock_trigger_at, "Close"].to_list()[0]
@@ -574,12 +575,8 @@ def ema_continual(symbol,
     return stock_df
 
 def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
-  """*** Candlestick Detected: Three White Soldiers ("Strong - Reversal - Bullish Pattern - Up")
-  # close of 4th less than close of 3rd - define the trend; should be same - down / up
-  # close of 3rd less than close of 2nd - define the trend
-  # 1st candle should now close below the close of the second
+  """
   
-
   # for long
   # close of 4th greater than close of 3rd
   # close of 3rd greater than close of 2nd -
@@ -591,16 +588,17 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   # close of 2nd higher than close of 1st
 
   """
-  # if(~is_sorted):
-  #   df = df.sort_index(ascending = False)
+#   if(~is_sorted):
+#     df = df.sort_index(ascending = False)
+#   st.write(df.head())
   # Fill NaN values with 0
   df = df.fillna(0)
   # print(df.head())
   df_evaluate = df[['Open','Close', 'High', 'Low']]
-#   df_evaluate['t3'] = df_evaluate['Close'].shift(4)
-#   df_evaluate['t2'] = df_evaluate['Close'].shift(3)
-#   df_evaluate['t1'] = df_evaluate['Close'].shift(2)
-#   df_evaluate['t0'] = df_evaluate['Close'].shift(1)
+  df_evaluate['t3'] = df_evaluate['Close'].shift(4)
+  df_evaluate['t2'] = df_evaluate['Close'].shift(3)
+  df_evaluate['t1'] = df_evaluate['Close'].shift(2)
+  df_evaluate['t0'] = df_evaluate['Close'].shift(1)
   
   df_evaluate = df_evaluate.fillna(0)
         
@@ -631,7 +629,7 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
               (df['Close'].shift(2) > df['Close'].shift(1))
               )
   
-  df_evaluate['position'] = np.where(df_evaluate['strategy_431_long'], "Buy", "Sell")
+#   df_evaluate['position'] = np.where(df_evaluate['strategy_431_long'], "Buy", "n")
   df_evaluate['position'] = np.where(df_evaluate['strategy_431_short'], "Sell", "Buy")
   
   df_evaluate, buy_short, sell_long = calculate_atr_buy_sell(df_evaluate)
@@ -644,8 +642,11 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
       df_evaluate['stop_loss_atr'] = df_evaluate.Close + st.session_state.stop_loss_factor * df_evaluate.atr_ma
       df_evaluate['take_profit_atr'] = df_evaluate.Close - st.session_state.take_profit_factor * df_evaluate.atr_ma
   
-#   st.write("df_evaluate['position']")
-#   st.write(df_evaluate)
+  st.write("df_evaluate['position']")
+  st.write("---")
+  st.write(df_evaluate.sort_index(ascending=False))
+  st.write("---")
+  st.write("---")
   return df_evaluate
 
 

@@ -857,16 +857,19 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                  algo_strategy = "4-3-1 candle price reversal",
                                  )
     
-    # print("status_strategy_431_reversal")
-    # print(status_strategy_431_reversal.columns)
-    # print()
+    print("status_strategy_431_reversal")
+    print(status_strategy_431_reversal.columns)
+    print()
     # Index(['Open', 'Close', 'High', 'Low', 'strategy_431_long',
     #    'strategy_431_short', 'position', 'atr', 'atr_ma', 'stop_loss_atr',
     #    'take_profit_atr'],
     #   dtype='object')
-    status_strategy_431_reversal = status_strategy_431_reversal[['Close', 'High', 'Low', 'strategy_431_long',
-       'strategy_431_short', 'position', 'atr', 'atr_ma', 'stop_loss_atr',
-       'take_profit_atr']]
+    status_strategy_431_reversal = status_strategy_431_reversal
+    # [['Close', 'strategy_431_long_c1',
+    #    'strategy_431_long_c2', 'strategy_431_long_c3', 'strategy_431_long',
+    #    'strategy_431_short_c1', 'strategy_431_short_c2',
+    #    'strategy_431_short_c3', 'strategy_431_short', 'atr', 'position',
+    #    'atr_ma', 'stop_loss_atr', 'take_profit_atr']]
     # st.write("4-3-1 candle price reversal", status_strategy_431_reversal.sort_index(ascending=False))
     
     st.write("---")
