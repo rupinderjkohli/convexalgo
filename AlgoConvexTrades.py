@@ -91,7 +91,7 @@ def main():
       # st.write(f"Selection changed to {selection}")
       
   with st.sidebar:
-    choose = option_menu("Convex Algos", ["Setup Day", "Signals", "Status", "Trading Charts", "Change Logs"],
+    choose = option_menu("Convex Algos", ["Setup Day", "---" ,"Signals", "Status", "Trading Charts", "Change Logs"],
                          icons=['house', 'camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill'],
                          menu_icon="app-indicator", default_index=0,
                          styles={
@@ -103,8 +103,14 @@ def main():
                          key='main_menu',
                          on_change=on_change
     )
+    manual_select = "Setup Day"
     # st.write(choose)
-    # 4. Manual item selection
+    
+    # Initialize session state
+    if 'main_menu' not in st.session_state:
+        st.session_state.main_menu = 0 
+        manual_select = st.session_state['main_menu']
+    
     if st.session_state.get('main_menu', 0):
         # st.session_state['main_menu'] = st.session_state.get('main_menu', 0)#+ 1) % 5
         manual_select = st.session_state['main_menu']
