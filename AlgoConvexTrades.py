@@ -39,17 +39,15 @@ def main():
   st.session_state.stop_loss_factor = float(stop_loss[0])
   st.session_state.take_profit_factor = float(take_profit[0])
   
-  
-  # st.session_state.period = PERIOD
-  # st.session_state.interval = INTERVAL
-  # st.session_state.stop_loss = STOP_LOSS
-  # st.session_state.take_profit = TAKE_PROFIT 
-  # st.session_state.moving_average = MOVING_AVERAGE
-  # st.session_state.trend_based = TREND_BASED 
+  st.session_state.moving_average = trading_strategy_ma
+  st.session_state.trend_based = trading_strategy_trend 
   
   ma_list = trading_strategy_ma #["SMA", "EMA","EMA 1-2 candle price continuation"]
   algo_list = trading_strategy_trend #["4-3-1 candle price reversal"]
   convex_trade_algos_list = ma_list + algo_list
+  selected_algos = convex_trade_algos_list
+  st.session_state[selected_algos] = convex_trade_algos_list
+  
   
   # List of algo functions
   algo_functions = [strategy_sma, strategy_ema, strategy_ema_continual, strategy_431_reversal]
@@ -85,7 +83,7 @@ def main():
   # 5. Add on_change callback
   # st.write(st.session_state)
   if('main_menu' not in st.session_state):
-    st.session_state['main_menu'] = st.session_state.get('main_menu', 1)
+    st.session_state['main_menu'] = st.session_state.get('main_menu', 0)
   # st.write(st.session_state)  
   
   def on_change(key):
@@ -107,12 +105,12 @@ def main():
     )
     
     # 4. Manual item selection
-    if st.session_state.get('main_menu', 1):
+    if st.session_state.get('main_menu', 0):
         # st.session_state['main_menu'] = (st.session_state.get('main_menu', 0) ) #+ 1) % 4
         manual_select = st.session_state['main_menu']
         # st.write(manual_select)
     else:
-        manual_select = st.session_state.get('main_menu', 1) #None
+        manual_select = st.session_state.get('main_menu', 0) #None
         
   # st.sidebar.success("Setup your trading day")
 
@@ -135,15 +133,16 @@ def main():
     # time check end
     # print(known_options)
     
-    # if(selected_algos not in st.session_state):
-    #   st.session_state[selected_algos] = st.session_state.get(selected_algos, selected_algos)
+    if(selected_algos not in st.session_state):
+      st.session_state[selected_algos] = st.session_state.get(selected_algos) #, selected_algos)
     # print(st.session_state)  
     # Store the selected option in session state
-    st.session_state.selected_algos = selected_algos
+    # st.session_state.selected_algos = selected_algos
     
   elif (manual_select == "Signals" ):
     st.header("Trading Signals View")
-    
+    if(selected_algos not in st.session_state):
+      st.session_state[selected_algos] = st.session_state.get(selected_algos)
     process_name = "Signals"
     start_time = time.time()
     

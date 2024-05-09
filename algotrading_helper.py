@@ -599,6 +599,8 @@ def setup_day(user_sel_list, period, interval, symbol_list, algo_functions_map):
     for option, selected in zip(algo_name, selected_options):    
         if selected:
           selected_algos.append(option)
+          
+  st.session_state.selected_algos = selected_algos
   
   print("selected_algos ",selected_algos)
   st.write("---")  # Add a horizontal rule
@@ -614,7 +616,8 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
   tasks = []
   
   if (len(selected_algos) == 0):
-    selected_algos = ['5/8 SMA', '5/8 EMA', '5/8 EMA 1-2 candle price','4-3-1 candle price reversal']
+    selected_algos = ['5/8 EMA', '5/8 EMA 1-2 candle price','4-3-1 candle price reversal']
+    st.session_state.selected_algos = selected_algos
   
   st.markdown("<div style='display:flex;'>Stocks watchlist:  {} <div> "
               .format(" , ".join(["<div> {} </div>".format(item) for item in known_options])), unsafe_allow_html=True)
