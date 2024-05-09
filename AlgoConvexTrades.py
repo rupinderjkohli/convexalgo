@@ -46,7 +46,7 @@ def main():
   algo_list = trading_strategy_trend #["4-3-1 candle price reversal"]
   convex_trade_algos_list = ma_list + algo_list
   selected_algos = convex_trade_algos_list
-  st.session_state[selected_algos] = convex_trade_algos_list
+  st.session_state.selected_algos = convex_trade_algos_list
   
   
   # List of algo functions
@@ -103,12 +103,12 @@ def main():
                          key='main_menu',
                          on_change=on_change
     )
-    
+    # st.write(choose)
     # 4. Manual item selection
     if st.session_state.get('main_menu', 0):
-        # st.session_state['main_menu'] = (st.session_state.get('main_menu', 0) ) #+ 1) % 4
+        # st.session_state['main_menu'] = st.session_state.get('main_menu', 0)#+ 1) % 5
         manual_select = st.session_state['main_menu']
-        # st.write(manual_select)
+        st.write(manual_select)
     else:
         manual_select = st.session_state.get('main_menu', 0) #None
         
@@ -133,23 +133,44 @@ def main():
     # time check end
     # print(known_options)
     
+    print("Setup Day st.session_state")
+    print(st.session_state) 
+    print("")
+    print("")
+    
     if(selected_algos not in st.session_state):
-      st.session_state[selected_algos] = st.session_state.get(selected_algos) #, selected_algos)
-    # print(st.session_state)  
+      st.session_state['selected_algos'] = selected_algos #st.session_state.get(selected_algos) #, selected_algos)
+    print("###########################")
+    print("")
+    print(st.session_state)  
+    print("")
+    print("")
     # Store the selected option in session state
-    # st.session_state.selected_algos = selected_algos
+    # else: st.session_state.selected_algos = selected_algos
     
   elif (manual_select == "Signals" ):
     st.header("Trading Signals View")
-    if(selected_algos not in st.session_state):
-      st.session_state[selected_algos] = st.session_state.get(selected_algos)
+    
     process_name = "Signals"
     start_time = time.time()
     
     known_options = display_watchlist()
     # print("known_options")
-    print(known_options, st.session_state.selected_algos)
     
+    
+    # Initialize session state if user coming directly to signals
+    if(selected_algos not in st.session_state):
+      st.session_state['selected_algos'] = selected_algos #st.session_state.get(selected_algos) #, selected_algos)
+    
+    # if(stop_loss_factor not in st.session_state):
+    #   st.session_state['stop_loss_factor'] = float(stop_loss[0])
+    # if(take_profit_factor not in st.session_state):
+    #   st.session_state['take_profit_factor'] = float(take_profit[0])
+      
+    print("signals known_options, st.session_state")
+    print(known_options, st.session_state)
+    print("")
+    print("")
     asyncio.run (signals_view(st.session_state.user_watchlist, # known_options, 
                               st.session_state.selected_algos, 
                               st.session_state.period, 
@@ -176,6 +197,14 @@ def main():
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
     
   elif (manual_select == "Status" ):
+    # Initialize session state if user coming directly to signals
+    if(selected_algos not in st.session_state):
+      st.session_state[selected_algos] = selected_algos
+    # if(stop_loss_factor not in st.session_state):
+    #   st.session_state[stop_loss_factor] = st.session_state.get(float(stop_loss[0]))
+    # if(take_profit_factor not in st.session_state):
+    #   st.session_state[take_profit_factor] = st.session_state.get(float(take_profit[0]))
+      
     st.write("Shows the current status of all strategies against all stocks")
     process_name = "Status"
     start_time = time.time()

@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../queryautomation"
+		},
+		{
+			"path": "../../git_convexttrades"
 		}
 	]
 }
