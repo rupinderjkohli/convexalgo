@@ -48,6 +48,7 @@ from millify import millify # shortens values (10_000 ---> 10k)
 
 # To read external property file
 from jproperties import Properties
+import tweepy
 
 from algotrading_class import *
 
@@ -714,8 +715,26 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
                                                              'stock_stop_loss_atr',
                                                              'stock_take_profit_atr',
                                                              'algo_strategy', 
+                                                             'tweet_post',
                                                              'stock_previous_triggers',
                                                              ]].sort_values(by = ['stock_trigger_at', 'symbol'], ascending=[False, True])
+  
+  # # Add a column with links
+  # link_column = []
+  # for symbol in combined_trading_summary_df['symbol']:
+  #   link = f'https://example.com/{symbol}'
+  #   link_column.append(f'[Link]({link})')
+  # # Add the link column to the DataFrame
+  # combined_trading_summary_df['share'] = link_column
+  
+  # # Create a column for popover toggles
+  # toggle_col = st.columns(combined_trading_summary_df.shape[0]) # Create a column for each row 
+  # print("toggle_col#########################", toggle_col)
+  
+  # for i, col in enumerate(combined_trading_summary_df.shape[0]):
+  #   if col.popover('ℹ️ {i}'): #('ℹ️', key=i):
+  #       col.write(combined_trading_summary_df.iloc[i]['symbol'])
+  
   st.data_editor(
     combined_trading_summary_df,
     column_config={"symbol": st.column_config.TextColumn(
@@ -756,12 +775,12 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
         format = "YYYY-MM-DD HH:mm"
         # format="DD MMM YYYY, HH:MM"
     ),
-        # "stock_view_details": st.column_config.LinkColumn
+        # "share": st.column_config.LinkColumn
         # (
-        #     "Stock Details",
-        #     help="The top trending Streamlit apps",
+        #     "share",
+        #     help="social media",
         #     max_chars=100,
-        #     display_text="view table",
+        #     # display_text="view table",
         #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
         # ),
         
@@ -770,6 +789,13 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
     use_container_width=True,
     hide_index=True,
     )
+  # combined_trading_summary_df['share'] = []
+  
+  
+    
+  with st.popover("Tweet"):
+    st.markdown("Hello World 👋")
+    name = st.text_input("What's your name?")
   
   return
   
@@ -1011,3 +1037,36 @@ async def algo_trading_summary(symbol,
     # # Print the top statistics
     # for stat in top_stats[:10]:
     #     print(stat)
+    
+def to_twitter(post):
+  # Twitter API credentials
+  consumer_key = "WGZXajFpNExQRVdDazBIX2Fiblc6MTpjaQ" #'your_consumer_key'
+  consumer_secret = "JFc7PYNVn6HZY4HyIXGphXIPm1PyRhmyD5sBCWLIJA3RDTti7p" #'your_consumer_secret'
+  access_token = "1342321856523726848-jd8sBpTd4l0h9SSzC1kIWUFXb6Nj6D" #'your_access_token'
+  access_token_secret = "kbLUtKW4QjWyteK7vOXDn4NqowPbVcfk5qLzsx1879JnJ" #'your_access_token_secret'
+  api_key = "l3JyizUiL2A4l45N0bPgloDv2"
+  api_secret = "yluErKd8PSwPhLGFRCB3R3kkbpOJZ8YaERJn4JJyu9inyn1DLO"
+
+  # Authenticate to Twitter
+  auth = tweepy.OAuth1UserHandler(#consumer_key, consumer_secret, 
+                                  api_key, api_secret, 
+                                  access_token, access_token_secret)
+  api = tweepy.API(auth)
+
+  # Streamlit app
+  st.sidebar.title("")
+  st.sidebar.title('Tweet from Streamlit App')
+
+  # Get tweet text from user input
+  tweet_text = st.sidebar.text_area('Enter your tweet:', '')
+
+  # Button to send tweet
+  if st.sidebar.button('Send Tweet'):
+      # Check if tweet text is not empty
+      if tweet_text.strip():
+          # Send tweet
+          api.update_status(tweet_text)
+          st.sidebar.success('Tweet sent successfully!')
+      else:
+          st.sidebar.warning('Please enter some text for your tweet.')
+  

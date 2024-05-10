@@ -20,3 +20,4 @@ jproperties
 streamlit-option-menu
 futures
 st_social_media_links
+tweepy
