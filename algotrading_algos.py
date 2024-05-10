@@ -217,6 +217,8 @@ async def strategy_431_reversal(symbol,
     previous_triggers_list = np.sort(previous_triggers_list)[::-1]
     stock_previous_triggers = previous_triggers_list 
     
+    tweet_post =  symbol + ': ' + stock_trigger_state + '; ' + str(stock_trigger_at.strftime("%Y-%m-%d %H:%M")) +'; ' + str("{:.2f}".format(stock_price_at_trigger)) +'; SL: ' + str("{:.2f}".format(stock_stop_loss_atr)) +'; PT: ' + str("{:.2f}".format(stock_take_profit_atr))
+        
     for variable in ["symbol",
                                 "stock_trigger_at",
                                 "stock_trigger_state",
@@ -227,7 +229,8 @@ async def strategy_431_reversal(symbol,
                                 # "stock_atr_ma",
                                 # "stock_ema_p1",
                                 # "stock_ema_p2",
-                                "stock_previous_triggers"
+                                "stock_previous_triggers",
+                                "tweet_post"
                                 ]:
         quick_explore[variable] = eval(variable)
                   
@@ -301,6 +304,10 @@ async def trading_signals_view(symbol,
         stock_view_details = etf_data[symbol]
         stock_previous_triggers = previous_triggers_list 
         
+        #generating tweet for TSLA with trigger state of Buy at 2024-05-10 09:50 at a price of 171.72
+        # symbol: buy: trigger time triggr price: SL:stoploss PT: profit target
+        tweet_post =  symbol + ': ' + stock_trigger_state + '; ' + str(stock_trigger_at.strftime("%Y-%m-%d %H:%M")) +'; ' + str("{:.2f}".format(stock_price_at_trigger)) +'; SL: ' + str("{:.2f}".format(stock_stop_loss_atr)) +'; PT: ' + str("{:.2f}".format(stock_take_profit_atr))
+        
         # st.write(stock_previous_triggers)
         for variable in ["symbol",
                          "stock_trigger_at",
@@ -312,6 +319,7 @@ async def trading_signals_view(symbol,
                         "stock_ema_p1",
                         "stock_ema_p2",
                         "algo_strategy",
+                        "tweet_post",
                         "stock_previous_triggers"
                         ]:
             quick_explore[variable] = eval(variable)

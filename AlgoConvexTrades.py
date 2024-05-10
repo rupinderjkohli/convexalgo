@@ -130,7 +130,9 @@ def main():
         manual_select = st.session_state.get('main_menu', 0) #None
   
   social_media_icons.render(sidebar=True, justify_content="space-evenly")
-      
+  
+  to_twitter("post")    
+  
   # st.sidebar.success("Setup your trading day")
 
   if (manual_select == "Setup Day" ):
