@@ -3,6 +3,8 @@ from algotrading_visualisations import *
 from algotrading_algos import *
 from algotrading_class import *
 
+from st_social_media_links import SocialMediaIcons
+
 
 from pathlib import Path
 
@@ -28,6 +30,16 @@ def main():
   
   # # Initialize SessionState
   # session_state = SessionState(selected_algos="")
+  social_media_links = [
+    "https://www.twitter.com/convextrades",
+    "https://www.instagram.com/convex.trades",
+    "https://www.facebook.com/convextrades",
+    # "https://www.youtube.com/channel/UC_DkawN3rharztFwMLzrA3g",
+    "https://www.github.com/jlnetosci/st-social-media-links",
+    ]
+
+  social_media_icons = SocialMediaIcons(social_media_links)
+
   
   # load the default ticker list
   refresh = False
@@ -114,10 +126,12 @@ def main():
     if st.session_state.get('main_menu', 0):
         # st.session_state['main_menu'] = st.session_state.get('main_menu', 0)#+ 1) % 5
         manual_select = st.session_state['main_menu']
-        st.write(manual_select)
+        # st.write(manual_select)
     else:
         manual_select = st.session_state.get('main_menu', 0) #None
-        
+  
+  social_media_icons.render(sidebar=True, justify_content="space-evenly")
+      
   # st.sidebar.success("Setup your trading day")
 
   if (manual_select == "Setup Day" ):
