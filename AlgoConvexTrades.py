@@ -34,8 +34,7 @@ def main():
     "https://www.twitter.com/convextrades",
     "https://www.instagram.com/convex.trades",
     "https://www.facebook.com/convextrades",
-    # "https://www.youtube.com/channel/UC_DkawN3rharztFwMLzrA3g",
-    "https://www.github.com/jlnetosci/st-social-media-links",
+   
     ]
 
   social_media_icons = SocialMediaIcons(social_media_links)
