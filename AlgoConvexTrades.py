@@ -234,7 +234,6 @@ def main():
                               st.session_state.selected_algos, 
                               st.session_state.period, 
                               st.session_state.interval))
-    # stock_status()
     
     end_time = time.time()
     execution_time = end_time - start_time
