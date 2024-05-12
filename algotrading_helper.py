@@ -923,16 +923,6 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
   return
   
 
-def show_trading_charts():
-  # known_options, 
-  #                             selected_algos, 
-  #                             period, 
-  #                             interval,):
-  # # show visualizations
-  # st.write("hello")
-  
-  return
-  
         
 def show_change_logs():
   # generate change log
@@ -1069,4 +1059,14 @@ def to_twitter(post):
           st.sidebar.success('Tweet sent successfully!')
       else:
           st.sidebar.warning('Please enter some text for your tweet.')
-  
+
+
+def get_selected_stock_history(known_options,selected_period, selected_interval):
+  selected_etf_data = {}
+  for symbol in known_options:
+    # get ticker data
+    yf_data = yf.Ticker(symbol) #initiate the ticker
+    # st.write("fetching status for: ", symbol )
+    stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)  
+    selected_etf_data[symbol] = stock_hist_df
+  return selected_etf_data

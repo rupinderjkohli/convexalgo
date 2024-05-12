@@ -13,3 +13,5 @@ __pycache__/algotrading_helper.cpython-39.pyc
 *.pyc
 df_evaluate.csv
 pages/show_trading_charts.py
+/__pycache__
+/__pycache__
