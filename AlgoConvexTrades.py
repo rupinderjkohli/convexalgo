@@ -219,18 +219,18 @@ def main():
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
     
   elif (manual_select == "Status" ):
+    st.header("Ticker Status View")
+    st.caption("Shows the status of the implemented strategies for all tickers")
     # Initialize session state if user coming directly to signals
     # Initialize session state if user coming directly to signals
     if(selected_algos not in st.session_state):
       st.session_state['selected_algos'] = selected_algos #st.session_state.get(selected_algos) #, selected_algos)
-    
     
     # if(stop_loss_factor not in st.session_state):
     #   st.session_state[stop_loss_factor] = st.session_state.get(float(stop_loss[0]))
     # if(take_profit_factor not in st.session_state):
     #   st.session_state[take_profit_factor] = st.session_state.get(float(take_profit[0]))
       
-    st.write("Shows the current status of all strategies against all stocks")
     process_name = "Status"
     start_time = time.time()
     
@@ -258,6 +258,7 @@ def main():
     
   elif (manual_select == "Trading Charts" ):
     st.header("Ticker Trading Charts")
+    st.caption("Presents the trading view of the tickers filtered on Ticker and Date")
     
     process_name = "Trading Charts"
     start_time = time.time()
@@ -279,7 +280,8 @@ def main():
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
   
   elif (manual_select == "Change Logs" ):
-    # st.write("Change Logs")
+    st.header("Change Logs")
+    st.caption("Lists the change log since the last release")
     process_name = "Change Logs"
     start_time = time.time()
     
