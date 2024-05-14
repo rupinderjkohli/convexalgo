@@ -100,7 +100,10 @@ def main():
   
   def on_change(key):
       selection = st.session_state[key]
-      # st.write(f"Selection changed to {selection}")
+      st.write(f"Selection changed to {selection}")
+      st.session_state.main_menu = selection
+      return
+      
       
   with st.sidebar:
     choose = option_menu("Convex Algos", ["Setup Day", "---" ,"Signals", "Status", "Trading Charts", "Change Logs"],
@@ -118,10 +121,10 @@ def main():
     manual_select = "Setup Day"
     # st.write(choose)
     
-    # Initialize session state
-    if 'main_menu' not in st.session_state:
-        st.session_state.main_menu = 0 
-        manual_select = st.session_state['main_menu']
+    # # Initialize session state
+    # if 'main_menu' not in st.session_state:
+    #     st.session_state.main_menu = 0 
+    #     manual_select = st.session_state['main_menu']
     
     if st.session_state.get('main_menu', 0):
         # st.session_state['main_menu'] = st.session_state.get('main_menu', 0)#+ 1) % 5
@@ -139,6 +142,8 @@ def main():
   if (manual_select == "Setup Day" ):
     process_name = "Setup Day"
     start_time = time.time()
+    # if(main_menu not in st.session_state):
+    #   st.session_state['main_menu'] = 0
     known_options, selected_algos = setup_day(user_sel_list, 
                                               st.session_state.period, 
                                               st.session_state.interval, 
@@ -172,6 +177,8 @@ def main():
     
   elif (manual_select == "Signals" ):
     st.header("Trading Signals View")
+    # if(main_menu not in st.session_state):
+    #   st.session_state['main_menu'] = 1
     
     process_name = "Signals"
     start_time = time.time()
@@ -221,6 +228,10 @@ def main():
   elif (manual_select == "Status" ):
     st.header("Ticker Status View")
     st.caption("Shows the status of the implemented strategies for all tickers")
+    
+    # if(main_menu not in st.session_state):
+    #   st.session_state['main_menu'] = 2
+    
     # Initialize session state if user coming directly to signals
     # Initialize session state if user coming directly to signals
     if(selected_algos not in st.session_state):
@@ -259,7 +270,8 @@ def main():
   elif (manual_select == "Trading Charts" ):
     st.header("Ticker Trading Charts")
     st.caption("Presents the trading view of the tickers filtered on Ticker and Date")
-    
+    # if(main_menu not in st.session_state):
+    #   st.session_state['main_menu'] = 3
     process_name = "Trading Charts"
     start_time = time.time()
     
@@ -282,6 +294,8 @@ def main():
   elif (manual_select == "Change Logs" ):
     st.header("Change Logs")
     st.caption("Lists the change log since the last release")
+    # if(main_menu not in st.session_state):
+    #   st.session_state['main_menu'] = 4
     process_name = "Change Logs"
     start_time = time.time()
     
