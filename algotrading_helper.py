@@ -636,10 +636,16 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
   # st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
   # st.subheader(st.session_state.page_subheader)
     
-          
+  # RK051424: getting stock history from a central function in 2 steps - 
+  # load the history for all tickers and 
+  # then process for individual ticker
+  yf_ticker_history = get_selected_stock_history(known_options,selected_period, selected_interval)    
+  # st.write(yf_ticker_history)    
   for symbol in known_options:
     # get ticker data
-    yf_data = yf.Ticker(symbol) #initiate the ticker
+    # yf_data = yf.Ticker(symbol) #initiate the ticker
+    
+    
     # st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
     # st.subheader(st.session_state.page_subheader)
     
@@ -658,10 +664,13 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
     # generate trading summary
     # based on the selected algo strategy call the selected functions
     # st.write("getting summary for: ", symbol)
-    stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+    # stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
     # st.write(stock_hist_df[:10])
     # await asyncio.sleep(1)
     # use gather instead of run
+    
+    # RK051424: getting stock history from a central function in 2 steps -
+    stock_hist_df = yf_ticker_history[symbol]
     
     tasks.append(algo_trading_summary(symbol, 
                                      stock_hist_df,
@@ -791,13 +800,16 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                        columns = ['Value']
                                        )
   # st.write(etf_processed_signals)
-  
+  # RK 051424
+  yf_ticker_history = get_selected_stock_history(known_options,selected_period, selected_interval)    
   for symbol in known_options:
     # get ticker data
     
-    yf_data = yf.Ticker(symbol) #initiate the ticker
+    # yf_data = yf.Ticker(symbol) #initiate the ticker
     st.write("fetching status for: ", symbol )
-    stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+    # stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
+    # RK051424: getting stock history from a central function in 2 steps -
+    stock_hist_df = yf_ticker_history[symbol]
     
     func1 = await strategy_sma(symbol,
                  stock_hist_df,
@@ -1082,7 +1094,7 @@ def to_twitter(post):
 
   # Streamlit app
   st.sidebar.title("")
-  st.sidebar.title('Tweet from Streamlit App')
+  st.sidebar.subheader('Tweet from ConvexTrades!')
 
   # Get tweet text from user input
   tweet_text = st.sidebar.text_area('Enter your tweet:', '')
