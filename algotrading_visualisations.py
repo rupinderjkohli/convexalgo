@@ -56,7 +56,6 @@ def show_trading_charts(known_options,
   max_date = (selected_etf_data[selected_ticker].index.max())
   
   
-
   # # Default value
   # default_date = datetime.date(2022, 5, 1)
 
@@ -86,6 +85,7 @@ def show_trading_charts(known_options,
   
   st.write(df_selected.index.min(), 
            df_selected.index.max())
+  st.write(df.head())
 
   # if(start_date != None or end_date != None):
   #   if(start_date < end_date):
@@ -105,6 +105,14 @@ def show_trading_charts(known_options,
   #                     selected_short_window,
   #                     selected_long_window,
   #                     display_table = False)
+  
+  # lw_charts_snapshot(selected_ticker,
+  #                      df_selected, 
+  #                      algo_strategy = 'EMA',
+  #                      selected_short_window = 5,
+  #                      selected_long_window = 8,
+  #                      )
+    
   return
 
 # ##########################################################  
@@ -118,11 +126,6 @@ def ticker_charts_snapshot(symbol,
                       #  display_table = False
                       ):
 
-    
-    # # column names for long and short moving average columns
-    # short_window_col = str(selected_short_window) + '_' + algo_strategy
-    # long_window_col = str(selected_long_window) + '_' + algo_strategy
-    
     df.rename(columns = {'Datetime':'time'}, inplace = True)
     
     chart = StreamlitChart(width=900, height=400)
@@ -163,7 +166,7 @@ def lw_charts_snapshot(symbol,
                        algo_strategy,
                        selected_short_window,
                        selected_long_window,
-                       display_table = False):
+                       ):
 
     
     # column names for long and short moving average columns
@@ -177,13 +180,13 @@ def lw_charts_snapshot(symbol,
     chart.set(stock_df, render_drawings = True)
     # print(stock_df.info())
     
-    line = chart.create_line(short_window_col, color = 'blue', price_line = True, price_label = True)
-    short_algo_data = stock_df
-    line.set(short_algo_data)
+    # line = chart.create_line(short_window_col, color = 'blue', price_line = True, price_label = True)
+    # short_algo_data = stock_df
+    # line.set(short_algo_data)
     
-    line = chart.create_line(long_window_col, color = 'red', price_line = True, price_label = True)
-    long_algo_data = stock_df
-    line.set(long_algo_data)
+    # line = chart.create_line(long_window_col, color = 'red', price_line = True, price_label = True)
+    # long_algo_data = stock_df
+    # line.set(long_algo_data)
     
     # chart styling
     chart.layout(background_color='#090008', text_color='#FFFFFF', font_size=16,
