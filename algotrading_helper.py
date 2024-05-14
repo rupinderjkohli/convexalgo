@@ -451,7 +451,7 @@ def display_watchlist():
   
   user_sel_list = load_user_selected_options()
   
-  st.session_state.user_watchlist = user_sel_list
+  st.session_state['user_watchlist'] = user_sel_list
   
   return user_sel_list
 
@@ -617,7 +617,8 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
   tasks = []
   
   if (len(selected_algos) == 0):
-    selected_algos = ['5/8 EMA', '5/8 EMA 1-2 candle price','4-3-1 candle price reversal']
+    #RK load from config
+    selected_algos = ['5/8 EMA', '5/8 EMA 1-2 candle price','4-3-1 candle price reversal'] 
     st.session_state.selected_algos = selected_algos
   
   st.markdown("<div style='display:flex;'>Stocks watchlist:  {} <div> "
@@ -658,19 +659,10 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
     # based on the selected algo strategy call the selected functions
     # st.write("getting summary for: ", symbol)
     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-    
+    # st.write(stock_hist_df[:10])
     # await asyncio.sleep(1)
     # use gather instead of run
     
-    
-    # trading_summary = await asyncio.gather(algo_trading_summary(symbol, 
-    #                                  stock_hist_df,
-    #                                  selected_algos, 
-    #                                  selected_period, 
-    #                                  selected_interval,
-    #                                  )
-    # )
-    # print("summary_view", stock_hist_df.columns)
     tasks.append(algo_trading_summary(symbol, 
                                      stock_hist_df,
                                      selected_algos, 
@@ -679,24 +671,8 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
                                      )
                  )
     
-    # # Combine results into a single list of dictionaries
-    # # st.write(trading_summary)
-    # # st.write(type(trading_summary))
-    # # st.write(len(trading_summary))
-    # for i, result in enumerate(trading_summary):
-    #   # st.write("len(result)",len(result))
-    #   combined_trading_summary.append(result[i])
-    # # st.write(combined_trading_summary)
-    
   results = await asyncio.gather(*tasks)
-  
-      
-  # present view  
-  # st.write(df_summary_view.sort_values(by='symbol',ascending=True))
-  # st.write("getting trading view for: ", selected_algos)
-  # st.write(combined_trading_summary)
-  # st.write("Results:", results)
-  
+
   # Flatten the list nested structure
   flattened_data = [item for sublist in results for item in sublist]
   
@@ -800,29 +776,38 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
   return
   
   
-  
+# save output in cache to be used by the trading charts  
 async def stock_status(known_options, selected_algos, selected_period, selected_interval):
   # generate stocks list view
   # st.write(known_options, selected_algos, selected_period, selected_interval)
   
   # await asyncio.sleep(1)
+  
+  etf_multi_index = pd.MultiIndex.from_product([known_options,
+                                                st.session_state.selected_algos],
+                                               names=['tickers', 'algo_strategy'])
+  # Create a DataFrame with the MultiIndex
+  etf_processed_signals = pd.DataFrame(index=etf_multi_index,
+                                       columns = ['Value']
+                                       )
+  # st.write(etf_processed_signals)
+  
   for symbol in known_options:
     # get ticker data
+    
     yf_data = yf.Ticker(symbol) #initiate the ticker
     st.write("fetching status for: ", symbol )
     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
     
-    status_trading_signal_details = {} # dictionary 
-    
-    
-    # func1 = strategy_sma(symbol,
-    #              stock_hist_df,
-    #              selected_period, 
-    #              selected_interval,
-    #              algo_strategy = "SMA",
-    #              selected_short_window = 5,
-    #              selected_long_window = 8
-    #              )
+    func1 = await strategy_sma(symbol,
+                 stock_hist_df,
+                 selected_period, 
+                 selected_interval,
+                 algo_strategy = "SMA",
+                 selected_short_window = 5,
+                 selected_long_window = 8,
+                 is_summary = False,
+                 )
     # st.write(func1)
     
     status_strategy_ema = await strategy_ema(symbol,
@@ -834,21 +819,17 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                  selected_long_window = 8,
                  is_summary = False,
                  )
-    # status_trading_signal_details[symbol] = status_strategy_ema
-    # EMA quick_explore + the following columns
-    # stock_df[short_window_col]; stock_df[long_window_col]
-    # stock_df['Signal']; stock_df['Position']
+    algo_strategy = "5/8 EMA"
+    
     print("status_strategy_ema")
-    print(status_strategy_ema.columns)
+    # print(status_strategy_ema.columns)
     print()
-    # status_strategy_ema
-    # Index(['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',
-      #  '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma', 'Position_c',
-      #  'stop_loss_atr', 'take_profit_atr'],
-    #   dtype='object')
+    
     status_strategy_ema = status_strategy_ema [[ 
        '5_EMA', '8_EMA', 'Position_c',]]
     # st.write("EMA", status_strategy_ema.sort_index(ascending=False))
+    # Rename the column Position_c
+    status_strategy_ema.rename(columns={'Position_c': 'Trigger:EMA crossover'}, inplace=True)
     
     status_strategy_ema_continual = await strategy_ema_continual(symbol,
                                  stock_hist_df,
@@ -859,12 +840,14 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                  selected_long_window = 8,
                                  is_summary = False,
                                  )
-    # status_trading_signal_details[symbol] = status_strategy_ema_continual
+    # etf_processed_signals[symbol][algo_strategy] = status_strategy_ema
+    # st.write(etf_processed_signals) #[symbol][:10])
+    
     # ema_continual + the following columns
     # stock_df['ema_5above8'];stock_df['t0_close_aboveema5'];stock_df['t0_low_belowema5'];stock_df['ema_continual_long'];
     # stock_df['ema_5below8'];stock_df['t0_close_belowema5'];stock_df['t0_low_aboveema5'];stock_df['ema_continual_short']
     print("status_strategy_ema_continual")
-    print(status_strategy_ema_continual.columns)
+    # print(status_strategy_ema_continual.columns)
     print()
     # Index(['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',
       #  '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma', 'position_c',
@@ -878,6 +861,8 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
        'ema_5above8','t0_close_aboveema5','t0_low_belowema5', 'ema_continual_long', 
        'ema_5below8','t0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short','position']]
     # st.write("EMA 1-2 candle price", status_strategy_ema_continual.sort_index(ascending=False))
+    # Rename the column position
+    status_strategy_ema.rename(columns={'position': 'Trigger:EMA 1-2 Continual'}, inplace=True)
     
     
     status_strategy_431_reversal = await strategy_431_reversal(symbol,
@@ -887,9 +872,9 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                  is_summary = False,
                                  algo_strategy = "4-3-1 candle price reversal",
                                  )
-    # status_trading_signal_details[symbol] = status_strategy_431_reversal
+  
     print("status_strategy_431_reversal")
-    print(status_strategy_431_reversal.columns)
+    # print(status_strategy_431_reversal.columns)
     print()
     # ['Open', 'Close', 'High', 'Low', 't3', 't2', 't1', 't0',
       #  'strategy_431_long_c1', 'strategy_431_long_c2', 'strategy_431_long_c3',
@@ -902,6 +887,8 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
        'strategy_431_short_c1', 'strategy_431_short_c2',
        'strategy_431_short_c3', 'strategy_431_short','position',]]
     # st.write("4-3-1 candle price reversal", status_strategy_431_reversal.sort_index(ascending=False))
+    # Rename the column position
+    status_strategy_ema.rename(columns={'position': 'Trigger:4-3-1 Reversal'}, inplace=True)
     
     st.write("---")
     
@@ -915,14 +902,22 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                     left_index=True, right_index=True, how='outer')
 
     st.write(status_ema_merged_df.sort_index(ascending=False))
-    st.write("---")
+    # print('#################################')
+    # print(status_ema_merged_df.columns)
+    # print('#################################')
     
-  # # for symbol in known_options:
-  # #   st.write(status_trading_signal_details[symbol] ) 
-  # st.write(status_trading_signal_details)  
-  return
+    st.write("---")
+    data = {}
+    for idx in etf_processed_signals.index:
+      # st.write(idx)
+      data[idx] = status_ema_merged_df 
+      
+    # Concatenate the DataFrames along axis=0 to create a DataFrame with MultiIndex
+    etf_processed_signals_df = pd.concat(data, axis=0)
+    
+    # st.write(etf_processed_signals_df) #[:10])
   
-
+  return etf_processed_signals_df
         
 def show_change_logs():
   # generate change log
@@ -931,7 +926,8 @@ def show_change_logs():
   st.write("- Ability to add more stocks to the existing watchlist from the universe of all stocks allowed by the app.")
   st.write("- Add your own stock tickers through the Customisation tab.")
   st.write("- Added 4-3-1 candle price reversal Strategy.")
-  st.write("- News about the selected stocks is listed.")
+  # st.write("- News about the selected stocks is listed.")
+  st.write("- Added visualizations with filter on date and stock.")
   
   return
 
@@ -944,11 +940,13 @@ async def algo_trading_summary(symbol,
                                selected_interval,
                                ):
     print("algo_trading_summary function is running")
-    # st.write(symbol, selected_algos, st.session_state.algo_functions_map)
+    print("algo_trading_summary")
+    # st.write(symbol, selected_algos)
     
     algo_name, algo_functions = list(st.session_state.algo_functions_map)
     
     # Extract the second element from each list using list comprehension
+    #RK load from config
     extracted_functions = [y for x, y in zip(algo_name, algo_functions) if x in selected_algos]
     # [lst[1] for lst in [algo_name, algo_functions]]
     
@@ -958,7 +956,7 @@ async def algo_trading_summary(symbol,
     # results = await asyncio.gather(func_a(), func_b())
     print("getting into functions")
     await asyncio.sleep(1)
-    func1 = strategy_sma(symbol,
+    func1 =  strategy_sma(symbol,
                  stock_hist_df,
                  selected_period, 
                  selected_interval,
@@ -967,7 +965,9 @@ async def algo_trading_summary(symbol,
                  selected_long_window = 8,
                  is_summary = True,
                  )
-    func2 = strategy_ema(symbol,
+    # st.write("func1", func1)
+    
+    func2 =  strategy_ema(symbol,
                  stock_hist_df,
                  selected_period, 
                  selected_interval,
@@ -976,8 +976,9 @@ async def algo_trading_summary(symbol,
                  selected_long_window = 8,
                  is_summary = True,
                  )
+    # st.write("func2", func2)
     
-    func3 = strategy_ema_continual(symbol,
+    func3 =  strategy_ema_continual(symbol,
                                  stock_hist_df,
                                  selected_period, 
                                  selected_interval,
@@ -986,21 +987,57 @@ async def algo_trading_summary(symbol,
                                  selected_long_window = 8,
                                  is_summary = True,
                                  )
+    # st.write("func3", func3)
     
-    func4 = strategy_431_reversal(symbol,
+    func4 =  strategy_431_reversal(symbol,
                                  stock_hist_df,
                                  selected_period, 
                                  selected_interval,
                                  is_summary = True,
                                  algo_strategy = "4-3-1 candle price reversal",
-                                 
                                  )
     
+    
+    # st.write("func4", func4)
     # results = await asyncio.gather(extracted_functions[0], extracted_functions[1])
-    results = await asyncio.gather(func1, func2, func3, func4)
+    # tasks = []
+    
+    # tasks.append(await strategy_ema(symbol,
+    #             stock_hist_df,
+    #             selected_period, 
+    #             selected_interval,
+    #             algo_strategy = "EMA",
+    #             selected_short_window = 5,
+    #             selected_long_window = 8,
+    #             is_summary = True,
+    #             )
+    #             )
+    # tasks.append(await strategy_ema_continual(symbol,
+    #                             stock_hist_df,
+    #                             selected_period, 
+    #                             selected_interval,
+    #                             algo_strategy = "EMA 1-2 candle price",
+    #                             selected_short_window = 5,
+    #                             selected_long_window = 8,
+    #                             is_summary = True,
+    #                             )
+    #             )
+    # tasks.append(await strategy_431_reversal(symbol,
+    #                            stock_hist_df,
+    #                            selected_period, 
+    #                            selected_interval,
+    #                            is_summary = True,
+    #                            algo_strategy = "4-3-1 candle price reversal",
+    #                            ))
+    
+    # results = await asyncio.gather(*tasks)
+    
+    results = await asyncio.gather(func2, func3, func4)
+    # st.write("results", results)
+  
     await asyncio.sleep(1)
     
-    # st.write("algo_trading_summary function is done")
+    print("algo_trading_summary function is done")
     # st.write(results)
     
     # Combine results into a single list of dictionaries
@@ -1017,7 +1054,7 @@ async def algo_trading_summary(symbol,
     # st.write(combined_results_df)
     
     # PLACEHOLDER TO TEST FOR NEW ALGOS
-    
+  
     return (combined_results)
 
     # Get the object allocation traceback

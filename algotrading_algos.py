@@ -101,6 +101,7 @@ async def strategy_ema(symbol,
     if (is_summary):
         return_snapshot = trading_snapshot_ema
     else: return_snapshot = stock_df
+    # st.write(">>>>>>>>>>>strategy ema >>>>>>>>>> return_snapshot",type(return_snapshot))
     return return_snapshot
     
     # return trading_snapshot_ema
@@ -124,8 +125,8 @@ async def strategy_ema_continual(symbol,
                                                                     selected_long_window,
                                                                     algo_strategy,
                                                                     True)
-    
-    stock_ema_continual_df = ema_continual(symbol,
+    # st.write(">>>>strategy_ema_continual - stock_df",stock_df)
+    stock_ema_continual_df = await ema_continual(symbol,
                              stock_df,
                              selected_short_window,
                              selected_long_window,
@@ -148,6 +149,7 @@ async def strategy_ema_continual(symbol,
     if (is_summary):
         return_snapshot = trading_snapshot_ema_continual
     else: return_snapshot = stock_ema_continual_df
+    # st.write(">>>>>>>>>>>strategy ema continual >>>>>>>>>> return_snapshot",type(return_snapshot))
     return return_snapshot
     
     
@@ -171,6 +173,8 @@ async def strategy_431_reversal(symbol,
                                     selected_period, 
                                     selected_interval,
                                     algo_strategy = "4-3-1 candle price reversal",)
+    
+    # st.write("df_four_three_one_soldiers",type(df_four_three_one_soldiers),df_four_three_one_soldiers)
 
     # st.write("df_four_three_one_soldiers")
     # Get the index of the row where the column value is "Buy" or "Sell"
@@ -226,9 +230,6 @@ async def strategy_431_reversal(symbol,
                                 "stock_stop_loss_atr",
                                 "stock_take_profit_atr",
                                 "algo_strategy",
-                                # "stock_atr_ma",
-                                # "stock_ema_p1",
-                                # "stock_ema_p2",
                                 "stock_previous_triggers",
                                 "tweet_post"
                                 ]:
@@ -239,6 +240,7 @@ async def strategy_431_reversal(symbol,
     if (is_summary):
         return_snapshot = quick_explore
     else: return_snapshot = df_four_three_one_soldiers
+    # st.write(">>>>>>>>>>>strategy 4-3-1 >>>>>>>>>> return_snapshot",type(return_snapshot))
     return return_snapshot
       
 
@@ -272,7 +274,7 @@ async def trading_signals_view(symbol,
         previous_triggers_list = np.sort(previous_triggers_list)[::-1]
         # print(previous_triggers_list)
         
-        stock_day_close = get_current_price(symbol, selected_period, selected_interval)
+        # stock_day_close = get_current_price(symbol, selected_period, selected_interval)
         stock_price_at_trigger = df_pos.loc[df_pos.index == df_pos.index.max(), "Close"].to_list()[0]
         stock_trigger_at = df_pos.index.max()
         stock_trigger_state = df_pos.loc[df_pos.index == df_pos.index.max(), "Position"].to_list()[0]
@@ -496,9 +498,10 @@ def get_current_price(symbol, selected_period, selected_interval):
     except:
       print("unable to load the ticker current price") 
       return 
+    # getting error: IndexError: single positional indexer is out-of-bounds
     return todays_data['Close'].iloc[-1]
 
-def ema_continual(symbol, 
+async def ema_continual(symbol, 
                   stock_df,
                   short_window,
                   long_window, 
@@ -513,6 +516,9 @@ def ema_continual(symbol,
     # #########################
     # BEGIN: DEBUG_INFO
     # st.write(symbol)
+    
+    await asyncio.sleep(1)
+    
     ema_continual_df = stock_df
     ema_continual_df['ema_5above8'] = (ema_continual_df[short_window_col] > ema_continual_df[long_window_col])
     
@@ -717,7 +723,7 @@ async def strategy_four_three_one_soldiers(symbol,
     df_summary_short = df_strategy_431_short #[df_strategy_431_short.index == df_strategy_431_short.index.max()]
     df_summary = pd.concat([df_summary, df_summary_short], ignore_index=False)
     
-    # st.write(df_summary)
+    # st.write("df_summary",df_summary)
     # return df_strategy_431 #df_summary
     return df_summary #returns the filtered data only
     

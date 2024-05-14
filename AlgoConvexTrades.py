@@ -76,6 +76,7 @@ def main():
   
   # load_user_selected_options()
   user_sel_list = load_user_selected_options()
+  st.session_state['user_watchlist'] = user_sel_list
   
   print(user_sel_list)
   
@@ -206,10 +207,10 @@ def main():
     # Hyperlink to generate trading chart
     if st.markdown("[Generate Trading Charts](show_trading_charts())"):
       st.write("show the charts")
-        # show_trading_charts(st.session_state.user_watchlist, #known_options, 
-        #                       st.session_state.selected_algos, 
-        #                       st.session_state.period, 
-        #                       st.session_state.interval) # known_options)
+      # show_trading_charts(st.session_state.user_watchlist, #known_options, 
+      #                       st.session_state.selected_algos, 
+      #                       st.session_state.period, 
+      #                       st.session_state.interval)
     
     # time check begin
     for variable in ["process_name","execution_time", "start_time", "end_time"]:
@@ -219,8 +220,11 @@ def main():
     
   elif (manual_select == "Status" ):
     # Initialize session state if user coming directly to signals
+    # Initialize session state if user coming directly to signals
     if(selected_algos not in st.session_state):
-      st.session_state[selected_algos] = selected_algos
+      st.session_state['selected_algos'] = selected_algos #st.session_state.get(selected_algos) #, selected_algos)
+    
+    
     # if(stop_loss_factor not in st.session_state):
     #   st.session_state[stop_loss_factor] = st.session_state.get(float(stop_loss[0]))
     # if(take_profit_factor not in st.session_state):
@@ -230,10 +234,18 @@ def main():
     process_name = "Status"
     start_time = time.time()
     
-    asyncio.run (stock_status(st.session_state.user_watchlist, # known_options, 
+    stock_status_result = asyncio.run (stock_status(st.session_state.user_watchlist, # known_options, 
                               st.session_state.selected_algos, 
                               st.session_state.period, 
                               st.session_state.interval))
+    
+    # Hyperlink to generate trading chart
+    if st.markdown("[Generate Trading Charts](show_trading_charts())"):
+      st.write("show the charts")
+      # show_trading_charts(st.session_state.user_watchlist, #known_options, 
+      #                         st.session_state.selected_algos, 
+      #                         st.session_state.period, 
+      #                         st.session_state.interval)
     
     end_time = time.time()
     execution_time = end_time - start_time
@@ -245,8 +257,7 @@ def main():
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
     
   elif (manual_select == "Trading Charts" ):
-    st.write("Display all charts with their candlestick charts")
-    st.write("Display specific chart with their candlestick charts")
+    st.header("Ticker Trading Charts")
     
     process_name = "Trading Charts"
     start_time = time.time()
