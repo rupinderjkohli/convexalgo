@@ -138,7 +138,7 @@ def main():
   if (st.session_state.selected_menu == "Setup Day" ):
     process_name = "Setup Day"
     start_time = time.time()
-    if(main_menu not in st.session_state):
+    if('main_menu' not in st.session_state):
       st.session_state['main_menu'] = 0
     if('selected_menu' not in st.session_state):  
       st.session_state['selected_menu'] = "Setup Day"
