@@ -15,7 +15,7 @@ import streamlit.components.v1 as components
 
 def main():
   st.set_page_config(
-    page_title="Convex Trades Dashboard",
+    page_title="Convex Algos Dashboard",
     page_icon="🧊",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -80,35 +80,29 @@ def main():
   
   print(user_sel_list)
   
-  
-  # if "shared" not in st.session_state:
-  #  st.session_state["shared"] = True
-
-  # if len(known_options) == 0:
-  #   st.write ("Please select a ticker in the sidebar")
-  #   return
-  # else:
-  #     st.write("home page")
-  
-  # st.write("# Welcome to Streamlit! 👋")
-  
-  # 5. Add on_change callback
-  # st.write(st.session_state)
   if('main_menu' not in st.session_state):
     st.session_state['main_menu'] = st.session_state.get('main_menu', 0)
+  if('selected_menu' not in st.session_state):  
+    st.session_state['selected_menu'] = "Signals"
+    
+    
+    
   # st.write(st.session_state)  
   
   def on_change(key):
       selection = st.session_state[key]
-      st.write(f"Selection changed to {selection}")
-      st.session_state.main_menu = selection
+      # st.write(f"Selection changed to {selection}")
+      st.session_state['main_menu'] = selection
+      st.session_state['selected_menu'] = selection
       return
       
       
   with st.sidebar:
-    choose = option_menu("Convex Algos", ["Setup Day", "---" ,"Signals", "Status", "Trading Charts", "Change Logs"],
-                         icons=['house', 'camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill'],
-                         menu_icon="app-indicator", default_index=0,
+    choose = option_menu("Convex Algos", ["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Setup Day",],
+                         icons=['camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill','house', ],
+                         menu_icon="app-indicator", 
+                        #  default_index=0,
+                         default_index=["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Setup Day",].index(st.session_state.selected_menu),
                          styles={
                           "container": {"padding": "5!important", "background-color": "#fafafa"},
                           "icon": {"color": "orange", "font-size": "25px"}, 
@@ -118,8 +112,10 @@ def main():
                          key='main_menu',
                          on_change=on_change
     )
-    manual_select = "Setup Day"
+    manual_select = "Signals"
     # st.write(choose)
+    # Update session state based on selection
+    st.session_state.selected_menu = choose
     
     # # Initialize session state
     # if 'main_menu' not in st.session_state:
@@ -139,11 +135,14 @@ def main():
   
   # st.sidebar.success("Setup your trading day")
 
-  if (manual_select == "Setup Day" ):
+  if (st.session_state.selected_menu == "Setup Day" ):
     process_name = "Setup Day"
     start_time = time.time()
     # if(main_menu not in st.session_state):
     #   st.session_state['main_menu'] = 0
+    if('selected_menu' not in st.session_state):  
+      st.session_state['selected_menu'] = "Setup Day"
+      
     known_options, selected_algos = setup_day(user_sel_list, 
                                               st.session_state.period, 
                                               st.session_state.interval, 
@@ -175,7 +174,7 @@ def main():
     # Store the selected option in session state
     # else: st.session_state.selected_algos = selected_algos
     
-  elif (manual_select == "Signals" ):
+  elif (st.session_state.selected_menu == "Signals" ):
     st.header("Trading Signals View")
     # if(main_menu not in st.session_state):
     #   st.session_state['main_menu'] = 1
@@ -186,7 +185,8 @@ def main():
     known_options = display_watchlist()
     # print("known_options")
     
-    
+    if('selected_menu' not in st.session_state):  
+      st.session_state['selected_menu'] = "Signals"
     # Initialize session state if user coming directly to signals
     if(selected_algos not in st.session_state):
       st.session_state['selected_algos'] = selected_algos #st.session_state.get(selected_algos) #, selected_algos)
@@ -225,7 +225,7 @@ def main():
     x = pd.DataFrame([process_time])
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
     
-  elif (manual_select == "Status" ):
+  elif (st.session_state.selected_menu == "Status" ):
     st.header("Ticker Status View")
     st.caption("Shows the status of the implemented strategies for all tickers")
     
@@ -245,10 +245,24 @@ def main():
     process_name = "Status"
     start_time = time.time()
     
-    stock_status_result = asyncio.run (stock_status(st.session_state.user_watchlist, # known_options, 
+    stock_status_data, status_ema_merged_df = asyncio.run (stock_status(st.session_state.user_watchlist, # known_options, 
                               st.session_state.selected_algos, 
                               st.session_state.period, 
                               st.session_state.interval))
+    
+    # st.write("###############################")
+    # st.write(status_ema_merged_df.sort_index(ascending=False))
+    # st.write("###############################")
+    
+    # st.write("###############################")
+    # st.write(type(stock_status_data))
+    # st.write(stock_status_data.keys())
+    
+    # # Convert to DataFrame by flattening the dictionary
+    for symbol, symbol_data in stock_status_data.items():
+      st.write("fetching status for ticker: ", symbol)
+      st.write(pd.DataFrame(symbol_data).sort_index(ascending=False))
+      
     
     # Hyperlink to generate trading chart
     if st.markdown("[Generate Trading Charts](show_trading_charts())"):
@@ -267,7 +281,7 @@ def main():
     x = pd.DataFrame([process_time])
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
     
-  elif (manual_select == "Trading Charts" ):
+  elif (st.session_state.selected_menu == "Trading Charts" ):
     st.header("Ticker Trading Charts")
     st.caption("Presents the trading view of the tickers filtered on Ticker and Date")
     # if(main_menu not in st.session_state):
@@ -291,7 +305,7 @@ def main():
     x = pd.DataFrame([process_time])
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
   
-  elif (manual_select == "Change Logs" ):
+  elif (st.session_state.selected_menu == "Change Logs" ):
     st.header("Change Logs")
     st.caption("Lists the change log since the last release")
     # if(main_menu not in st.session_state):

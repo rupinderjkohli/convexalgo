@@ -776,22 +776,15 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
     )
   # combined_trading_summary_df['share'] = []
   
-  
-    
-  with st.popover("Tweet"):
-    st.markdown("Hello World 👋")
-    name = st.text_input("What's your name?")
-  
-  return
-  
-  
-# save output in cache to be used by the trading charts  
+# save output in cache to be used by the trading charts
+@st.cache_resource  
 async def stock_status(known_options, selected_algos, selected_period, selected_interval):
   # generate stocks list view
   # st.write(known_options, selected_algos, selected_period, selected_interval)
   
   # await asyncio.sleep(1)
-  
+  stock_status_data = {}
+  status_ema_merged_df = {}
   etf_multi_index = pd.MultiIndex.from_product([known_options,
                                                 st.session_state.selected_algos],
                                                names=['tickers', 'algo_strategy'])
@@ -799,14 +792,15 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
   etf_processed_signals = pd.DataFrame(index=etf_multi_index,
                                        columns = ['Value']
                                        )
-  # st.write(etf_processed_signals)
+  # st.write("from stock_status",etf_processed_signals)
   # RK 051424
-  yf_ticker_history = get_selected_stock_history(known_options,selected_period, selected_interval)    
+  yf_ticker_history = get_selected_stock_history(known_options,selected_period, selected_interval) 
+  
   for symbol in known_options:
     # get ticker data
     
     # yf_data = yf.Ticker(symbol) #initiate the ticker
-    st.write("fetching status for: ", symbol )
+    # st.write("fetching status for: ", symbol )
     # stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
     # RK051424: getting stock history from a central function in 2 steps -
     stock_hist_df = yf_ticker_history[symbol]
@@ -838,20 +832,22 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     print()
     
     status_strategy_ema = status_strategy_ema [[ 
-       '5_EMA', '8_EMA', 'Position_c',]]
+       'Close','5_EMA', '8_EMA', 'Position_c',]]
     # st.write("EMA", status_strategy_ema.sort_index(ascending=False))
     # Rename the column Position_c
-    status_strategy_ema.rename(columns={'Position_c': 'Trigger:EMA crossover'}, inplace=True)
+    status_strategy_ema.rename(columns={'Position_c': 'Trigger:EMA crossover',
+                                        'Close': 'EMA Close Price'}, inplace=True)
     
     status_strategy_ema_continual = await strategy_ema_continual(symbol,
                                  stock_hist_df,
                                  selected_period, 
                                  selected_interval,
-                                 algo_strategy = "EMA 1-2 candle price",
+                                 algo_strategy = "5/8 EMA 1-2 candle price",
                                  selected_short_window = 5,
                                  selected_long_window = 8,
                                  is_summary = False,
                                  )
+    algo_strategy = "5/8 EMA 1-2 candle price"
     # etf_processed_signals[symbol][algo_strategy] = status_strategy_ema
     # st.write(etf_processed_signals) #[symbol][:10])
     
@@ -859,7 +855,7 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     # stock_df['ema_5above8'];stock_df['t0_close_aboveema5'];stock_df['t0_low_belowema5'];stock_df['ema_continual_long'];
     # stock_df['ema_5below8'];stock_df['t0_close_belowema5'];stock_df['t0_low_aboveema5'];stock_df['ema_continual_short']
     print("status_strategy_ema_continual")
-    # print(status_strategy_ema_continual.columns)
+    print(status_strategy_ema_continual.columns)
     print()
     # Index(['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',
       #  '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma', 'position_c',
@@ -869,13 +865,13 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
       #  't0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short'],
     #   dtype='object')
     status_strategy_ema_continual = status_strategy_ema_continual[[ 
-       '5_EMA 1-2 candle price','8_EMA 1-2 candle price',  
+       'Close','5_5/8 EMA 1-2 candle price','8_5/8 EMA 1-2 candle price',  
        'ema_5above8','t0_close_aboveema5','t0_low_belowema5', 'ema_continual_long', 
        'ema_5below8','t0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short','position']]
     # st.write("EMA 1-2 candle price", status_strategy_ema_continual.sort_index(ascending=False))
     # Rename the column position
-    status_strategy_ema.rename(columns={'position': 'Trigger:EMA 1-2 Continual'}, inplace=True)
-    
+    status_strategy_ema_continual.rename(columns={'position': 'Trigger:EMA 1-2 Continual',
+                                        'Close': 'EMA_C Close Price'}, inplace=True)
     
     status_strategy_431_reversal = await strategy_431_reversal(symbol,
                                  stock_hist_df,
@@ -884,6 +880,7 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                  is_summary = False,
                                  algo_strategy = "4-3-1 candle price reversal",
                                  )
+    algo_strategy = "4-3-1 candle price reversal"
   
     print("status_strategy_431_reversal")
     # print(status_strategy_431_reversal.columns)
@@ -894,15 +891,18 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
       #  'strategy_431_short_c3', 'strategy_431_short', 'position', 'atr',
       #  'atr_ma', 'stop_loss_atr', 'take_profit_atr']
     #   dtype='object')
-    status_strategy_431_reversal = status_strategy_431_reversal[['strategy_431_long_c1',
+    status_strategy_431_reversal = status_strategy_431_reversal[['Close','strategy_431_long_c1',
        'strategy_431_long_c2', 'strategy_431_long_c3', 'strategy_431_long',
        'strategy_431_short_c1', 'strategy_431_short_c2',
        'strategy_431_short_c3', 'strategy_431_short','position',]]
     # st.write("4-3-1 candle price reversal", status_strategy_431_reversal.sort_index(ascending=False))
     # Rename the column position
-    status_strategy_ema.rename(columns={'position': 'Trigger:4-3-1 Reversal'}, inplace=True)
+    status_strategy_431_reversal.rename(columns={'position': 'Trigger:4-3-1 Reversal',
+                                        'Close': '4-3-1 Close Price'}, inplace=True)
     
-    st.write("---")
+    
+    
+    # st.write("---")
     
     # Merge on index and selected columns
     status_ema_merged_df = pd.DataFrame()
@@ -913,23 +913,33 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                     status_strategy_431_reversal, #[selected_columns_df2], 
                                     left_index=True, right_index=True, how='outer')
 
-    st.write(status_ema_merged_df.sort_index(ascending=False))
+    # st.write("fetching status for: ", symbol )
+    # st.write("---")
+    # st.write(status_ema_merged_df.sort_index(ascending=False))
+    # st.write("---")
+    
+    stock_status_data[symbol] = status_ema_merged_df
     # print('#################################')
     # print(status_ema_merged_df.columns)
     # print('#################################')
     
-    st.write("---")
-    data = {}
-    for idx in etf_processed_signals.index:
-      # st.write(idx)
-      data[idx] = status_ema_merged_df 
+    # data = {}
+    # for idx in etf_processed_signals.index:
+    #   # st.write(idx)
+    #   data[idx] = status_ema_merged_df 
+    #   # Reassign names if they are missing or incorrect
       
-    # Concatenate the DataFrames along axis=0 to create a DataFrame with MultiIndex
-    etf_processed_signals_df = pd.concat(data, axis=0)
+      
+    # # Concatenate the DataFrames along axis=0 to create a DataFrame with MultiIndex
+    # etf_processed_signals_df = pd.concat(data, axis=0)
+    # # st.write("etf_processed_signals_df.index",etf_processed_signals_df.index)
+    # etf_processed_signals_df.index.names = ['ticker', 'algo_name', 'Datetime']
+    # # st.write("etf_processed_signals_df.index",etf_processed_signals_df.index)
     
-    # st.write(etf_processed_signals_df) #[:10])
+    # # st.write("from stock_status function")
+    # # st.write(etf_processed_signals_df[symbol]) #[:10])
   
-  return etf_processed_signals_df
+  return stock_status_data, status_ema_merged_df #etf_processed_signals_df, stock_status_data
         
 def show_change_logs():
   # generate change log
@@ -994,7 +1004,7 @@ async def algo_trading_summary(symbol,
                                  stock_hist_df,
                                  selected_period, 
                                  selected_interval,
-                                 algo_strategy = "EMA 1-2 candle price",
+                                 algo_strategy = "5/8 EMA 1-2 candle price",
                                  selected_short_window = 5,
                                  selected_long_window = 8,
                                  is_summary = True,
@@ -1053,21 +1063,21 @@ async def algo_trading_summary(symbol,
     # st.write(results)
     
     # Combine results into a single list of dictionaries
-    combined_results = []
-    combined_results_df = pd.DataFrame()
+    trading_summary_results = []
+    trading_summary_results_df = pd.DataFrame()
     for result in results:
-        combined_results.append(result)
-    # print(type(combined_results))
-    # st.write(combined_results)
+        trading_summary_results.append(result)
+    # print(type(trading_summary_results))
+    # st.write(trading_summary_results)
 
     # Create a DataFrame from the list of dictionaries
     print("generated trading summary for ", symbol)
-    # combined_results_df = pd.DataFrame(combined_results)
-    # st.write(combined_results_df)
+    # trading_summary_results_df = pd.DataFrame(trading_summary_results)
+    # st.write(trading_summary_results_df)
     
     # PLACEHOLDER TO TEST FOR NEW ALGOS
   
-    return (combined_results)
+    return (trading_summary_results)
 
     # Get the object allocation traceback
     # snapshot = tracemalloc.take_snapshot()
@@ -1119,3 +1129,20 @@ def get_selected_stock_history(known_options,selected_period, selected_interval)
     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)  
     selected_etf_data[symbol] = stock_hist_df
   return selected_etf_data
+
+def identify_market_patterns(df):
+  patterns = {
+      'Bullish Engulfing': ((df['Open'][1] > df['Close'][1]) & (df['Open'][2] < df['Close'][2]) & 
+                            (df['Open'][1] > df['Close'][2]) & (df['Close'][1] < df['Open'][2])),
+      'Bearish Engulfing': ((df['Open'][1] < df['Close'][1]) & (df['Open'][2] > df['Close'][2]) &
+                            (df['Open'][1] < df['Close'][2]) & (df['Close'][1] > df['Open'][2])),
+      'Doji': (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.05),
+      'Hammer': ((df['Close'] - df['Low']) > (df['High'] - df['Low']) * 0.7) & 
+                (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3),
+      'Shooting Star': ((df['High'] - df['Open']) > (df['High'] - df['Low']) * 0.7) & 
+                      (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3)
+  }
+    # Add a column for patterns
+  for pattern, condition in patterns.items():
+    df[pattern] = condition
+  return df

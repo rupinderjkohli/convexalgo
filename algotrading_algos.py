@@ -390,7 +390,7 @@ def MovingAverageCrossStrategy(symbol,
         # create a new column 'Position' which is a day-to-day difference of the 'Signal' column. 
         stock_df['Position'] = stock_df['Signal'].diff()
 
-    elif (moving_avg == 'EMA' or moving_avg == 'EMA 1-2 candle price'):
+    elif (moving_avg == 'EMA' or moving_avg == '5/8 EMA 1-2 candle price'):
         
         # column names for long and short moving average columns
         short_window_col = str(short_window) + '_' + moving_avg
