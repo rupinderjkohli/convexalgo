@@ -31,7 +31,9 @@ def show_trading_charts(known_options,
   # Selection for a specific time frame.
   
   # can we use stock_view_details here
-  
+  # Define the market pattern
+
+
   selected_etf_data = get_selected_stock_history(known_options,selected_period, selected_interval)
   # st.subheader('Select a Ticker')
   selected_ticker = st.selectbox("Select Ticker",options=known_options,
@@ -83,9 +85,9 @@ def show_trading_charts(known_options,
   df_selected = df[(pd.Timestamp(start_date) <= df.index.tz_localize(None)) & 
                    (df.index.tz_localize(None) <= (pd.Timestamp(end_date) + timedelta(days=1)))]
   
-  st.write(df_selected.index.min(), 
-           df_selected.index.max())
-  st.write(df.head())
+  # st.write(df_selected.index.min(), 
+  #          df_selected.index.max())
+  st.write(df_selected.head())
 
   # if(start_date != None or end_date != None):
   #   if(start_date < end_date):
@@ -99,6 +101,38 @@ def show_trading_charts(known_options,
   
   ticker_charts_snapshot(selected_ticker,
                        df_selected,)
+  
+  st.write("")
+  lw_charts_snapshot(selected_ticker,
+                       df_selected, 
+                      )
+  
+  st.write("")
+  fig = draw_candle_stick_chart(selected_ticker,df_selected)
+  st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+  
+  # Visualize the data
+  df_mkt_patterns = identify_market_patterns(df)
+  # st.write(df_mkt_patterns)
+  
+  stock_status_data, status_ema_merged_df = asyncio.run (stock_status(st.session_state.user_watchlist, # known_options, 
+                              st.session_state.selected_algos, 
+                              st.session_state.period, 
+                              st.session_state.interval))
+  
+  # st.write("1",type(stock_status_result))
+  # print(stock_status_result.columns)
+  df_selected_ticker = stock_status_data[selected_ticker] #etf_processed_signals_df.loc[selected_ticker]
+  # df_selected_ticker_filtered = df_selected_ticker[(pd.Timestamp(start_date) <= df_selected_ticker.index.tz_localize(None)) & 
+  #                  (df_selected_ticker.index.tz_localize(None) <= (pd.Timestamp(end_date) + timedelta(days=1)))]
+  
+  st.write(df_selected_ticker)
+  # apdict = mpf.make_addplot(df[['Bullish Engulfing', 'Bearish Engulfing', 'Doji', 'Hammer', 'Shooting Star']]*100,
+  #                           type='scatter', markersize=200, marker='^')
+
+  # mpf.plot(df, type='candle', style='charles', addplot=apdict,
+  #         title='Candlestick Patterns', ylabel='Price (USD)')
+
   # lw_charts_snapshot(selected_ticker,
   #                     df, 
   #                     algo_strategy,
@@ -163,15 +197,15 @@ def ticker_charts_snapshot(symbol,
 # ##########################################################  
 def lw_charts_snapshot(symbol,
                        stock_df, 
-                       algo_strategy,
-                       selected_short_window,
-                       selected_long_window,
+                      #  algo_strategy,
+                      #  selected_short_window,
+                      #  selected_long_window,
                        ):
 
     
-    # column names for long and short moving average columns
-    short_window_col = str(selected_short_window) + '_' + algo_strategy
-    long_window_col = str(selected_long_window) + '_' + algo_strategy
+    # # column names for long and short moving average columns
+    # short_window_col = str(selected_short_window) + '_' + algo_strategy
+    # long_window_col = str(selected_long_window) + '_' + algo_strategy
     
     stock_df.rename(columns = {'Datetime':'time'}, inplace = True)
     
@@ -493,7 +527,7 @@ def sparkline(df, col): #, Avg):
 # ##########################################################  
 # Purpose: 
 # ##########################################################
-def draw_candle_stick_chart(df,symbol):
+def draw_candle_stick_chart(symbol, df):
   candlestick = go.Candlestick(
                             x=df.index,       # choosing the Datetime column for the x-axis disrupts the graph to show the gaps
                             open=df['Open'],
