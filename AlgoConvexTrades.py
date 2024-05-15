@@ -122,7 +122,7 @@ def main():
     #     st.session_state.main_menu = 0 
     #     manual_select = st.session_state['main_menu']
     
-    if st.session_state.get('main_menu', 0):
+    if st.session_state.get('main_menu', st.session_state.selected_menu):
         # st.session_state['main_menu'] = st.session_state.get('main_menu', 0)#+ 1) % 5
         manual_select = st.session_state['main_menu']
         # st.write(manual_select)
