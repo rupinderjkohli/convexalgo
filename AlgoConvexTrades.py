@@ -101,8 +101,8 @@ def main():
     choose = option_menu("Convex Algos", ["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Setup Day",],
                          icons=['camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill','house', ],
                          menu_icon="app-indicator", 
-                        #  default_index=0,
-                         default_index=["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Setup Day",].index(st.session_state.selected_menu),
+                         default_index=0,
+                        #  default_index=["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Setup Day",].index(st.session_state.selected_menu),
                          styles={
                           "container": {"padding": "5!important", "background-color": "#fafafa"},
                           "icon": {"color": "orange", "font-size": "25px"}, 
