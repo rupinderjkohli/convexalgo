@@ -127,7 +127,7 @@ def main():
         manual_select = st.session_state['main_menu']
         # st.write(manual_select)
     else:
-        manual_select = st.session_state.get('main_menu', 0) #None
+        manual_select = st.session_state.get('main_menu', st.session_state.selected_menu) #None
   
   social_media_icons.render(sidebar=True, justify_content="space-evenly")
   
