@@ -3,15 +3,13 @@ from algotrading_visualisations import *
 from algotrading_algos import *
 from algotrading_class import *
 
+from streamlit_option_menu import option_menu
+import streamlit.components.v1 as components
 from st_social_media_links import SocialMediaIcons
-
 
 from pathlib import Path
 
 pd.options.display.float_format = '{:,.2f}'.format
-
-from streamlit_option_menu import option_menu
-import streamlit.components.v1 as components
 
 def main():
   st.set_page_config(
@@ -40,18 +38,18 @@ def main():
   social_media_icons = SocialMediaIcons(social_media_links)
 
   
-  # load the default ticker list
+  # load the config file and the user specified default ticker list 
   refresh = False
   symbol_list, period, interval, stop_loss, take_profit,trading_strategy_ma,trading_strategy_trend = load_config(refresh)
   
   symbol_list = np.sort(symbol_list)
-  st.session_state.period = period[0]
-  st.session_state.interval = interval[0]
-  st.session_state.stop_loss_factor = float(stop_loss[0])
-  st.session_state.take_profit_factor = float(take_profit[0])
+  st.session_state['period'] = period[0]
+  st.session_state['interval'] = interval[0]
+  st.session_state['stop_loss_factor'] = float(stop_loss[0])
+  st.session_state['take_profit_factor'] = float(take_profit[0])
   
-  st.session_state.moving_average = trading_strategy_ma
-  st.session_state.trend_based = trading_strategy_trend 
+  st.session_state['moving_average'] = trading_strategy_ma
+  st.session_state['trend_based'] = trading_strategy_trend 
   
   ma_list = trading_strategy_ma #["SMA", "EMA","EMA 1-2 candle price continuation"]
   algo_list = trading_strategy_trend #["4-3-1 candle price reversal"]
@@ -59,9 +57,9 @@ def main():
   selected_algos = convex_trade_algos_list
   st.session_state.selected_algos = convex_trade_algos_list
   
-  
   # List of algo functions
   algo_functions = [strategy_sma, strategy_ema, strategy_ema_continual, strategy_431_reversal]
+  algo_functions_args = []
   
   algo_functions_map = (((convex_trade_algos_list, algo_functions)))
   st.session_state.algo_functions_map = algo_functions_map
@@ -85,8 +83,6 @@ def main():
   if('selected_menu' not in st.session_state):  
     st.session_state['selected_menu'] = "Signals"
     
-    
-    
   # st.write(st.session_state)  
   
   def on_change(key):
@@ -94,6 +90,7 @@ def main():
       # st.write(f"Selection changed to {selection}")
       st.session_state['main_menu'] = selection
       st.session_state['selected_menu'] = selection
+      st.write("ON CHANGE DID I REACH HERE")
       return
       
       
@@ -104,10 +101,19 @@ def main():
                          default_index=0,
                         #  default_index=["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Setup Day",].index(st.session_state.selected_menu),
                          styles={
-                          "container": {"padding": "5!important", "background-color": "#fafafa"},
+                          "container": {"padding": "5!important"}, #, "background-color": "#fafafa"},
                           "icon": {"color": "orange", "font-size": "25px"}, 
                           "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
                           "nav-link-selected": {"background-color": "#02ab21"},
+                          # # "container": {"padding": "0!important", "background-color": "#262730"},
+                          # # "icon": {"color": "#fafafa", "font-size": "25px"},
+                          # "nav-link": {
+                          #     "font-size": "16px",
+                          #     "text-align": "left",
+                          #     "margin": "0px",
+                          #     "--hover-color": "#444",
+                          # },
+                          # "nav-link-selected": {"background-color": "#1f77b4"},
                       },
                          key='main_menu',
                          on_change=on_change
@@ -115,7 +121,7 @@ def main():
     manual_select = "Signals"
     # st.write(choose)
     # Update session state based on selection
-    st.session_state.selected_menu = choose
+    st.session_state['selected_menu'] = choose
     
     # # Initialize session state
     # if 'main_menu' not in st.session_state:
@@ -128,6 +134,14 @@ def main():
         # st.write(manual_select)
     else:
         manual_select = st.session_state.get('main_menu', 0) #None
+    
+    # RK16052024: Ensure content is displayed on initial load
+    # print("$$$$$$$$$$$$$$$$$$$$$$$$$  ",st.session_state.main_menu)
+    # print("$$$$$$$$$$$$$$$$$$$$$$$$$  ",st.session_state.selected_menu)
+    
+  # load_signals_view(process_time,process_time_df)
+  if (st.session_state.main_menu == 0):
+    load_signals_view(process_time,process_time_df)
   
   social_media_icons.render(sidebar=True, justify_content="space-evenly")
   
@@ -139,7 +153,7 @@ def main():
     process_name = "Setup Day"
     start_time = time.time()
     if('main_menu' not in st.session_state):
-      st.session_state['main_menu'] = 0
+      st.session_state['main_menu'] = 1
     if('selected_menu' not in st.session_state):  
       st.session_state['selected_menu'] = "Setup Day"
       
@@ -175,55 +189,7 @@ def main():
     # else: st.session_state.selected_algos = selected_algos
     
   elif (st.session_state.selected_menu == "Signals" ):
-    st.header("Trading Signals View")
-    # if(main_menu not in st.session_state):
-    #   st.session_state['main_menu'] = 1
-    
-    process_name = "Signals"
-    start_time = time.time()
-    
-    known_options = display_watchlist()
-    # print("known_options")
-    
-    if('selected_menu' not in st.session_state):  
-      st.session_state['selected_menu'] = "Signals"
-    # Initialize session state if user coming directly to signals
-    if(selected_algos not in st.session_state):
-      st.session_state['selected_algos'] = selected_algos #st.session_state.get(selected_algos) #, selected_algos)
-    
-    # if(stop_loss_factor not in st.session_state):
-    #   st.session_state['stop_loss_factor'] = float(stop_loss[0])
-    # if(take_profit_factor not in st.session_state):
-    #   st.session_state['take_profit_factor'] = float(take_profit[0])
-      
-    print("signals known_options, st.session_state")
-    print(known_options, st.session_state)
-    print("")
-    print("")
-    asyncio.run (signals_view(st.session_state.user_watchlist, # known_options, 
-                              st.session_state.selected_algos, 
-                              st.session_state.period, 
-                              st.session_state.interval ))
-    
-    end_time = time.time()
-    execution_time = end_time - start_time
-    
-    # if st.button("Generate Trading Chart"):
-    #     show_trading_charts()
-    
-    # Hyperlink to generate trading chart
-    if st.markdown("[Generate Trading Charts](show_trading_charts())"):
-      st.write("show the charts")
-      # show_trading_charts(st.session_state.user_watchlist, #known_options, 
-      #                       st.session_state.selected_algos, 
-      #                       st.session_state.period, 
-      #                       st.session_state.interval)
-    
-    # time check begin
-    for variable in ["process_name","execution_time", "start_time", "end_time"]:
-        process_time[variable] = eval(variable)
-    x = pd.DataFrame([process_time])
-    process_time_df = pd.concat([x, process_time_df], ignore_index=True)
+    load_signals_view(process_time,process_time_df)
     
   elif (st.session_state.selected_menu == "Status" ):
     st.header("Ticker Status View")
@@ -234,7 +200,7 @@ def main():
     
     # Initialize session state if user coming directly to signals
     # Initialize session state if user coming directly to signals
-    if(selected_algos not in st.session_state):
+    if('selected_algos' not in st.session_state):
       st.session_state['selected_algos'] = selected_algos #st.session_state.get(selected_algos) #, selected_algos)
     
     # if(stop_loss_factor not in st.session_state):
@@ -327,5 +293,60 @@ def main():
   print (process_time_df)
   return
 
+def load_signals_view(process_time,process_time_df):
+  st.header("Trading Signals View")
+  st.caption("Lists the latest trade triggers")
+  # if(main_menu not in st.session_state):
+  #   st.session_state['main_menu'] = 1
+  
+  process_name = "Signals"
+  start_time = time.time()
+  
+  known_options = display_watchlist()
+  # print("known_options")
+  
+  if('selected_menu' not in st.session_state):  
+    st.session_state['selected_menu'] = "Signals"
+  # Initialize session state if user coming directly to signals
+  if('selected_algos' not in st.session_state):
+    st.session_state['selected_algos'] = selected_algos #st.session_state.get(selected_algos) #, selected_algos)
+  
+  # if(stop_loss_factor not in st.session_state):
+  #   st.session_state['stop_loss_factor'] = float(stop_loss[0])
+  # if(take_profit_factor not in st.session_state):
+  #   st.session_state['take_profit_factor'] = float(take_profit[0])
+    
+  print("signals known_options, st.session_state")
+  print(known_options, st.session_state)
+  print("")
+  print("")
+  asyncio.run (signals_view(st.session_state.user_watchlist, # known_options, 
+                            st.session_state.selected_algos, 
+                            st.session_state.period, 
+                            st.session_state.interval ))
+  
+  end_time = time.time()
+  execution_time = end_time - start_time
+  
+  # if st.button("Generate Trading Chart"):
+  #     show_trading_charts()
+  
+  # Hyperlink to generate trading chart
+  if st.markdown("[Generate Trading Charts](show_trading_charts())"):
+    st.write("show the charts")
+    # show_trading_charts(st.session_state.user_watchlist, #known_options, 
+    #                       st.session_state.selected_algos, 
+    #                       st.session_state.period, 
+    #                       st.session_state.interval)
+  
+  # time check begin
+  for variable in ["process_name","execution_time", "start_time", "end_time"]:
+      process_time[variable] = eval(variable)
+  x = pd.DataFrame([process_time])
+  process_time_df = pd.concat([x, process_time_df], ignore_index=True)
+  
+  return
+    
+    
 if __name__ == '__main__':
   main()
