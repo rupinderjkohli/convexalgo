@@ -55,8 +55,8 @@ from algotrading_class import *
 from algotrading_algos import *
 
 
-# Using plotly dark template
-TEMPLATE = 'plotly_dark'
+# # Using plotly dark template
+# TEMPLATE = 'plotly_dark'
 
 # st.set_page_config(layout='wide', page_title='Stock Dashboard', page_icon=':dollar:')
 
