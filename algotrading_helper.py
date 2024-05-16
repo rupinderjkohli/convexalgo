@@ -90,6 +90,7 @@ def load_config(refresh):
   TAKE_PROFIT = configs.get('TAKE_PROFIT')
   MOVING_AVERAGE_BASED = configs.get('MOVING_AVERAGE_BASED').data.split(',')
   TREND_BASED = configs.get('TREND_BASED').data.split(',')
+  CANDLE_BASED = configs.get('CANDLE_BASED').data.split(',')
   
   
   # print("SYMBOLS")
@@ -98,7 +99,7 @@ def load_config(refresh):
   if refresh:
     return SYMBOLS
   else:
-    return SYMBOLS, PERIOD, INTERVAL, STOP_LOSS, TAKE_PROFIT, MOVING_AVERAGE_BASED, TREND_BASED
+    return SYMBOLS, PERIOD, INTERVAL, STOP_LOSS, TAKE_PROFIT, MOVING_AVERAGE_BASED, TREND_BASED, CANDLE_BASED
 
   
   
@@ -437,10 +438,6 @@ def historical_overview(df):
   
   return df_overview_df
 
-
-
-  
-  
   
 def display_watchlist():
   # expander = st.expander("Selected Stocks")
@@ -901,7 +898,23 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                         'Close': '4-3-1 Close Price'}, inplace=True)
     
     
+    status_strategy_candle_hammer =  await strategy_candle_hammer(symbol,
+                                 stock_hist_df,
+                                 selected_period, 
+                                 selected_interval,
+                                 is_summary = False,
+                                 algo_strategy = "candle hammer",
+                                 )
+    algo_strategy = "candle hammer"
     
+    strategy_candle_inverted_hammer = await strategy_candle_inverted_hammer(symbol,
+                                 stock_hist_df,
+                                 selected_period, 
+                                 selected_interval,
+                                 is_summary = False,
+                                 algo_strategy = "candle inverted hammer",)
+    
+    algo_strategy = "candle inverted hammer"
     # st.write("---")
     
     # Merge on index and selected columns
@@ -912,13 +925,15 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
                                     status_strategy_431_reversal, #[selected_columns_df2], 
                                     left_index=True, right_index=True, how='outer')
+    status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
+                                    status_strategy_candle_hammer, #[selected_columns_df2], 
+                                    left_index=True, right_index=True, how='outer')
+    status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
+                                    strategy_candle_inverted_hammer, #[selected_columns_df2], 
+                                    left_index=True, right_index=True, how='outer')
 
-    # st.write("fetching status for: ", symbol )
-    # st.write("---")
-    # st.write(status_ema_merged_df.sort_index(ascending=False))
-    # st.write("---")
-    
     stock_status_data[symbol] = status_ema_merged_df
+    
     # print('#################################')
     # print(status_ema_merged_df.columns)
     # print('#################################')
@@ -928,7 +943,6 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     #   # st.write(idx)
     #   data[idx] = status_ema_merged_df 
     #   # Reassign names if they are missing or incorrect
-      
       
     # # Concatenate the DataFrames along axis=0 to create a DataFrame with MultiIndex
     # etf_processed_signals_df = pd.concat(data, axis=0)
@@ -962,7 +976,6 @@ async def algo_trading_summary(symbol,
                                selected_interval,
                                ):
     print("algo_trading_summary function is running")
-    print("algo_trading_summary")
     # st.write(symbol, selected_algos)
     
     algo_name, algo_functions = list(st.session_state.algo_functions_map)
@@ -1019,42 +1032,24 @@ async def algo_trading_summary(symbol,
                                  algo_strategy = "4-3-1 candle price reversal",
                                  )
     
+    func5 =  strategy_candle_hammer(symbol,
+                                 stock_hist_df,
+                                 selected_period, 
+                                 selected_interval,
+                                 is_summary = True,
+                                 algo_strategy = "candle hammer",
+                                 )
     
+    func6 = strategy_candle_inverted_hammer(symbol,
+                                 stock_hist_df,
+                                 selected_period, 
+                                 selected_interval,
+                                 is_summary = True,
+                                 algo_strategy = "candle inverted hammer",)
     # st.write("func4", func4)
-    # results = await asyncio.gather(extracted_functions[0], extracted_functions[1])
-    # tasks = []
     
-    # tasks.append(await strategy_ema(symbol,
-    #             stock_hist_df,
-    #             selected_period, 
-    #             selected_interval,
-    #             algo_strategy = "EMA",
-    #             selected_short_window = 5,
-    #             selected_long_window = 8,
-    #             is_summary = True,
-    #             )
-    #             )
-    # tasks.append(await strategy_ema_continual(symbol,
-    #                             stock_hist_df,
-    #                             selected_period, 
-    #                             selected_interval,
-    #                             algo_strategy = "EMA 1-2 candle price",
-    #                             selected_short_window = 5,
-    #                             selected_long_window = 8,
-    #                             is_summary = True,
-    #                             )
-    #             )
-    # tasks.append(await strategy_431_reversal(symbol,
-    #                            stock_hist_df,
-    #                            selected_period, 
-    #                            selected_interval,
-    #                            is_summary = True,
-    #                            algo_strategy = "4-3-1 candle price reversal",
-    #                            ))
     
-    # results = await asyncio.gather(*tasks)
-    
-    results = await asyncio.gather(func2, func3, func4)
+    results = await asyncio.gather(func2, func3, func4, func5, func6)
     # st.write("results", results)
   
     await asyncio.sleep(1)
@@ -1076,6 +1071,16 @@ async def algo_trading_summary(symbol,
     # st.write(trading_summary_results_df)
     
     # PLACEHOLDER TO TEST FOR NEW ALGOS
+    # func5 =  asyncio.run(strategy_candle_hammer(symbol,
+    #                              stock_hist_df,
+    #                              selected_period, 
+    #                              selected_interval,
+    #                              is_summary = True,
+    #                              algo_strategy = "candle hammer",
+    #                              ))
+    # st.write("algo_strategy: candle hammer: ",symbol, func5) #pd.DataFrame(func5))
+    
+    # # st.write("algo_strategy: candle hammer: ",symbol, results_hammer)
   
     return (trading_summary_results)
 
@@ -1130,19 +1135,4 @@ def get_selected_stock_history(known_options,selected_period, selected_interval)
     selected_etf_data[symbol] = stock_hist_df
   return selected_etf_data
 
-def identify_market_patterns(df):
-  patterns = {
-      'Bullish Engulfing': ((df['Open'][1] > df['Close'][1]) & (df['Open'][2] < df['Close'][2]) & 
-                            (df['Open'][1] > df['Close'][2]) & (df['Close'][1] < df['Open'][2])),
-      'Bearish Engulfing': ((df['Open'][1] < df['Close'][1]) & (df['Open'][2] > df['Close'][2]) &
-                            (df['Open'][1] < df['Close'][2]) & (df['Close'][1] > df['Open'][2])),
-      'Doji': (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.05),
-      'Hammer': ((df['Close'] - df['Low']) > (df['High'] - df['Low']) * 0.7) & 
-                (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3),
-      'Shooting Star': ((df['High'] - df['Open']) > (df['High'] - df['Low']) * 0.7) & 
-                      (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3)
-  }
-    # Add a column for patterns
-  for pattern, condition in patterns.items():
-    df[pattern] = condition
-  return df
+

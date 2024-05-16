@@ -40,7 +40,7 @@ def main():
   
   # load the config file and the user specified default ticker list 
   refresh = False
-  symbol_list, period, interval, stop_loss, take_profit,trading_strategy_ma,trading_strategy_trend = load_config(refresh)
+  symbol_list, period, interval, stop_loss, take_profit,trading_strategy_ma,trading_strategy_trend, trading_strategy_candle = load_config(refresh)
   
   symbol_list = np.sort(symbol_list)
   st.session_state['period'] = period[0]
@@ -50,9 +50,11 @@ def main():
   
   st.session_state['moving_average'] = trading_strategy_ma
   st.session_state['trend_based'] = trading_strategy_trend 
+  st.session_state['candle_based'] = trading_strategy_candle 
+  
   
   ma_list = trading_strategy_ma #["SMA", "EMA","EMA 1-2 candle price continuation"]
-  algo_list = trading_strategy_trend #["4-3-1 candle price reversal"]
+  algo_list = trading_strategy_trend + trading_strategy_candle #["4-3-1 candle price reversal"]
   convex_trade_algos_list = ma_list + algo_list
   selected_algos = convex_trade_algos_list
   st.session_state.selected_algos = convex_trade_algos_list
