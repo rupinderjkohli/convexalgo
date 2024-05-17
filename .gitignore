@@ -10,3 +10,4 @@ __pycache__/algotrading_helper.cpython-39.pyc
 df_evaluate.csv
 pages/show_trading_charts.py
 /__pycache__
+user_selected_options.csv
