@@ -767,9 +767,9 @@ async def strategy_candle_hammer(symbol,
                                  algo_strategy = "candle hammer",):
     await asyncio.sleep(1)
     # st.write(candle_hammer(df_strategy_candle_hammer))
-    st.write("strategy_candle_hammer", symbol)
-    strategy_hammer(df)
-    st.write("################")
+    # st.write("strategy_candle_hammer", symbol)
+    # strategy_hammer(df)
+    # st.write("################")
     df_strategy_candle_hammer = df
     
     df_strategy_candle_hammer['hammer'] = candle_hammer(df_strategy_candle_hammer)
@@ -948,9 +948,9 @@ def strategy_hammer(df):
 
     # Fill NaN values with 0
     # df = df.fillna(0)
-    
+    print(df.keys())
     df['is_hammer'] = (
-        ((df["High"] - df["Low"]) > 3 * (df["Open"] - df["Close"]))
+        ((df['High'] - df['Low']) > 3 * (df["Open"] - df["Close"]))
         & (((df["Close"] - df["Low"]) / (0.001 + df["High"] - df["Low"])) > 0.6)
         & (((df["Open"] - df["Low"]) / (0.001 + df["High"] - df["Low"])) > 0.6)
     )
@@ -961,20 +961,29 @@ def strategy_hammer(df):
         & ((df["High"] - df["Open"]) / (0.001 + df["High"] - df["Low"]) > 0.6)
     )  
     
-    # df['check1'] = (df['is_hammer'] & (df['Close']>df['Open'])) & 
-    # (df['is_inverted_hammer'] & (df['Close']>df['Open'])))
+    df['is_red_bear'] = (df['Close'] < df['Open'])
+    df['is_green_bull'] = (df['Close'] > df['Open'])
     
-    # df['check2'] = (np.where(df['is_hammer'], df['Close'] > df['Low'].shift(1), False))
+    df['down_trend'] = (
+        (df['Close'].shift(1) < df['Close'].shift(2)) & 
+        (df['Close'].shift(2)< df['Close'].shift(3)) #&
+        # (df['Close'].shift(1) < df['Open'].shift(1)) &
+        # (df['Close'].shift(2) < df['Open'].shift(2)) &
+        # (df['Close'].shift(3) < df['Open'].shift(3))
+        )
     
+    df['up_trend'] = (
+        (df['Close'].shift(1) > df['Close'].shift(2)) & 
+        (df['Close'].shift(2)> df['Close'].shift(3))
+                        ) 
     
-    df['strategy_hammer_long'] = (((df['Open'].shift(1) < df['Close'].shift(1)) &
-    (df['Open'].shift(2) < df['Close'].shift(2)) & (df['Open'].shift(3) < df['Close'].shift(3))) &
-    # (df['is_hammer'] & df['is_inverted_hammer']) &
+    df['strategy_hammer_long'] = ((df['down_trend']) & (df['is_hammer']) &
     (df['is_hammer'] & (df['Close']>df['Open'])) & 
-    (df['is_inverted_hammer'] & (df['Close']>df['Open'])) &
     (np.where(df['is_hammer'], df['Close'] > df['Low'].shift(1), False)))
     
-    st.write("strategy_hammer (strategy_hammer)", df[['Close','Open','Low','is_hammer','is_inverted_hammer','strategy_hammer_long' ]])
+    st.write("strategy_hammer (strategy_hammer)", df[['Close','Open','Low','is_red_bear','is_green_bull','down_trend','up_trend',
+                                                      'is_hammer','is_inverted_hammer','strategy_hammer_long']].sort_index(ascending=False)
+             )
     # st.write("strategy_hammer (strategy_hammer)", df)    
     # st.write("strategy_hammer",df)
     # await asyncio.sleep(1)

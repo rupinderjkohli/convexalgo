@@ -967,6 +967,30 @@ def show_change_logs():
   
   return
 
+def algo_playground():
+  # st.session_state.user_watchlist, # known_options, 
+  #                             st.session_state.selected_algos, 
+  #                             st.session_state.period, 
+  #                             st.session_state.interval
+  df_hist = get_selected_stock_history(st.session_state.user_watchlist,st.session_state.period, 
+                                  st.session_state.interval)
+  
+  for symbol in st.session_state.user_watchlist:
+    print(df_hist[symbol].columns)
+    df = df_hist[symbol]
+    strategy_candle_hammer(symbol,
+                                  df,
+                                  st.session_state.period, 
+                                  st.session_state.interval,
+                                  is_summary = True,
+                                  algo_strategy = "candle hammer",)
+    # await asyncio.sleep(1)
+    # st.write(candle_hammer(df_strategy_candle_hammer))
+    st.write("strategy_candle_hammer", symbol)
+    strategy_hammer(df)
+  
+  return
+  
 # #############################################
 
 async def algo_trading_summary(symbol,
