@@ -968,7 +968,7 @@ def show_change_logs():
   
   return
 
-def algo_playground():
+async def algo_playground():
   # st.session_state.user_watchlist, # known_options, 
   #                             st.session_state.selected_algos, 
   #                             st.session_state.period, 
@@ -976,19 +976,66 @@ def algo_playground():
   df_hist = get_selected_stock_history(st.session_state.user_watchlist,st.session_state.period, 
                                   st.session_state.interval)
   
+  strategy_hammer_summary_tasks = []
+  strategy_hammer_details_tasks = []
+  
   for symbol in st.session_state.user_watchlist:
     print(df_hist[symbol].columns)
     df = df_hist[symbol]
-    strategy_candle_hammer(symbol,
+    
+    # # st.write("################")
+    # st.write(candle_hammer(df))
+    # # st.write("################")
+    
+    strategy_hammer_summary_tasks.append(strategy_candle_hammer(symbol,
                                   df,
                                   st.session_state.period, 
                                   st.session_state.interval,
                                   is_summary = True,
                                   algo_strategy = "candle hammer",)
-    # await asyncio.sleep(1)
-    # st.write(candle_hammer(df_strategy_candle_hammer))
-    st.write("strategy_candle_hammer", symbol)
-    strategy_hammer(df)
+                                     )
+
+    
+    # strategy_candle_hammer_summary = asyncio.run(strategy_candle_hammer(symbol,
+    #                               df,
+    #                               st.session_state.period, 
+    #                               st.session_state.interval,
+    #                               is_summary = True,
+    #                               algo_strategy = "candle hammer",))
+    
+    # pd.DataFrame(strategy_candle_hammer_summary)
+    # st.write(strategy_candle_hammer_summary)
+    
+    # st.write("strategy_candle_hammer - details",)
+    # strategy_hammer_details_tasks.append(strategy_candle_hammer(symbol,
+    #                               df,
+    #                               st.session_state.period, 
+    #                               st.session_state.interval,
+    #                               is_summary = False,
+    #                               algo_strategy = "candle hammer",)
+    #                                  )
+    st.write("strategy_candle_hammer - details",symbol)
+    # results_strategy_hammer_details = await asyncio.gather(*strategy_hammer_details_tasks)
+    # st.write(type(results_strategy_hammer_details))
+    strategy_candle_hammer_detailed = asyncio.run(strategy_candle_hammer(symbol,
+                                  df,
+                                  st.session_state.period, 
+                                  st.session_state.interval,
+                                  is_summary = False,
+                                  algo_strategy = "candle hammer",))
+    
+    await asyncio.sleep(1)
+    st.write(strategy_candle_hammer_detailed)
+    
+    # strategy_hammer(df)
+  
+  st.write("strategy_candle_hammer - summary")
+  results_strategy_hammer_summary = await asyncio.gather(*strategy_hammer_summary_tasks)
+  st.write(pd.DataFrame(results_strategy_hammer_summary))
+  
+  
+  
+  
   
   return
   
