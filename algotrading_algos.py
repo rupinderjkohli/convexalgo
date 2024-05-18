@@ -952,7 +952,6 @@ def strategy_hammer(df):
     # df = df.fillna(0)
     # print(df.keys())
     st.write("processing candle properties")
-     
     
     df['is_red_bear'] = (df['Close'] < df['Open'])
     df['is_green_bull'] = (df['Close'] > df['Open'])
