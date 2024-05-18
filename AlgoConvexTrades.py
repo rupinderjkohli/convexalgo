@@ -12,17 +12,17 @@ from pathlib import Path
 pd.options.display.float_format = '{:,.2f}'.format
 
 def main():
-  st.set_page_config(
-    page_title="Convex Algos Dashboard",
-    page_icon="🧊",
-    layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'Get Help': 'https://convextrades.com/',
-        # 'Report a bug': "mailto:rupinder.johar.kohli@gmail.com",
-        'About': "#An *extremely* cool app displaying your GoTo Trading Dashboard!"
-    }
-  )    
+  # st.set_page_config(
+  #   page_title="Convex Algos Dashboard",
+  #   page_icon="🧊",
+  #   layout="wide",
+  #   initial_sidebar_state="expanded",
+  #   menu_items={
+  #       'Get Help': 'https://convextrades.com/',
+  #       # 'Report a bug': "mailto:rupinder.johar.kohli@gmail.com",
+  #       'About': "#An *extremely* cool app displaying your GoTo Trading Dashboard!"
+  #   }
+  # )    
   # """### Select Stock and Time interval"""
   # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01Home.py
   
@@ -38,54 +38,56 @@ def main():
   social_media_icons = SocialMediaIcons(social_media_links)
   
   # # ***USER LOGIN***
-  # user_login_process()
+  user_type = user_login_process()
+  if user_type not in (['GU','RU']):
+    return
   
-  if 'name' not in st.session_state:
-      st.session_state['name'] = None
-  if(('authentication_status' not in st.session_state)):
-    st.session_state["authentication_status"] = None
-  if 'username' not in st.session_state:
-      st.session_state['username'] = None
-  if 'logout' not in st.session_state:
-      st.session_state['logout'] = None
-  # st.write(st.session_state)
+  # if 'name' not in st.session_state:
+  #     st.session_state['name'] = None
+  # if(('authentication_status' not in st.session_state)):
+  #   st.session_state["authentication_status"] = None
+  # if 'username' not in st.session_state:
+  #     st.session_state['username'] = None
+  # if 'logout' not in st.session_state:
+  #     st.session_state['logout'] = None
+  # # st.write(st.session_state)
   
-  name, authentication_status, username = authenticator.login()
-  # username_of_forgotten_password, email_of_forgotten_password, new_random_password = authenticator.forgot_password()
+  # name, authentication_status, username = authenticator.login()
+  # # username_of_forgotten_password, email_of_forgotten_password, new_random_password = authenticator.forgot_password()
   
-  # st.write(name, authentication_status, username)
-  # st.write(st.session_state)
-  if st.session_state["authentication_status"]:
-    st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
-    authenticator.logout(location='sidebar')
-    # disable some menu options for new users
-    if username == 'guest':
-        st.write(f'Welcome *{name}*')
-        # call a function to disable some options menu
+  # # st.write(name, authentication_status, username)
+  # # st.write(st.session_state)
+  # if st.session_state["authentication_status"]:
+  #   st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
+  #   authenticator.logout(location='sidebar')
+  #   # disable some menu options for new users
+  #   if username == 'guest':
+  #       st.write(f'Welcome *{name}*')
+  #       # call a function to disable some options menu
         
-    # proceed further
-  elif st.session_state["authentication_status"] is False:
-      st.error('Username/password is incorrect')
-      return
-  elif st.session_state["authentication_status"] is None:
-      st.warning('Please enter your username and password')
-      return
+  #   # proceed further
+  # elif st.session_state["authentication_status"] is False:
+  #     st.error('Username/password is incorrect')
+  #     return
+  # elif st.session_state["authentication_status"] is None:
+  #     st.warning('Please enter your username and password')
+  #     return
   
-  # if (~st.session_state["authentication_status"]):
-  #   try:
-  #       if authenticator.reset_password(st.session_state["username"]):
-  #           st.success('Password modified successfully')
-  #   except Exception as e:
-  #       st.error(e)
+  # # if (~st.session_state["authentication_status"]):
+  # #   try:
+  # #       if authenticator.reset_password(st.session_state["username"]):
+  # #           st.success('Password modified successfully')
+  # #   except Exception as e:
+  # #       st.error(e)
   
-  # try:
-  #   email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(pre_authorization=False)
-  #   if email_of_registered_user:
-  #       st.success('User registered successfully')
-  # except Exception as e:
-  #   st.error(e)
+  # # try:
+  # #   email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(pre_authorization=False)
+  # #   if email_of_registered_user:
+  # #       st.success('User registered successfully')
+  # # except Exception as e:
+  # #   st.error(e)
           
-  # ***USER LOGIN DONE***
+  # # ***USER LOGIN DONE***
   
   if('main_menu' not in st.session_state):
     st.session_state['main_menu'] = st.session_state.get('main_menu', 0)
@@ -132,7 +134,6 @@ def main():
   st.session_state['user_watchlist'] = user_sel_list
   
   print(user_sel_list)
-  
     
   # st.write(st.session_state)  
   
@@ -144,7 +145,7 @@ def main():
   #     # st.write("ON CHANGE DID I REACH HERE")
   #     return
       
-  show_menu()
+  # show_menu()
       
   # with st.sidebar:
   #   choose = option_menu("Convex Algos", ["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Algo Playground","---","Setup Day",],
