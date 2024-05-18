@@ -731,7 +731,7 @@ def candle_hammer(df: pd.DataFrame = None) -> pd.Series:
     """* Candlestick Detected: Hammer ("Weak - Reversal - Bullish Signal - Up"""
 
     # Fill NaN values with 0
-    df = df.fillna(0)
+    # df = df.fillna(0)
     
     # await asyncio.sleep(1)
     return (
@@ -747,13 +747,18 @@ async def strategy_candle_hammer(symbol,
                                  is_summary, # = True,
                                  algo_strategy = "candle hammer",):
     await asyncio.sleep(1)
-    # st.write(candle_hammer(df_strategy_candle_hammer))
-    # st.write("strategy_candle_hammer", symbol)
-    # strategy_hammer(df)
-    # st.write("################")
+    
+    st.write("strategy_candle_hammer", symbol)
+    # st.write(candle_hammer(df))
+    st.write("################")
+    
+    strategy_hammer(df)
+    st.write("################")
     df_strategy_candle_hammer = df
     
     df_strategy_candle_hammer['hammer'] = candle_hammer(df_strategy_candle_hammer)
+    # st.write(df_strategy_candle_hammer)
+    
     # st.write("Candlestick Detected: Hammer (Weak - Reversal - Bullish Signal - Up) for: ", symbol)
     df_strategy_candle_hammer = df_strategy_candle_hammer[df_strategy_candle_hammer.hammer == True]
     df_strategy_candle_hammer = df_strategy_candle_hammer[['Open','Close','High','Low','Volume', 'hammer' ]]
@@ -818,7 +823,9 @@ async def strategy_candle_hammer(symbol,
     if (is_summary):
         return_snapshot = quick_explore
     else: return_snapshot = df_strategy_candle_hammer
-    # st.write(">>>>>>>>>>>strategy 4-3-1 >>>>>>>>>> return_snapshot",type(return_snapshot))
+    
+    # st.write(">>>>>>>>>>>strategy candle hammer >>>>>>>>>> return_snapshot",type(return_snapshot))
+    # st.write(">>>>>>>>>>>strategy candle hammer >>>>>>>>>> return_snapshot",return_snapshot)
     return return_snapshot
     
 def candle_inverted_hammer(df: pd.DataFrame = None) -> pd.Series:
@@ -923,13 +930,36 @@ async def strategy_candle_inverted_hammer(symbol,
 #     """Calculate and return the length of upper shadow or wick."""
 #     return self.high - (self.open if self.open >= self.close else self.close)      
 
+def candles_downtrend(df):
+    
+    return(
+        df['is_red_bear'].shift(2) &
+        df['is_red_bear'].shift(3) &
+        df['is_red_bear'].shift(4)
+        )
 
+def candles_uptrend(df):
+    return (
+        (df['Close'].shift(1) > df['Open'].shift(1)) &
+        (df['Close'].shift(2) > df['Open'].shift(2)) &
+        (df['Close'].shift(3) > df['Open'].shift(3))
+                        )  
+      
 def strategy_hammer(df):
     """* Candlestick Detected: Hammer ("Weak - Reversal - Bullish Signal - Up"""
 
     # Fill NaN values with 0
     # df = df.fillna(0)
-    print(df.keys())
+    # print(df.keys())
+    st.write("processing candle properties")
+     
+    
+    df['is_red_bear'] = (df['Close'] < df['Open'])
+    df['is_green_bull'] = (df['Close'] > df['Open'])
+    
+    df['down_trend'] = candles_downtrend(df)
+    df['up_trend'] = candles_uptrend(df)
+    
     df['is_hammer'] = (
         ((df['High'] - df['Low']) > 3 * (df["Open"] - df["Close"]))
         & (((df["Close"] - df["Low"]) / (0.001 + df["High"] - df["Low"])) > 0.6)
@@ -940,23 +970,7 @@ def strategy_hammer(df):
         ((df["High"] - df["Low"]) > 3 * (df["Open"] - df["Close"]))
         & ((df["High"] - df["Close"]) / (0.001 + df["High"] - df["Low"]) > 0.6)
         & ((df["High"] - df["Open"]) / (0.001 + df["High"] - df["Low"]) > 0.6)
-    )  
-    
-    df['is_red_bear'] = (df['Close'] < df['Open'])
-    df['is_green_bull'] = (df['Close'] > df['Open'])
-    
-    df['down_trend'] = (
-        (df['Close'].shift(1) < df['Close'].shift(2)) & 
-        (df['Close'].shift(2)< df['Close'].shift(3)) #&
-        # (df['Close'].shift(1) < df['Open'].shift(1)) &
-        # (df['Close'].shift(2) < df['Open'].shift(2)) &
-        # (df['Close'].shift(3) < df['Open'].shift(3))
-        )
-    
-    df['up_trend'] = (
-        (df['Close'].shift(1) > df['Close'].shift(2)) & 
-        (df['Close'].shift(2)> df['Close'].shift(3))
-                        ) 
+    ) 
     
     df['strategy_hammer_long'] = ((df['down_trend']) & (df['is_hammer']) &
     (df['is_hammer'] & (df['Close']>df['Open'])) & 

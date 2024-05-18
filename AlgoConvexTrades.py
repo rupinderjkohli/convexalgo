@@ -291,7 +291,7 @@ def main():
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
   
   elif (st.session_state.selected_menu == "Algo Playground"):
-    algo_playground()
+    asyncio.run (algo_playground())
     
   
   print (process_time_df)
