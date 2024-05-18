@@ -90,13 +90,13 @@ def main():
       # st.write(f"Selection changed to {selection}")
       st.session_state['main_menu'] = selection
       st.session_state['selected_menu'] = selection
-      st.write("ON CHANGE DID I REACH HERE")
+      # st.write("ON CHANGE DID I REACH HERE")
       return
       
       
   with st.sidebar:
-    choose = option_menu("Convex Algos", ["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Setup Day",],
-                         icons=['camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill','house', ],
+    choose = option_menu("Convex Algos", ["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Algo Playground","---","Setup Day",],
+                         icons=['camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill',"---" ,"battery-charging","---" ,'house', ],
                          menu_icon="app-indicator", 
                          default_index=0,
                         #  default_index=["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Setup Day",].index(st.session_state.selected_menu),
@@ -289,6 +289,10 @@ def main():
         process_time[variable] = eval(variable)
     x = pd.DataFrame([process_time])
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
+  
+  elif (st.session_state.selected_menu == "Algo Playground"):
+    algo_playground()
+    
   
   print (process_time_df)
   return

@@ -617,9 +617,7 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   # close of 2nd higher than close of 1st
 
   """
-#   if(~is_sorted):
-#     df = df.sort_index(ascending = False)
-#   st.write(df.head())
+
   # Fill NaN values with 0
   df = df.fillna(0)
   # print(df.head())
@@ -662,18 +660,6 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   df_evaluate['position'] = np.where(df_evaluate['strategy_431_long'], 'Buy', 
                                      np.where(df_evaluate['strategy_431_short'], 'Sell', None))
   
-#   st.write("df_evaluate['corrected_position']")
-#   st.write("---")
-#   st.write(df_evaluate[['Close', 't3', 't2', 't1', 't0',
-#        'strategy_431_long_c1', 'strategy_431_long_c2', 'strategy_431_long_c3',
-#        'strategy_431_long', 'strategy_431_short_c1', 'strategy_431_short_c2',
-#        'strategy_431_short_c3', 'strategy_431_short', 
-#        'position',
-       
-#        ]].sort_index(ascending=False))
-#   st.write("---")
-#   st.write("---")
-  
   df_evaluate, buy_short, sell_long = calculate_atr_buy_sell(df_evaluate)
   
   if any(df_evaluate['position'] == "Buy"):
@@ -684,11 +670,6 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
       df_evaluate['stop_loss_atr'] = df_evaluate.Close + st.session_state.stop_loss_factor * df_evaluate.atr_ma
       df_evaluate['take_profit_atr'] = df_evaluate.Close - st.session_state.take_profit_factor * df_evaluate.atr_ma
   
-#   st.write("df_evaluate['position']")
-#   st.write("---")
-#   st.write(df_evaluate.sort_index(ascending=False))
-#   st.write("---")
-#   st.write("---")
   return df_evaluate
     
 async def strategy_four_three_one_soldiers(symbol,
@@ -728,3 +709,264 @@ async def strategy_four_three_one_soldiers(symbol,
     return df_summary #returns the filtered data only
     
  
+def identify_market_patterns(df):
+  patterns = {
+      'Bullish Engulfing': ((df['Open'].shift(1) > df['Close'].shift(1)) & (df['Open'].shift(2) < df['Close'].shift(2)) & 
+                            (df['Open'].shift(1) > df['Close'].shift(2)) & (df['Close'].shift(1) < df['Open'].shift(2))),
+      'Bearish Engulfing': ((df['Open'].shift(1) < df['Close'].shift(1)) & (df['Open'].shift(2) > df['Close'].shift(2)) &
+                            (df['Open'].shift(1) < df['Close'].shift(2)) & (df['Close'][1] > df['Open'][2])),
+      'Doji': (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.05),
+      'Hammer': ((df['Close'] - df['Low']) > (df['High'] - df['Low']) * 0.7) & 
+                (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3),
+      'Shooting Star': ((df['High'] - df['Open']) > (df['High'] - df['Low']) * 0.7) & 
+                      (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3)
+  }
+    # Add a column for patterns
+  for pattern, condition in patterns.items():
+    df[pattern] = condition
+  return df
+
+# reference: https://eodhd.com/financial-academy/technical-analysis-examples/practical-guide-to-automated-detection-trading-patterns-with-python
+def candle_hammer(df: pd.DataFrame = None) -> pd.Series:
+    """* Candlestick Detected: Hammer ("Weak - Reversal - Bullish Signal - Up"""
+
+    # Fill NaN values with 0
+    df = df.fillna(0)
+    
+    # await asyncio.sleep(1)
+    return (
+        ((df["High"] - df["Low"]) > 3 * (df["Open"] - df["Close"]))
+        & (((df["Close"] - df["Low"]) / (0.001 + df["High"] - df["Low"])) > 0.6)
+        & (((df["Open"] - df["Low"]) / (0.001 + df["High"] - df["Low"])) > 0.6)
+    )
+    
+async def strategy_candle_hammer(symbol,
+                                 df,
+                                 selected_period, 
+                                 selected_interval,
+                                 is_summary, # = True,
+                                 algo_strategy = "candle hammer",):
+    await asyncio.sleep(1)
+    # st.write(candle_hammer(df_strategy_candle_hammer))
+    # st.write("strategy_candle_hammer", symbol)
+    # strategy_hammer(df)
+    # st.write("################")
+    df_strategy_candle_hammer = df
+    
+    df_strategy_candle_hammer['hammer'] = candle_hammer(df_strategy_candle_hammer)
+    # st.write("Candlestick Detected: Hammer (Weak - Reversal - Bullish Signal - Up) for: ", symbol)
+    df_strategy_candle_hammer = df_strategy_candle_hammer[df_strategy_candle_hammer.hammer == True]
+    df_strategy_candle_hammer = df_strategy_candle_hammer[['Open','Close','High','Low','Volume', 'hammer' ]]
+    
+    # df_strategy_candle_hammer['hammer'] = np.where(df_strategy_candle_hammer['Position']==1, 'Buy', 
+    #                                  np.where(df_strategy_candle_hammer['Position']==-1, 'Sell', None))
+    
+    df_strategy_candle_hammer['Trigger_Hammer'] = np.where(df_strategy_candle_hammer['hammer'],'Buy', None)
+    
+
+    # Collate high level stats on the data
+    quick_explore = {}
+
+    quick_explore_df = pd.DataFrame() 
+    
+    stock_trigger_at = df_strategy_candle_hammer.index.max()
+    
+    stock_trigger_state = "tbc" #df_strategy_candle_hammer.loc[df_strategy_candle_hammer.index ==  stock_trigger_at, "position"].to_list()[0]
+    stock_price_at_trigger = df_strategy_candle_hammer.loc[df_strategy_candle_hammer.index ==  stock_trigger_at, "Close"].to_list()[0]
+    
+    # # df_four_three_one_soldiers, buy_short, sell_long = calculate_atr_buy_sell(df_four_three_one_soldiers)
+    
+    # # st.write("df_four_three_one_soldiers.columns")
+    # # print(df_four_three_one_soldiers.columns)
+    # # st.write(stock_trigger_state)
+    stock_stop_loss_atr = 0
+    stock_take_profit_atr = 0
+    # # if (stock_trigger_state == "Buy"):
+    # #     stock_stop_loss_atr = stock_price_at_trigger - st.session_state.stop_loss_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"]).to_list()[0]
+    # #     stock_take_profit_atr = (stock_price_at_trigger + st.session_state.take_profit_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
+
+    # #     # df_four_three_one_soldiers['stop_loss_atr'] = df_four_three_one_soldiers.Close - st.session_state.stop_loss_factor * df_four_three_one_soldiers.atr_ma
+    # #     # df_four_three_one_soldiers['take_profit_atr'] = df_four_three_one_soldiers.Close + st.session_state.take_profit_factor * df_four_three_one_soldiers.atr_ma
+    
+    # # elif (stock_trigger_state == "Sell"):
+    # #     stock_stop_loss_atr = (stock_price_at_trigger + st.session_state.stop_loss_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
+    # #     stock_take_profit_atr = (stock_price_at_trigger - st.session_state.take_profit_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
+
+    
+    previous_triggers = df_strategy_candle_hammer[['hammer']][-6:]
+    previous_triggers_list = previous_triggers.index.strftime('%Y/%m/%d %H:%M')
+    previous_triggers_list = np.sort(previous_triggers_list)[::-1]
+    stock_previous_triggers = previous_triggers_list 
+    
+    tweet_post =  "tbc" #symbol + ': ' + stock_trigger_state + '; ' + str(stock_trigger_at.strftime("%Y-%m-%d %H:%M")) +'; ' + str("{:.2f}".format(stock_price_at_trigger)) +'; SL: ' + str("{:.2f}".format(stock_stop_loss_atr)) +'; PT: ' + str("{:.2f}".format(stock_take_profit_atr))
+        
+    for variable in ["symbol",
+                                "stock_trigger_at",
+                                "stock_trigger_state",
+                                "stock_price_at_trigger",
+                                "stock_stop_loss_atr",
+                                "stock_take_profit_atr",
+                                "algo_strategy",
+                                "stock_previous_triggers",
+                                "tweet_post"
+                                ]:
+        quick_explore[variable] = eval(variable)
+                  
+    # st.write(quick_explore)
+    # RK 1705: hammer & inverted hammer
+    
+    if (is_summary):
+        return_snapshot = quick_explore
+    else: return_snapshot = df_strategy_candle_hammer
+    # st.write(">>>>>>>>>>>strategy 4-3-1 >>>>>>>>>> return_snapshot",type(return_snapshot))
+    return return_snapshot
+    
+def candle_inverted_hammer(df: pd.DataFrame = None) -> pd.Series:
+    """* Candlestick Detected: Inverted Hammer ("Weak - Continuation - Bullish Pattern - Up")"""
+
+    # Fill NaN values with 0
+    df = df.fillna(0)
+
+    return (
+        ((df["High"] - df["Low"]) > 3 * (df["Open"] - df["Close"]))
+        & ((df["High"] - df["Close"]) / (0.001 + df["High"] - df["Low"]) > 0.6)
+        & ((df["High"] - df["Open"]) / (0.001 + df["High"] - df["Low"]) > 0.6)
+    )  
+    
+async def strategy_candle_inverted_hammer(symbol,
+                                 df,
+                                 selected_period, 
+                                 selected_interval,
+                                 is_summary,# = True,
+                                 algo_strategy = "candle inverted hammer",):
+    await asyncio.sleep(1)
+    st.write("df_strategy_candle_inverted_hammer")
+    df_strategy_candle_inverted_hammer = df
+    
+    df_strategy_candle_inverted_hammer['inverted_hammer'] = candle_inverted_hammer(df_strategy_candle_inverted_hammer)
+    # st.write("Candlestick Detected: Hammer (Weak - Reversal - Bullish Signal - Up) for: ", symbol)
+    df_strategy_candle_inverted_hammer = df_strategy_candle_inverted_hammer[df_strategy_candle_inverted_hammer.inverted_hammer == True]
+    df_strategy_candle_inverted_hammer = df_strategy_candle_inverted_hammer[['Open','Close','High','Low','Volume','inverted_hammer' ]]
+    
+    # df_strategy_candle_hammer['hammer'] = np.where(df_strategy_candle_hammer['Position']==1, 'Buy', 
+    #                                  np.where(df_strategy_candle_hammer['Position']==-1, 'Sell', None))
+    
+    df_strategy_candle_inverted_hammer['Trigger_Inverted_Hammer'] = np.where(df_strategy_candle_inverted_hammer['inverted_hammer'],'Sell', None)
+    
+
+    # Collate high level stats on the data
+    quick_explore = {}
+
+    quick_explore_df = pd.DataFrame() 
+    
+    stock_trigger_at = df_strategy_candle_inverted_hammer.index.max()
+    
+    stock_trigger_state = "tbc" #df_strategy_candle_hammer.loc[df_strategy_candle_hammer.index ==  stock_trigger_at, "position"].to_list()[0]
+    stock_price_at_trigger = df_strategy_candle_inverted_hammer.loc[df_strategy_candle_inverted_hammer.index ==  stock_trigger_at, "Close"].to_list()[0]
+    
+    # # df_four_three_one_soldiers, buy_short, sell_long = calculate_atr_buy_sell(df_strategy_candle_inverted_hammer)
+    
+    # # st.write("df_four_three_one_soldiers.columns")
+    # # print(df_four_three_one_soldiers.columns)
+    # # st.write(stock_trigger_state)
+    stock_stop_loss_atr = 0
+    stock_take_profit_atr = 0
+    # # if (stock_trigger_state == "Buy"):
+    # #     stock_stop_loss_atr = stock_price_at_trigger - st.session_state.stop_loss_factor * (df_strategy_candle_inverted_hammer.loc[(df_strategy_candle_inverted_hammer.index == df_strategy_candle_inverted_hammer.index.max()), "atr_ma"]).to_list()[0]
+    # #     stock_take_profit_atr = (stock_price_at_trigger + st.session_state.take_profit_factor * (df_strategy_candle_inverted_hammer.loc[(df_strategy_candle_inverted_hammer.index == df_strategy_candle_inverted_hammer.index.max()), "atr_ma"])).to_list()[0]
+ 
+    # # elif (stock_trigger_state == "Sell"):
+    # #     stock_stop_loss_atr = (stock_price_at_trigger + st.session_state.stop_loss_factor * (df_strategy_candle_inverted_hammer.loc[(df_strategy_candle_inverted_hammer.index == df_strategy_candle_inverted_hammer.index.max()), "atr_ma"])).to_list()[0]
+    # #     stock_take_profit_atr = (stock_price_at_trigger - st.session_state.take_profit_factor * (df_strategy_candle_inverted_hammer.loc[(df_strategy_candle_inverted_hammer.index == df_strategy_candle_inverted_hammer.index.max()), "atr_ma"])).to_list()[0]
+
+    
+    previous_triggers = df_strategy_candle_inverted_hammer[['inverted_hammer']][-6:]
+    previous_triggers_list = previous_triggers.index.strftime('%Y/%m/%d %H:%M')
+    previous_triggers_list = np.sort(previous_triggers_list)[::-1]
+    stock_previous_triggers = previous_triggers_list 
+    
+    tweet_post =  "tbc" #symbol + ': ' + stock_trigger_state + '; ' + str(stock_trigger_at.strftime("%Y-%m-%d %H:%M")) +'; ' + str("{:.2f}".format(stock_price_at_trigger)) +'; SL: ' + str("{:.2f}".format(stock_stop_loss_atr)) +'; PT: ' + str("{:.2f}".format(stock_take_profit_atr))
+        
+    for variable in ["symbol",
+                                "stock_trigger_at",
+                                "stock_trigger_state",
+                                "stock_price_at_trigger",
+                                "stock_stop_loss_atr",
+                                "stock_take_profit_atr",
+                                "algo_strategy",
+                                "stock_previous_triggers",
+                                "tweet_post"
+                                ]:
+        quick_explore[variable] = eval(variable)
+                  
+    # st.write(quick_explore)
+    
+    if (is_summary):
+        return_snapshot = quick_explore
+    else: return_snapshot = df_strategy_candle_inverted_hammer
+    
+    return return_snapshot   
+
+# Bullish Candle — Green / Bull / Long CandleStick
+# def is_bullish(self):
+#     return self.open < self.close
+
+# # Bearish Candle — Red / Bear / Short CandleStick
+# def is_bearish(self):
+#     return self.open > self.close
+
+# def __get_lower_wick_length(self):
+#     """Calculate and return the length of lower shadow or wick."""
+#     return (self.open if self.open <= self.close else self.close) - self.low
+
+# def __get_upper_wick_length(self):
+#     """Calculate and return the length of upper shadow or wick."""
+#     return self.high - (self.open if self.open >= self.close else self.close)      
+
+
+def strategy_hammer(df):
+    """* Candlestick Detected: Hammer ("Weak - Reversal - Bullish Signal - Up"""
+
+    # Fill NaN values with 0
+    # df = df.fillna(0)
+    print(df.keys())
+    df['is_hammer'] = (
+        ((df['High'] - df['Low']) > 3 * (df["Open"] - df["Close"]))
+        & (((df["Close"] - df["Low"]) / (0.001 + df["High"] - df["Low"])) > 0.6)
+        & (((df["Open"] - df["Low"]) / (0.001 + df["High"] - df["Low"])) > 0.6)
+    )
+    
+    df['is_inverted_hammer'] = (
+        ((df["High"] - df["Low"]) > 3 * (df["Open"] - df["Close"]))
+        & ((df["High"] - df["Close"]) / (0.001 + df["High"] - df["Low"]) > 0.6)
+        & ((df["High"] - df["Open"]) / (0.001 + df["High"] - df["Low"]) > 0.6)
+    )  
+    
+    df['is_red_bear'] = (df['Close'] < df['Open'])
+    df['is_green_bull'] = (df['Close'] > df['Open'])
+    
+    df['down_trend'] = (
+        (df['Close'].shift(1) < df['Close'].shift(2)) & 
+        (df['Close'].shift(2)< df['Close'].shift(3)) #&
+        # (df['Close'].shift(1) < df['Open'].shift(1)) &
+        # (df['Close'].shift(2) < df['Open'].shift(2)) &
+        # (df['Close'].shift(3) < df['Open'].shift(3))
+        )
+    
+    df['up_trend'] = (
+        (df['Close'].shift(1) > df['Close'].shift(2)) & 
+        (df['Close'].shift(2)> df['Close'].shift(3))
+                        ) 
+    
+    df['strategy_hammer_long'] = ((df['down_trend']) & (df['is_hammer']) &
+    (df['is_hammer'] & (df['Close']>df['Open'])) & 
+    (np.where(df['is_hammer'], df['Close'] > df['Low'].shift(1), False)))
+    
+    st.write("strategy_hammer (strategy_hammer)", df[['Close','Open','Low','is_red_bear','is_green_bull','down_trend','up_trend',
+                                                      'is_hammer','is_inverted_hammer','strategy_hammer_long']].sort_index(ascending=False)
+             )
+    # st.write("strategy_hammer (strategy_hammer)", df)    
+    # st.write("strategy_hammer",df)
+    # await asyncio.sleep(1)
+    return df
+    

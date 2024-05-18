@@ -4,9 +4,9 @@ config copy.properties
 app.py
 algotrading_v3_4 copy.py
 config copy.properties
-__pycache__/algotrading_algos.cpython-39.pyc
-__pycache__/algotrading_helper.cpython-39.pyc
+__pycache__/
 *.pyc
 df_evaluate.csv
 pages/show_trading_charts.py
 /__pycache__
+user_selected_options.csv
