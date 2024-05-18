@@ -1,19 +1,17 @@
 pandas
+numpy
 matplotlib
 yfinance
 plotly
 streamlit==1.32.0
 kaleido==0.2.1
 pybase64
-# IPython
 millify
 streamlit-extras
 lightweight_charts
 asyncio
 nest_asyncio
-# streamlit_lightweight_charts
 pytz
-lightweight-charts
 streamlit_js_eval
 streamlit-authenticator
 jproperties
