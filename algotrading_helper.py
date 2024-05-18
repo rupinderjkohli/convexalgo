@@ -284,9 +284,6 @@ def unix_timestamp(local_timestamp, local_timezone):
     return int(dt_local.timestamp())
   
   
-
-
-
 # Bullish Candle — Green / Bull / Long CandleStick
 # Bearish Candle — Red / Bear / Short CandleStick
 # https://medium.com/@letspython3.x/learn-and-implement-candlestick-patterns-python-6de09854fa3e
@@ -898,25 +895,26 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                                         'Close': '4-3-1 Close Price'}, inplace=True)
     
     
-    status_strategy_candle_hammer =  await strategy_candle_hammer(symbol,
-                                 stock_hist_df,
-                                 selected_period, 
-                                 selected_interval,
-                                 is_summary = False,
-                                 algo_strategy = "candle hammer",
-                                 )
-    algo_strategy = "candle hammer"
+    # status_strategy_candle_hammer =  await strategy_candle_hammer(symbol,
+    #                              stock_hist_df,
+    #                              selected_period, 
+    #                              selected_interval,
+    #                              is_summary = False,
+    #                              algo_strategy = "candle hammer",
+    #                              )
+    # algo_strategy = "candle hammer"
+    # st.write("strategy_candle_inverted_hammer:stock_status")
     
-    strategy_candle_inverted_hammer = await strategy_candle_inverted_hammer(symbol,
-                                 stock_hist_df,
-                                 selected_period, 
-                                 selected_interval,
-                                 is_summary = False,
-                                 algo_strategy = "candle inverted hammer",)
+    # strategy_candle_inverted_hammer = await strategy_candle_inverted_hammer(symbol,
+    #                              stock_hist_df,
+    #                              selected_period, 
+    #                              selected_interval,
+    #                              is_summary = False,
+    #                              algo_strategy = "candle inverted hammer",)
     
-    algo_strategy = "candle inverted hammer"
+    # algo_strategy = "candle inverted hammer"
     # st.write("---")
-    
+    # st.write("strategy_candle_inverted_hammer:stock_status")
     # Merge on index and selected columns
     status_ema_merged_df = pd.DataFrame()
     status_ema_merged_df = pd.merge(status_strategy_ema, #[selected_columns_df1], 
@@ -925,12 +923,12 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
                                     status_strategy_431_reversal, #[selected_columns_df2], 
                                     left_index=True, right_index=True, how='outer')
-    status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
-                                    status_strategy_candle_hammer, #[selected_columns_df2], 
-                                    left_index=True, right_index=True, how='outer')
-    status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
-                                    strategy_candle_inverted_hammer, #[selected_columns_df2], 
-                                    left_index=True, right_index=True, how='outer')
+    # status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
+    #                                 status_strategy_candle_hammer, #[selected_columns_df2], 
+    #                                 left_index=True, right_index=True, how='outer')
+    # status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
+    #                                 strategy_candle_inverted_hammer, #[selected_columns_df2], 
+    #                                 left_index=True, right_index=True, how='outer')
 
     stock_status_data[symbol] = status_ema_merged_df
     
@@ -1056,24 +1054,24 @@ async def algo_trading_summary(symbol,
                                  algo_strategy = "4-3-1 candle price reversal",
                                  )
     
-    func5 =  strategy_candle_hammer(symbol,
-                                 stock_hist_df,
-                                 selected_period, 
-                                 selected_interval,
-                                 is_summary = True,
-                                 algo_strategy = "candle hammer",
-                                 )
+    # func5 =  strategy_candle_hammer(symbol,
+    #                              stock_hist_df,
+    #                              selected_period, 
+    #                              selected_interval,
+    #                              is_summary = True,
+    #                              algo_strategy = "candle hammer",
+    #                              )
     
-    func6 = strategy_candle_inverted_hammer(symbol,
-                                 stock_hist_df,
-                                 selected_period, 
-                                 selected_interval,
-                                 is_summary = True,
-                                 algo_strategy = "candle inverted hammer",)
+    # func6 = strategy_candle_inverted_hammer(symbol,
+    #                              stock_hist_df,
+    #                              selected_period, 
+    #                              selected_interval,
+    #                              is_summary = True,
+    #                              algo_strategy = "candle inverted hammer",)
     # st.write("func4", func4)
     
     
-    results = await asyncio.gather(func2, func3, func4, func5, func6)
+    results = await asyncio.gather(func2, func3, func4)
     # st.write("results", results)
   
     await asyncio.sleep(1)

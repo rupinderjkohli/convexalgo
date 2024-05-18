@@ -98,7 +98,7 @@ def main():
       
   with st.sidebar:
     choose = option_menu("Convex Algos", ["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Algo Playground","---","Setup Day",],
-                         icons=['camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill',"play",'house', ],
+                         icons=['camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill',"---" ,"battery-charging","---" ,'house', ],
                          menu_icon="app-indicator", 
                          default_index=0,
                         #  default_index=["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Setup Day",].index(st.session_state.selected_menu),

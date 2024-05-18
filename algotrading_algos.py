@@ -617,9 +617,7 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   # close of 2nd higher than close of 1st
 
   """
-#   if(~is_sorted):
-#     df = df.sort_index(ascending = False)
-#   st.write(df.head())
+
   # Fill NaN values with 0
   df = df.fillna(0)
   # print(df.head())
@@ -662,18 +660,6 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   df_evaluate['position'] = np.where(df_evaluate['strategy_431_long'], 'Buy', 
                                      np.where(df_evaluate['strategy_431_short'], 'Sell', None))
   
-#   st.write("df_evaluate['corrected_position']")
-#   st.write("---")
-#   st.write(df_evaluate[['Close', 't3', 't2', 't1', 't0',
-#        'strategy_431_long_c1', 'strategy_431_long_c2', 'strategy_431_long_c3',
-#        'strategy_431_long', 'strategy_431_short_c1', 'strategy_431_short_c2',
-#        'strategy_431_short_c3', 'strategy_431_short', 
-#        'position',
-       
-#        ]].sort_index(ascending=False))
-#   st.write("---")
-#   st.write("---")
-  
   df_evaluate, buy_short, sell_long = calculate_atr_buy_sell(df_evaluate)
   
   if any(df_evaluate['position'] == "Buy"):
@@ -684,11 +670,6 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
       df_evaluate['stop_loss_atr'] = df_evaluate.Close + st.session_state.stop_loss_factor * df_evaluate.atr_ma
       df_evaluate['take_profit_atr'] = df_evaluate.Close - st.session_state.take_profit_factor * df_evaluate.atr_ma
   
-#   st.write("df_evaluate['position']")
-#   st.write("---")
-#   st.write(df_evaluate.sort_index(ascending=False))
-#   st.write("---")
-#   st.write("---")
   return df_evaluate
     
 async def strategy_four_three_one_soldiers(symbol,
@@ -763,7 +744,7 @@ async def strategy_candle_hammer(symbol,
                                  df,
                                  selected_period, 
                                  selected_interval,
-                                 is_summary = True,
+                                 is_summary, # = True,
                                  algo_strategy = "candle hammer",):
     await asyncio.sleep(1)
     # st.write(candle_hammer(df_strategy_candle_hammer))
@@ -856,13 +837,13 @@ async def strategy_candle_inverted_hammer(symbol,
                                  df,
                                  selected_period, 
                                  selected_interval,
-                                 is_summary = True,
+                                 is_summary,# = True,
                                  algo_strategy = "candle inverted hammer",):
     await asyncio.sleep(1)
-    # st.write(candle_hammer(df_strategy_candle_hammer))
+    st.write("df_strategy_candle_inverted_hammer")
     df_strategy_candle_inverted_hammer = df
     
-    df_strategy_candle_inverted_hammer['inverted_hammer'] = candle_hammer(df_strategy_candle_inverted_hammer)
+    df_strategy_candle_inverted_hammer['inverted_hammer'] = candle_inverted_hammer(df_strategy_candle_inverted_hammer)
     # st.write("Candlestick Detected: Hammer (Weak - Reversal - Bullish Signal - Up) for: ", symbol)
     df_strategy_candle_inverted_hammer = df_strategy_candle_inverted_hammer[df_strategy_candle_inverted_hammer.inverted_hammer == True]
     df_strategy_candle_inverted_hammer = df_strategy_candle_inverted_hammer[['Open','Close','High','Low','Volume','inverted_hammer' ]]
