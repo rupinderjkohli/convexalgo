@@ -14,6 +14,13 @@ credentials:
       name: Rupinder Kohli
       password: abc # Will be hashed automatically
       user_type: RU #registered user
+    ltiwari:
+      email: rupkohli17@gmail.com
+      failed_login_attempts: 0 # Will be managed automatically
+      logged_in: False # Will be managed automatically
+      name: Lakshya Tiwari
+      password: abc # Will be hashed automatically
+      user_type: RU #registered user  
     guest:
       email: rupkohli17@gmail.com
       failed_login_attempts: 0 # Will be managed automatically
