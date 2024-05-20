@@ -9,4 +9,4 @@ __pycache__/
 df_evaluate.csv
 pages/show_trading_charts.py
 /__pycache__
-user_selected_options.csv
+*user_selected_options.csv

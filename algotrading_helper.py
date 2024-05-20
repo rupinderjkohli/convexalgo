@@ -208,24 +208,11 @@ def get_stk_news(ticker):
 
 # https://coderzcolumn.com/tutorials/data-science/candlestick-chart-in-python-mplfinance-plotly-bokeh#2
 
-
-# ##########################################################  
-# Purpose: set up the stock ticker watchlist (user customisation)
-# ##########################################################
-def save_user_selected_options(selected_tickers):
-  df_tickers = pd.DataFrame(selected_tickers)
-  try:
-    df_tickers.to_csv("user_selected_options.csv", mode='w', index=False, header=True)
-  except pd.errors.EmptyDataError:
-    print('CSV file is empty save')
-  except FileNotFoundError:
-    print('CSV file not found save')
-  return
-  
-def load_user_selected_options():
+def load_user_selected_options(username):
   user_list = []
   try :
-    df = pd.read_csv("user_selected_options.csv", header=0)
+    user_options = username + "_user_selected_options.csv"
+    df = pd.read_csv(user_options, header=0)
     
     if (df.empty):
       user_list = []
@@ -239,6 +226,22 @@ def load_user_selected_options():
     print('CSV file not found load')
   
   return user_list
+
+# ##########################################################  
+# Purpose: set up the stock ticker watchlist (user customisation)
+# ##########################################################
+def save_user_selected_options(username, selected_tickers):
+  df_tickers = pd.DataFrame(selected_tickers)
+  try:
+    user_options = username + "_user_selected_options.csv"
+    df_tickers.to_csv(user_options, mode='w', index=False, header=True)
+  except pd.errors.EmptyDataError:
+    print('CSV file is empty save')
+  except FileNotFoundError:
+    print('CSV file not found save')
+  return
+  
+
   
 def update_selection():
   print("options changed")
@@ -446,7 +449,7 @@ def display_watchlist():
 
   # load_user_selected_options()
   
-  user_sel_list = load_user_selected_options()
+  user_sel_list = load_user_selected_options(st.session_state.username)
   
   st.session_state['user_watchlist'] = user_sel_list
   
@@ -478,7 +481,7 @@ def customize(expander):
     return ticker_list
   
 
-def setup_day(user_sel_list, period, interval, symbol_list, algo_functions_map):
+def setup_day(username,user_sel_list, period, interval, symbol_list, algo_functions_map):
   st.markdown(
       """
       Welcom to Convex Trades, a one stop solution enabling you to 
@@ -532,7 +535,7 @@ def setup_day(user_sel_list, period, interval, symbol_list, algo_functions_map):
     # print(ticker)
     # print(st.session_state)
     known_options = ticker
-    save_user_selected_options(ticker)
+    save_user_selected_options(username,ticker)
     refresh = False
       
   is_customize = expander.toggle("Customize List")

@@ -4,18 +4,27 @@ credentials:
       email: deb.c@gmail.com
       failed_login_attempts: 0 # Will be managed automatically
       logged_in: False # Will be managed automatically
-      name: John Smith
+      name: Debashish Chatterjee
       password: abc # Will be hashed automatically
+      user_type: RU #registered user
     rkohli:
       email: rupkohli17@gmail.com
       failed_login_attempts: 0 # Will be managed automatically
       logged_in: False # Will be managed automatically
-      name: Rebecca Briggs
-      password: def # Will be hashed automatically
+      name: Rupinder Kohli
+      password: abc # Will be hashed automatically
+      user_type: RU #registered user
+    guest:
+      email: rupkohli17@gmail.com
+      failed_login_attempts: 0 # Will be managed automatically
+      logged_in: False # Will be managed automatically
+      name: Guest
+      password: guest # Will be hashed automatically
+      user_type: GU #guest user
 cookie:
   expiry_days: 30
   key: convextradesalgo # Must be string
-  name: some_cookie_name
+  name: cookie_convextradesalgo
 pre-authorized:
   emails:
   - rupinder.johar.kohli@gmail.com
