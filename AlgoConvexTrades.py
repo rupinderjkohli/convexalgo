@@ -130,7 +130,7 @@ def main():
   user_sel_list = []
   
   # load_user_selected_options()
-  user_sel_list = load_user_selected_options()
+  user_sel_list = load_user_selected_options(st.session_state.username)
   st.session_state['user_watchlist'] = user_sel_list
   
   print(user_sel_list)
@@ -202,7 +202,8 @@ def main():
     if('selected_menu' not in st.session_state):  
       st.session_state['selected_menu'] = "Setup Day"
       
-    known_options, selected_algos = setup_day(user_sel_list, 
+    known_options, selected_algos = setup_day(st.session_state.username,
+                                              user_sel_list, 
                                               st.session_state.period, 
                                               st.session_state.interval, 
                                               symbol_list, 
