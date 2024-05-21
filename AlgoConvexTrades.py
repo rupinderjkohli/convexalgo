@@ -80,9 +80,11 @@ def main():
   
   # List of algo functions
   algo_functions = [strategy_sma, strategy_ema, strategy_ema_continual, strategy_431_reversal]
+  
+  # TODO
   algo_functions_args = []
   
-  algo_functions_map = (((convex_trade_algos_list, algo_functions)))
+  algo_functions_map = (((convex_trade_algos_list, algo_functions, algo_functions_args)))
   if('algo_functions_map' not in st.session_state):
     st.session_state['algo_functions_map'] = algo_functions_map
   
@@ -113,6 +115,9 @@ def main():
   
   # st.sidebar.success("Setup your trading day")
 
+  # ***************
+  # Trading DAY DETUP
+  # ***************
   if (st.session_state.selected_menu == "Setup Day" ):
     process_name = "Setup Day"
     start_time = time.time()
@@ -153,26 +158,23 @@ def main():
     # Store the selected option in session state
     # else: st.session_state.selected_algos = selected_algos
     
+  # ***************
+  # Trading SIGNALS
+  # ***************
   elif (st.session_state.selected_menu == "Signals" ):
     load_signals_view(process_time,process_time_df)
     
+  # ***************
+  # Trading STATUS
+  # ***************
   elif (st.session_state.selected_menu == "Status" ):
     st.header("Ticker Status View")
     st.caption("Shows the status of the implemented strategies for all tickers")
     
-    # if(main_menu not in st.session_state):
-    #   st.session_state['main_menu'] = 2
-    
-    # Initialize session state if user coming directly to signals
     # Initialize session state if user coming directly to signals
     if('selected_algos' not in st.session_state):
       st.session_state['selected_algos'] = selected_algos #st.session_state.get(selected_algos) #, selected_algos)
-    
-    # if(stop_loss_factor not in st.session_state):
-    #   st.session_state[stop_loss_factor] = st.session_state.get(float(stop_loss[0]))
-    # if(take_profit_factor not in st.session_state):
-    #   st.session_state[take_profit_factor] = st.session_state.get(float(take_profit[0]))
-      
+       
     process_name = "Status"
     start_time = time.time()
     
@@ -181,15 +183,7 @@ def main():
                               st.session_state.period, 
                               st.session_state.interval))
     
-    # st.write("###############################")
-    # st.write(status_ema_merged_df.sort_index(ascending=False))
-    # st.write("###############################")
-    
-    # st.write("###############################")
-    # st.write(type(stock_status_data))
-    # st.write(stock_status_data.keys())
-    
-    # # Convert to DataFrame by flattening the dictionary
+    # Convert to DataFrame by flattening the dictionary
     for symbol, symbol_data in stock_status_data.items():
       st.write("fetching status for ticker: ", symbol)
       st.write(pd.DataFrame(symbol_data).sort_index(ascending=False))
@@ -212,6 +206,9 @@ def main():
     x = pd.DataFrame([process_time])
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
     
+  # ***************
+  # Trading CHARTS
+  # ***************
   elif (st.session_state.selected_menu == "Trading Charts" ):
     st.header("Ticker Trading Charts")
     st.caption("Presents the trading view of the tickers filtered on Ticker and Date")
@@ -236,6 +233,9 @@ def main():
     x = pd.DataFrame([process_time])
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
   
+  # ***************
+  # CHANGE LOGS
+  # ***************
   elif (st.session_state.selected_menu == "Change Logs" ):
     st.header("Change Logs")
     st.caption("Lists the change log since the last release")
@@ -279,12 +279,7 @@ def load_signals_view(process_time,process_time_df):
   # Initialize session state if user coming directly to signals
   if('selected_algos' not in st.session_state):
     st.session_state['selected_algos'] = selected_algos #st.session_state.get(selected_algos) #, selected_algos)
-  
-  # if(stop_loss_factor not in st.session_state):
-  #   st.session_state['stop_loss_factor'] = float(stop_loss[0])
-  # if(take_profit_factor not in st.session_state):
-  #   st.session_state['take_profit_factor'] = float(take_profit[0])
-    
+   
   print("signals known_options, st.session_state")
   print(known_options, st.session_state)
   print("")
