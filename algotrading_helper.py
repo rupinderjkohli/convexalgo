@@ -32,8 +32,9 @@ from plotly.subplots import make_subplots
 import streamlit as st      #install
 from streamlit_js_eval import streamlit_js_eval
 
-# from streamlit_autorefresh import st_autorefresh
+from streamlit_autorefresh import st_autorefresh
 # from schedule import every, repeat, run_pending
+
 import streamlit_extras #.metric_cards #import style_metric_cards # beautify metric card with css
 
 # from lightweight_charts import Chart
@@ -285,115 +286,7 @@ def unix_timestamp(local_timestamp, local_timezone):
     """Convert our datetime object back to a timestamp"""
     return int(dt_local.timestamp())
   
-  
-# Bullish Candle — Green / Bull / Long CandleStick
-# Bearish Candle — Red / Bear / Short CandleStick
-# https://medium.com/@letspython3.x/learn-and-implement-candlestick-patterns-python-6de09854fa3e
-def candle_properties(df):
-  # st.write(open, close)
-  # df['candle_type'] = np.where(df['Open'] < df['Close'], "green", "red") 
-  # df['candle_length'] = df['High'] - df['Low']
-  # df['bodyLength'] = abs(df['Open'] - df['Close'])
-  # """Calculate and return the length of lower shadow or wick."""
-  # df['lowerWick'] = (df['Open'] if df['Open'] <= df['Close'] else df['Close']) - df['Low']
-  # """Calculate and return the length of upper shadow or wick."""                
-  # df['upperWick'] = df['High'] - (df['Open'] if df['Open'] >= df['Close'] else df['Close'])
-  
-  df['candle_type'] = np.where(df['Open'] < df['Close'], "green", "red") 
-  df['candle_length'] = df['High'] - df['Low']
-  df['bodyLength'] = abs(df['Open'] - df['Close'])
-  
-  # # """Calculate and return the length of lower shadow or wick."""
-  df['lowerWick'] = np.where(df['Open'] <= df['Close'], 
-                                        df['Open'], 
-                                        df['Close']) - df['Low']
-  
-  # # """Calculate and return the length of upper shadow or wick."""                
-  df['upperWick'] = df['High'] - np.where(df['Open'] >= df['Close'], 
-                                        df['Open'], 
-                                        df['Close'])
 
-  return df
-
-def strategy_431(
-  # symbol,
-                 df, #to find the prev 3 candles
-                #  candle_obj,
-                #  is_sorted, #if the df is sorted in reverse order of dates
-                 
-                #  selected_short_window,
-                #  selected_long_window,
-                #  algo_strategy
-                 ):
-  
-  # If ((close of previous candle(c1) > Close of the candle before (c2))
-  # AND (close of the candle before (c2) is > the close of candle before (c3))
-  # AND (last candle (c0) close < close of c1)
-  # AND (last candle(c0) close > low of c2)
-  # AND (last candle close < last candle open)
-  
-  # for long - three white soldiers
-  # https://trendspider.com/learning-center/thestrat-candlestick-patterns-a-traders-guide/
-  # https://www.babypips.com/learn/forex/triple-candlestick-patterns
-  # https://bullishbears.com/3-bar-reversal-pattern/
-
-  # close of 4th less than close of 3rd - define the trend; should be same - down / up
-  # close of 3rd less than close of 2nd - define the trend
-  # 1st candle should now close below the close of the second
-  
-  # first candle = candle at the top of the frame (now - 5 min (interval)
-  # second candle is now - 10 min (interval *2
-  # third candle is now - 15 min (interval * 3)
-  # fourth candle is now - 20 min (interval * 4)
-  
-  # for short 
-  # close of 3rd less than close of 2nd
-  # close of 2nd less than close of 1st
-  
-  df_3_whites = candle_three_white_soldiers(df)
-  st.write(df_3_whites)
-  return
-
-# https://eodhd.com/financial-academy/technical-analysis-examples/practical-guide-to-automated-detection-trading-patterns-with-python
-# 
-def candle_three_white_soldiers(df) -> pd.Series:
-  """*** Candlestick Detected: Three White Soldiers ("Strong - Reversal - Bullish Pattern - Up")"""
-
-  # Fill NaN values with 0
-  df = df.fillna(0)
-
-  return (
-      ((df["Open"] > df["Open"].shift(1)) & (df["Open"] < df["Close"].shift(1)))
-      & (df["Close"] > df["High"].shift(1))
-      & (df["High"] - np.maximum(df["Open"], df["Close"]) < (abs(df["Open"] - df["Close"])))
-      & ((df["Open"].shift(1) > df["Open"].shift(2)) & (df["Open"].shift(1) < df["Close"].shift(2)))
-      & (df["Close"].shift(1) > df["High"].shift(2))
-      & (
-          df["High"].shift(1) - np.maximum(df["Open"].shift(1), df["Close"].shift(1))
-          < (abs(df["Open"].shift(1) - df["Close"].shift(1)))
-      )
-  )
-
-
-def candle_three_black_crows(df) -> pd.Series:
-  """* Candlestick Detected: Three Black Crows ("Strong - Reversal - Bearish Pattern - Down")"""
-
-  # Fill NaN values with 0
-  df = df.fillna(0)
-
-  return (
-      ((df["Open"] < df["Open"].shift(1)) & (df["Open"] > df["Close"].shift(1)))
-      & (df["Close"] < df["Low"].shift(1))
-      & (df["Low"] - np.maximum(df["Open"], df["Close"]) < (abs(df["Open"] - df["Close"])))
-      & ((df["Open"].shift(1) < df["Open"].shift(2)) & (df["Open"].shift(1) > df["Close"].shift(2)))
-      & (df["Close"].shift(1) < df["Low"].shift(2))
-      & (
-          df["Low"].shift(1) - np.maximum(df["Open"].shift(1), df["Close"].shift(1))
-          < (abs(df["Open"].shift(1) - df["Close"].shift(1)))
-      )
-  )
-  
-  
  
 
 # ##########################################################  
@@ -1199,21 +1092,13 @@ def get_selected_stock_history(known_options,selected_period, selected_interval)
     # st.write("fetching status for: ", symbol )
     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)  
     selected_etf_data[symbol] = stock_hist_df
+    
+     
   return selected_etf_data
 
-def identify_market_patterns(df):
-  patterns = {
-      'Bullish Engulfing': ((df['Open'][1] > df['Close'][1]) & (df['Open'][2] < df['Close'][2]) & 
-                            (df['Open'][1] > df['Close'][2]) & (df['Close'][1] < df['Open'][2])),
-      'Bearish Engulfing': ((df['Open'][1] < df['Close'][1]) & (df['Open'][2] > df['Close'][2]) &
-                            (df['Open'][1] < df['Close'][2]) & (df['Close'][1] > df['Open'][2])),
-      'Doji': (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.05),
-      'Hammer': ((df['Close'] - df['Low']) > (df['High'] - df['Low']) * 0.7) & 
-                (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3),
-      'Shooting Star': ((df['High'] - df['Open']) > (df['High'] - df['Low']) * 0.7) & 
-                      (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3)
-  }
-    # Add a column for patterns
-  for pattern, condition in patterns.items():
-    df[pattern] = condition
-  return df
+def app_refresh(selected_interval):
+   # streamlit autorefresh
+  stock_history_refresh_cnt = st_autorefresh(interval=5000, limit=100, key="stock_history_refresh") 
+  last_update = datetime.now()
+  st.session_state['last_run'] = int(time.time())
+  return last_update
