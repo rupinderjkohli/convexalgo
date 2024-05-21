@@ -140,6 +140,7 @@ if __name__ == "__main__":
                 cciSlopeUp = True if currSlope > 0 else False
                 cciSlopeDown = True if currSlope < 0 else False
 
+                # EMA with 5/8 cross over
                 df['emaFast'] = ema(df['Close'], globals.emaFastLength)
                 df['emaSlow'] = ema(df['Close'], globals.emaSlowLength)
 
@@ -151,6 +152,7 @@ if __name__ == "__main__":
                 emaSlowCrossedUp = True if currClose > currSlow else False
                 emaSlowCrossedDown = True if currClose < currSlow else False
 
+                # 431
                 threeCandlesUp = True if (df.at[len(df) - 2, 'Close'] > df.at[len(df) - 3, 'Close']) and (df.at[len(df) - 3, 'Close'] > df.at[len(df) - 4, 'Close']) else False
                 currentCandleDown = True if currClose < (df.at[len(df) - 2, 'Close'] - ((df.at[len(df) - 2, 'Close'] > df.at[len(df) - 2, 'Open']) / 2)) else False    
 
@@ -183,7 +185,7 @@ if __name__ == "__main__":
                     #buyStock(stock, qty)
                     print("Long")
 
-
+                # CCI
                 cciCrossUp0 = True if (df.at[len(df) - 1, 'CCI'] > 0) and (df.at[len(df) - 2, 'CCI'] < 0) else False
                 cciCrossDown0 = True if (df.at[len(df) - 1, 'CCI'] < 0) and (df.at[len(df) - 2, 'CCI'] > 0) else False
                 cciCrossUpMinus100 = True if (df.at[len(df) - 2, 'CCI'] < -100) and (df.at[len(df) - 1, 'CCI'] > -100) else False
