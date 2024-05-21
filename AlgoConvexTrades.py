@@ -7,22 +7,23 @@ from streamlit_option_menu import option_menu
 import streamlit.components.v1 as components
 from st_social_media_links import SocialMediaIcons
 
+
 from pathlib import Path
 
 pd.options.display.float_format = '{:,.2f}'.format
 
 def main():
-  # st.set_page_config(
-  #   page_title="Convex Algos Dashboard",
-  #   page_icon="🧊",
-  #   layout="wide",
-  #   initial_sidebar_state="expanded",
-  #   menu_items={
-  #       'Get Help': 'https://convextrades.com/',
-  #       # 'Report a bug': "mailto:rupinder.johar.kohli@gmail.com",
-  #       'About': "#An *extremely* cool app displaying your GoTo Trading Dashboard!"
-  #   }
-  # )    
+  st.set_page_config(
+    page_title="Convex Algos Dashboard",
+    page_icon="🧊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': 'https://convextrades.com/',
+        # 'Report a bug': "mailto:rupinder.johar.kohli@gmail.com",
+        'About': "#An *extremely* cool app displaying your GoTo Trading Dashboard!"
+    }
+  )    
   # """### Select Stock and Time interval"""
   # https://github.com/smudali/stocks-analysis/blob/main/dasboard/01Home.py
   
@@ -39,54 +40,10 @@ def main():
   
   # # ***USER LOGIN***
   user_type = user_login_process()
+  # st.write("user_type",user_type)
   if user_type not in (['GU','RU']):
     return
-  
-  # if 'name' not in st.session_state:
-  #     st.session_state['name'] = None
-  # if(('authentication_status' not in st.session_state)):
-  #   st.session_state["authentication_status"] = None
-  # if 'username' not in st.session_state:
-  #     st.session_state['username'] = None
-  # if 'logout' not in st.session_state:
-  #     st.session_state['logout'] = None
-  # # st.write(st.session_state)
-  
-  # name, authentication_status, username = authenticator.login()
-  # # username_of_forgotten_password, email_of_forgotten_password, new_random_password = authenticator.forgot_password()
-  
-  # # st.write(name, authentication_status, username)
-  # # st.write(st.session_state)
-  # if st.session_state["authentication_status"]:
-  #   st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
-  #   authenticator.logout(location='sidebar')
-  #   # disable some menu options for new users
-  #   if username == 'guest':
-  #       st.write(f'Welcome *{name}*')
-  #       # call a function to disable some options menu
         
-  #   # proceed further
-  # elif st.session_state["authentication_status"] is False:
-  #     st.error('Username/password is incorrect')
-  #     return
-  # elif st.session_state["authentication_status"] is None:
-  #     st.warning('Please enter your username and password')
-  #     return
-  
-  # # if (~st.session_state["authentication_status"]):
-  # #   try:
-  # #       if authenticator.reset_password(st.session_state["username"]):
-  # #           st.success('Password modified successfully')
-  # #   except Exception as e:
-  # #       st.error(e)
-  
-  # # try:
-  # #   email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(pre_authorization=False)
-  # #   if email_of_registered_user:
-  # #       st.success('User registered successfully')
-  # # except Exception as e:
-  # #   st.error(e)
-          
   # # ***USER LOGIN DONE***
   
   if('main_menu' not in st.session_state):
@@ -99,26 +56,35 @@ def main():
   symbol_list, period, interval, stop_loss, take_profit,trading_strategy_ma,trading_strategy_trend = load_config(refresh)
   
   symbol_list = np.sort(symbol_list)
-  st.session_state['period'] = period[0]
-  st.session_state['interval'] = interval[0]
-  st.session_state['stop_loss_factor'] = float(stop_loss[0])
-  st.session_state['take_profit_factor'] = float(take_profit[0])
+  if('period' not in st.session_state):
+    st.session_state['period'] = period[0]
+  if('interval' not in st.session_state):
+    st.session_state['interval'] = interval[0]
+  if('stop_loss_factor' not in st.session_state):
+    st.session_state['stop_loss_factor'] = float(stop_loss[0])
+  if('take_profit_factor' not in st.session_state):
+    st.session_state['take_profit_factor'] = float(take_profit[0])
   
-  st.session_state['moving_average'] = trading_strategy_ma
-  st.session_state['trend_based'] = trading_strategy_trend 
+  if('moving_average' not in st.session_state):
+    st.session_state['moving_average'] = trading_strategy_ma
+  if('trend_based' not in st.session_state):
+    st.session_state['trend_based'] = trading_strategy_trend 
   
   ma_list = trading_strategy_ma #["SMA", "EMA","EMA 1-2 candle price continuation"]
   algo_list = trading_strategy_trend #["4-3-1 candle price reversal"]
   convex_trade_algos_list = ma_list + algo_list
   selected_algos = convex_trade_algos_list
-  st.session_state.selected_algos = convex_trade_algos_list
+  
+  if('selected_algos' not in st.session_state):
+    st.session_state['selected_algos'] = convex_trade_algos_list
   
   # List of algo functions
   algo_functions = [strategy_sma, strategy_ema, strategy_ema_continual, strategy_431_reversal]
   algo_functions_args = []
   
   algo_functions_map = (((convex_trade_algos_list, algo_functions)))
-  st.session_state.algo_functions_map = algo_functions_map
+  if('algo_functions_map' not in st.session_state):
+    st.session_state['algo_functions_map'] = algo_functions_map
   
   print(convex_trade_algos_list)
   
@@ -131,58 +97,11 @@ def main():
   
   # load_user_selected_options()
   user_sel_list = load_user_selected_options(st.session_state.username)
-  st.session_state['user_watchlist'] = user_sel_list
+  if('user_watchlist' not in st.session_state):
+    st.session_state['user_watchlist'] = user_sel_list
   
   print(user_sel_list)
     
-  # st.write(st.session_state)  
-  
-  # def on_change(key):
-  #     selection = st.session_state[key]
-  #     # st.write(f"Selection changed to {selection}")
-  #     st.session_state['main_menu'] = selection
-  #     st.session_state['selected_menu'] = selection
-  #     # st.write("ON CHANGE DID I REACH HERE")
-  #     return
-      
-  # show_menu()
-      
-  # with st.sidebar:
-  #   choose = option_menu("Convex Algos", ["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Algo Playground","---","Setup Day",],
-  #                        icons=['camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill',"---" ,"battery-charging","---" ,'house', ],
-  #                        menu_icon="app-indicator", 
-  #                        default_index=0,
-  #                       #  default_index=["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Setup Day",].index(st.session_state.selected_menu),
-  #                        styles={
-  #                         "container": {"padding": "5!important"}, #, "background-color": "#fafafa"},
-  #                         "icon": {"color": "orange", "font-size": "25px"}, 
-  #                         "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
-  #                         "nav-link-selected": {"background-color": "#02ab21"},
-                          
-  #                     },
-  #                        key='main_menu',
-  #                        on_change=on_change
-  #   )
-  #   manual_select = "Signals"
-  #   # st.write(choose)
-  #   # Update session state based on selection
-  #   st.session_state['selected_menu'] = choose
-    
-  #   # # Initialize session state
-  #   # if 'main_menu' not in st.session_state:
-  #   #     st.session_state.main_menu = 0 
-  #   #     manual_select = st.session_state['main_menu']
-    
-  #   if st.session_state.get('main_menu', 0):
-  #       # st.session_state['main_menu'] = st.session_state.get('main_menu', 0)#+ 1) % 5
-  #       manual_select = st.session_state['main_menu']
-  #       # st.write(manual_select)
-  #   else:
-  #       manual_select = st.session_state.get('main_menu', 0) #None
-    
-  #   # RK16052024: Ensure content is displayed on initial load
-  #   # print("$$$$$$$$$$$$$$$$$$$$$$$$$  ",st.session_state.main_menu)
-  #   # print("$$$$$$$$$$$$$$$$$$$$$$$$$  ",st.session_state.selected_menu)
     
   # load_signals_view(process_time,process_time_df)
   if (st.session_state.main_menu == 0):
@@ -399,4 +318,8 @@ def load_signals_view(process_time,process_time_df):
     
     
 if __name__ == '__main__':
+  # st.markdown(""" <style>
+  #   #MainMenu {visibility: hidden;}
+  #   footer {visibility: hidden;}
+  #   </style> """, unsafe_allow_html=True)
   main()

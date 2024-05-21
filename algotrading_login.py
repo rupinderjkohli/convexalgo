@@ -6,9 +6,12 @@ import streamlit as st
 import streamlit_authenticator as stauth
 from streamlit_option_menu import option_menu
 
-
 import yaml
 from yaml.loader import SafeLoader
+
+from algotrading_helper import *
+
+
 
 # with open('./config.yaml') as file:
 #         config = yaml.load(file, Loader=SafeLoader)
@@ -58,27 +61,43 @@ def user_login_process():
         st.session_state['selected_menu'] = "Signals"
     if 'user_type' not in st.session_state:
         st.session_state['user_type'] = None
+    if 'last_run' not in st.session_state:
+        st.session_state['last_run'] = datetime.now() #since the app is being run the first time
   
     # st.write(st.session_state)
     
     name, authentication_status, username = authenticator.login()
      
     # st.write(name, authentication_status, username)
-    # st.write(st.session_state)
+    # st.write("on login: ",st.session_state)
+        
     if st.session_state["authentication_status"]:
         st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
+        user_ticker = load_user_selected_options(username)
         authenticator.logout(location='sidebar')
-        # disable some menu options for new users
-        if username == 'guest':
-            st.write(f'Welcome *{st.session_state["name"]}*')
-            st.session_state['user_type'] = "GU"
-            # call a function to disable some options menu
-            show_menu("GU")
-            return st.session_state['user_type']
-        else: 
-            st.session_state['user_type'] = "RU"
-            show_menu("RU")
-            return st.session_state['user_type']
+        st.session_state['user_type'] = "RU"
+        if (len(user_ticker) == 0): 
+            show_menu("RU", "Setup Day")
+    
+            # st.write("Select to Setup Day option from the side menu for first time Ticker Setup")
+        else: show_menu("RU", "Signals")
+        return st.session_state['user_type']
+            
+        # # disable some menu options for new users
+        # if username == 'guest':
+        #     st.write(f'Welcome *{st.session_state["name"]}*')
+        #     st.session_state['user_type'] = "GU"
+        #     # call a function to disable some options menu
+        #     show_menu("GU")
+        #     if (len(user_ticker) == 0): 
+        #         st.write("Select to Setup Day option from the side menu for first time Ticker Setup")
+        #     return st.session_state['user_type']
+        # else: 
+        #     st.session_state['user_type'] = "RU"
+        #     show_menu("RU")
+        #     if (len(user_ticker) == 0): 
+        #         st.write("Select to Setup Day option from the side menu for first time Ticker Setup")
+        #     return st.session_state['user_type']
             
         # proceed further
     elif st.session_state["authentication_status"] is False:
@@ -106,7 +125,7 @@ def user_login_process():
             
     # ***USER LOGIN DONE***
 
-def show_menu(user):
+def show_menu(user, option):
     with st.sidebar:
         choose = option_menu("Convex Algos", ["Signals", "Status", "Trading Charts", "Change Logs", "---" ,"Algo Playground","---","Setup Day",],
                             icons=['camera fill', 'list-columns-reverse', 'bar-chart-line','person lines fill',"---" ,"battery-charging","---" ,'house', ],
@@ -123,8 +142,8 @@ def show_menu(user):
                             key='main_menu',
                             on_change=on_change
         )
-        manual_select = "Signals"
-        # st.write(choose)
+        manual_select = option #"Signals"
+        # st.write(st.session_state.get('main_menu', option))
         # Update session state based on selection
         st.session_state['selected_menu'] = choose
         
@@ -133,8 +152,9 @@ def show_menu(user):
         #     st.session_state.main_menu = 0 
         #     manual_select = st.session_state['main_menu']
         
-        if st.session_state.get('main_menu', 0):
+        if st.session_state.get('main_menu', option):
             # st.session_state['main_menu'] = st.session_state.get('main_menu', 0)#+ 1) % 5
+            # st.write("st.session_state.get('main_menu', option)",st.session_state.get('main_menu', option))
             manual_select = st.session_state['main_menu']
             # st.write(manual_select)
         else:
