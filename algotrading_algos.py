@@ -1095,17 +1095,102 @@ def candle_three_black_crows(df) -> pd.Series:
   
 def identify_market_patterns(df):
   patterns = {
-      'Bullish Engulfing': ((df['Open'][1] > df['Close'][1]) & (df['Open'][2] < df['Close'][2]) & 
-                            (df['Open'][1] > df['Close'][2]) & (df['Close'][1] < df['Open'][2])),
-      'Bearish Engulfing': ((df['Open'][1] < df['Close'][1]) & (df['Open'][2] > df['Close'][2]) &
-                            (df['Open'][1] < df['Close'][2]) & (df['Close'][1] > df['Open'][2])),
-      'Doji': (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.05),
-      'Hammer': ((df['Close'] - df['Low']) > (df['High'] - df['Low']) * 0.7) & 
-                (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3),
-      'Shooting Star': ((df['High'] - df['Open']) > (df['High'] - df['Low']) * 0.7) & 
-                      (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3)
+    'Bullish Engulfing': ((df['Open'][1] > df['Close'][1]) & (df['Open'][2] < df['Close'][2]) & 
+                        (df['Open'][1] > df['Close'][2]) & (df['Close'][1] < df['Open'][2])),
+    'Bearish Engulfing': ((df['Open'][1] < df['Close'][1]) & (df['Open'][2] > df['Close'][2]) &
+                        (df['Open'][1] < df['Close'][2]) & (df['Close'][1] > df['Open'][2])),
+    'Doji': (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.05),
+    'Hammer': ((df['Close'] - df['Low']) > (df['High'] - df['Low']) * 0.7) & 
+            (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3),
+    'Shooting Star': ((df['High'] - df['Open']) > (df['High'] - df['Low']) * 0.7) & 
+                    (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3)
+    # 'ema_crossover': (np.where((df['Close'].ewm(span = short_window, adjust = True).mean()) > 
+    #                            (df['Close'].ewm(span = long_window, adjust = True).mean()), 
+    #                            1.0, 0.0)).diff()
+    # 'ema_continual':
+
   }
     # Add a column for patterns
   for pattern, condition in patterns.items():
     df[pattern] = condition
   return df      
+
+'''
+ # EMA
+ # Create short exponential moving average column
+df[short_window_col] = df['Close'].ewm(span = short_window, adjust = True).mean()
+
+# Create a long exponential moving average column
+df[long_window_col] = df['Close'].ewm(span = long_window, adjust = True).mean()
+
+# create a new column 'Signal' such that if faster moving average is greater than slower moving average 
+# then set Signal as 1 else 0.
+df['Signal'] = 0.0  
+df['Signal'] = np.where(df[short_window_col] > df[long_window_col], 1.0, 0.0) 
+
+# create a new column 'Position' which is a day-to-day difference of the 'Signal' column. 
+df['ema_crossover'] = df['Signal'].diff()
+'''
+
+'''
+# EMA CONTINUAL
+# Create short exponential moving average column
+df[short_window_col] = df['Close'].ewm(span = short_window, adjust = True).mean()
+
+# Create a long exponential moving average column
+df[long_window_col] = df['Close'].ewm(span = long_window, adjust = True).mean()
+
+df['ema_5above8'] = (df[short_window_col] > df[long_window_col])
+
+df['ema_continual_long'] = ((df[short_window_col] > df[long_window_col]) & #Ema 5 is above Ema  8
+                                    # Last candle (C0) closes above ema5 with low below ema 5 or ema 8 (green candle) and 
+                                    # close of C0 candle is less than high of the last two candles
+                                    ((df['Close'].shift(1) > df[short_window_col]) &
+                                    ((df['Low'].shift(1) < df[short_window_col]) |
+                                    (df['Low'].shift(1) < df[long_window_col])) &
+                                    (df['Close'].shift(1) <  df['High'].shift(1)) & 
+                                    (df['Close'].shift(1) <  df['High'].shift(2))) &
+                                    # Low of Candle before C0 (C1) < ema 5 or <  ema 8 
+                                    # with high above ema 5(red candle) 
+                                    (((df['Low'].shift(2) < df[short_window_col]) |
+                                    (df['Low'].shift(2) < df[long_window_col])) &
+                                    (df['High'].shift(2) > df[short_window_col]))
+                                    )
+
+df['ema_5below8'] = (df[short_window_col] < df[long_window_col]) 
+                            
+df['ema_continual_short'] = ((df[short_window_col] < df[long_window_col]) & #Ema 5 is above Ema  8
+                                    # Last candle (C0) closes above ema5 with low below ema 5 or ema 8 (green candle) and 
+                                    # close of C0 candle is less than high of the last two candles
+                                    ((df['Close'].shift(1) < df[short_window_col]) &
+                                    ((df['High'].shift(1) > df[short_window_col]) |
+                                    (df['High'].shift(1) > df[long_window_col])) &
+                                    (df['Close'].shift(1) >  df['Low'].shift(1)) & 
+                                    (df['Close'].shift(1) >  df['Low'].shift(2))) &
+                                    # Low of Candle before C0 (C1) < ema 5 or <  ema 8 
+                                    # with high above ema 5(red candle) 
+                                    (((df['High'].shift(2) > df[short_window_col]) |
+                                    (df['High'].shift(2) > df[long_window_col])) &
+                                    (df['Low'].shift(2) < df[short_window_col]))
+                                    )
+
+df['ema_continual'] = np.where(df['ema_continual_long'], 'Buy', 
+                                    np.where(df['ema_continual_short'], 'Sell', None))
+
+'''
+
+'''
+# 431
+df['strategy_431_long'] = ((df['Close'].shift(4) > df['Close'].shift(3)) &
+            (df['Close'].shift(3) > df['Close'].shift(2)) &
+            (df['Close'].shift(2) < df['Close'].shift(1))
+            )
+            
+df['strategy_431_short'] = ((df['Close'].shift(4) < df['Close'].shift(3)) &
+            (df['Close'].shift(3) < df['Close'].shift(2)) &
+            (df['Close'].shift(2) > df['Close'].shift(1))
+            )
+
+df['candle_reversal_431'] = np.where(df['strategy_431_long'], 'Buy', 
+                                    np.where(df['strategy_431_short'], 'Sell', None))
+'''

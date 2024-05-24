@@ -485,7 +485,7 @@ def setup_day(username,user_sel_list, period, interval, symbol_list, algo_functi
   with st.container(): # CONTAINER: Strategy selection 
     expander = st.expander("Select Trading Strategy")
     
-    algo_name, algo_functions = list(algo_functions_map)
+    algo_name, algo_functions, algo_functions_args = list(algo_functions_map)
     
     # Checkbox selection
     selected_algos = []
@@ -947,7 +947,7 @@ async def algo_trading_summary(symbol,
     print("algo_trading_summary")
     # st.write(symbol, selected_algos)
     
-    algo_name, algo_functions = list(st.session_state.algo_functions_map)
+    algo_name, algo_functions, algo_functions_args = list(st.session_state.algo_functions_map)
     
     # Extract the second element from each list using list comprehension
     #RK load from config

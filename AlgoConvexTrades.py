@@ -2,6 +2,9 @@ from algotrading_helper import *
 from algotrading_visualisations import *
 from algotrading_algos import *
 from algotrading_login import *
+from algotrading_playground import *
+from convexAlgos_standalone import *
+
 
 from streamlit_option_menu import option_menu
 import streamlit.components.v1 as components
@@ -114,9 +117,11 @@ def main():
   to_twitter("post")    
   
   # st.sidebar.success("Setup your trading day")
+  print(st.session_state)
+
 
   # ***************
-  # Trading DAY DETUP
+  # Trading DAY SETUP
   # ***************
   if (st.session_state.selected_menu == "Setup Day" ):
     process_name = "Setup Day"
@@ -255,8 +260,16 @@ def main():
     x = pd.DataFrame([process_time])
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
   
+  # ***************
+  # ALGO PLAYGROUND
+  # ***************
   elif (st.session_state.selected_menu == "Algo Playground"):
-    asyncio.run (algo_playground())
+    # st.button("standalone_algos",type="primary")
+    if(st.button("standalone_algos")):
+      st.write("button clicked")
+      convexalgos_standalone()
+    if(st.button("algo_playground")):
+      asyncio.run (algo_playground())
     
   
   print (process_time_df)
