@@ -25,10 +25,10 @@ from millify import millify # shortens values (10_000 ---> 10k)
 from jproperties import Properties
 
 
-# import tracemalloc
+import tracemalloc
 
-# # Enable tracemalloc
-# tracemalloc.start()
+# Enable tracemalloc
+tracemalloc.start()
 
 async def strategy_sma(symbol,
                  stock_hist_df,
@@ -933,9 +933,9 @@ async def strategy_candle_inverted_hammer(symbol,
 def candles_downtrend(df):
     
     return(
-        df['is_red_bear'].shift(2) &
-        df['is_red_bear'].shift(3) &
-        df['is_red_bear'].shift(4)
+        (df['Close'].shift(1) < df['Open'].shift(1)) &
+        (df['Close'].shift(2) < df['Open'].shift(2)) &
+        (df['Close'].shift(3) < df['Open'].shift(3))
         )
 
 def candles_uptrend(df):
@@ -951,7 +951,7 @@ def strategy_hammer(df):
     # Fill NaN values with 0
     # df = df.fillna(0)
     # print(df.keys())
-    st.write("processing candle properties")
+    # st.write("processing candle properties")
     
     df['is_red_bear'] = (df['Close'] < df['Open'])
     df['is_green_bull'] = (df['Close'] > df['Open'])
@@ -960,44 +960,34 @@ def strategy_hammer(df):
     df['up_trend'] = candles_uptrend(df)
     
     df['is_hammer'] = (
-        ((df['High'] - df['Low']) > 3 * (df["Open"] - df["Close"]))
-        & (((df["Close"] - df["Low"]) / (0.001 + df["High"] - df["Low"])) > 0.6)
-        & (((df["Open"] - df["Low"]) / (0.001 + df["High"] - df["Low"])) > 0.6)
+        ((df['High'] - df['Low']) > 3 * (df['Open'] - df['Close']))
+        & (((df['Close'] - df['Low']) / (0.001 + df['High'] - df['Low'])) > 0.6)
+        & (((df['Open'] - df['Low']) / (0.001 + df['High'] - df['Low'])) > 0.6)
     )
     
     df['is_inverted_hammer'] = (
-        ((df["High"] - df["Low"]) > 3 * (df["Open"] - df["Close"]))
-        & ((df["High"] - df["Close"]) / (0.001 + df["High"] - df["Low"]) > 0.6)
-        & ((df["High"] - df["Open"]) / (0.001 + df["High"] - df["Low"]) > 0.6)
+        ((df['High'] - df['Low']) > 3 * (df['Open'] - df['Close']))
+        & ((df['High'] - df['Close']) / (0.001 + df['High'] - df['Low']) > 0.6)
+        & ((df['High'] - df['Open']) / (0.001 + df['High'] - df['Low']) > 0.6)
     ) 
     
     df['strategy_hammer_long'] = ((df['down_trend']) & (df['is_hammer']) &
     (df['is_hammer'] & (df['Close']>df['Open'])) & 
     (np.where(df['is_hammer'], df['Close'] > df['Low'].shift(1), False)))
     
-    st.write("strategy_hammer (strategy_hammer)", df[['Close','Open','Low','is_red_bear','is_green_bull','down_trend','up_trend',
-                                                      'is_hammer','is_inverted_hammer','strategy_hammer_long']].sort_index(ascending=False)
-             )
+    # st.write("strategy_hammer (strategy_hammer)", df[['Close','Open','Low','High','is_red_bear','is_green_bull','down_trend','up_trend',
+    #                                                   'is_hammer','is_inverted_hammer','strategy_hammer_long']].sort_index(ascending=False)
+            #  )
     # st.write("strategy_hammer (strategy_hammer)", df)    
     # st.write("strategy_hammer",df)
     # await asyncio.sleep(1)
     return df
     
-    
-    
-  
+ 
 # Bullish Candle — Green / Bull / Long CandleStick
 # Bearish Candle — Red / Bear / Short CandleStick
 # https://medium.com/@letspython3.x/learn-and-implement-candlestick-patterns-python-6de09854fa3e
 def candle_properties(df):
-  # st.write(open, close)
-  # df['candle_type'] = np.where(df['Open'] < df['Close'], "green", "red") 
-  # df['candle_length'] = df['High'] - df['Low']
-  # df['bodyLength'] = abs(df['Open'] - df['Close'])
-  # """Calculate and return the length of lower shadow or wick."""
-  # df['lowerWick'] = (df['Open'] if df['Open'] <= df['Close'] else df['Close']) - df['Low']
-  # """Calculate and return the length of upper shadow or wick."""                
-  # df['upperWick'] = df['High'] - (df['Open'] if df['Open'] >= df['Close'] else df['Close'])
   
   df['candle_type'] = np.where(df['Open'] < df['Close'], "green", "red") 
   df['candle_length'] = df['High'] - df['Low']
@@ -1095,17 +1085,98 @@ def candle_three_black_crows(df) -> pd.Series:
   
 def identify_market_patterns(df):
   patterns = {
-      'Bullish Engulfing': ((df['Open'][1] > df['Close'][1]) & (df['Open'][2] < df['Close'][2]) & 
-                            (df['Open'][1] > df['Close'][2]) & (df['Close'][1] < df['Open'][2])),
-      'Bearish Engulfing': ((df['Open'][1] < df['Close'][1]) & (df['Open'][2] > df['Close'][2]) &
-                            (df['Open'][1] < df['Close'][2]) & (df['Close'][1] > df['Open'][2])),
-      'Doji': (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.05),
-      'Hammer': ((df['Close'] - df['Low']) > (df['High'] - df['Low']) * 0.7) & 
-                (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3),
-      'Shooting Star': ((df['High'] - df['Open']) > (df['High'] - df['Low']) * 0.7) & 
-                      (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3)
+    'Bullish Engulfing': ((df['Open'][1] > df['Close'][1]) & (df['Open'][2] < df['Close'][2]) & 
+                        (df['Open'][1] > df['Close'][2]) & (df['Close'][1] < df['Open'][2])),
+    'Bearish Engulfing': ((df['Open'][1] < df['Close'][1]) & (df['Open'][2] > df['Close'][2]) &
+                        (df['Open'][1] < df['Close'][2]) & (df['Close'][1] > df['Open'][2])),
+    'Doji': (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.05),
+    'Hammer': ((df['Close'] - df['Low']) > (df['High'] - df['Low']) * 0.7) & 
+            (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3),
+    'Shooting Star': ((df['High'] - df['Open']) > (df['High'] - df['Low']) * 0.7) & 
+                    (abs(df['Open'] - df['Close']) < (df['High'] - df['Low']) * 0.3)
+    # 'ema_crossover': (np.where((df['Close'].ewm(span = short_window, adjust = True).mean()) > 
+    #                            (df['Close'].ewm(span = long_window, adjust = True).mean()), 
+    #                            1.0, 0.0)).diff()
+    # 'ema_continual':
+
   }
     # Add a column for patterns
   for pattern, condition in patterns.items():
     df[pattern] = condition
   return df      
+
+'''
+ # EMA
+ # Create short exponential moving average column
+df[short_window_col] = df['Close'].ewm(span = short_window, adjust = True).mean()
+
+# Create a long exponential moving average column
+df[long_window_col] = df['Close'].ewm(span = long_window, adjust = True).mean()
+
+# create a new column 'Signal' such that if faster moving average is greater than slower moving average 
+# then set Signal as 1 else 0.
+df['Signal'] = 0.0  
+df['Signal'] = np.where(df[short_window_col] > df[long_window_col], 1.0, 0.0) 
+
+# create a new column 'Position' which is a day-to-day difference of the 'Signal' column. 
+df['ema_crossover'] = df['Signal'].diff()
+
+# EMA CONTINUAL
+# Create short exponential moving average column
+df[short_window_col] = df['Close'].ewm(span = short_window, adjust = True).mean()
+
+# Create a long exponential moving average column
+df[long_window_col] = df['Close'].ewm(span = long_window, adjust = True).mean()
+
+df['ema_5above8'] = (df[short_window_col] > df[long_window_col])
+
+df['ema_continual_long'] = ((df[short_window_col] > df[long_window_col]) & #Ema 5 is above Ema  8
+                                    # Last candle (C0) closes above ema5 with low below ema 5 or ema 8 (green candle) and 
+                                    # close of C0 candle is less than high of the last two candles
+                                    ((df['Close'].shift(1) > df[short_window_col]) &
+                                    ((df['Low'].shift(1) < df[short_window_col]) |
+                                    (df['Low'].shift(1) < df[long_window_col])) &
+                                    (df['Close'].shift(1) <  df['High'].shift(1)) & 
+                                    (df['Close'].shift(1) <  df['High'].shift(2))) &
+                                    # Low of Candle before C0 (C1) < ema 5 or <  ema 8 
+                                    # with high above ema 5(red candle) 
+                                    (((df['Low'].shift(2) < df[short_window_col]) |
+                                    (df['Low'].shift(2) < df[long_window_col])) &
+                                    (df['High'].shift(2) > df[short_window_col]))
+                                    )
+
+df['ema_5below8'] = (df[short_window_col] < df[long_window_col]) 
+                            
+df['ema_continual_short'] = ((df[short_window_col] < df[long_window_col]) & #Ema 5 is above Ema  8
+                                    # Last candle (C0) closes above ema5 with low below ema 5 or ema 8 (green candle) and 
+                                    # close of C0 candle is less than high of the last two candles
+                                    ((df['Close'].shift(1) < df[short_window_col]) &
+                                    ((df['High'].shift(1) > df[short_window_col]) |
+                                    (df['High'].shift(1) > df[long_window_col])) &
+                                    (df['Close'].shift(1) >  df['Low'].shift(1)) & 
+                                    (df['Close'].shift(1) >  df['Low'].shift(2))) &
+                                    # Low of Candle before C0 (C1) < ema 5 or <  ema 8 
+                                    # with high above ema 5(red candle) 
+                                    (((df['High'].shift(2) > df[short_window_col]) |
+                                    (df['High'].shift(2) > df[long_window_col])) &
+                                    (df['Low'].shift(2) < df[short_window_col]))
+                                    )
+
+df['ema_continual'] = np.where(df['ema_continual_long'], 'Buy', 
+                                    np.where(df['ema_continual_short'], 'Sell', None))
+
+
+# 431
+df['strategy_431_long'] = ((df['Close'].shift(4) > df['Close'].shift(3)) &
+            (df['Close'].shift(3) > df['Close'].shift(2)) &
+            (df['Close'].shift(2) < df['Close'].shift(1))
+            )
+            
+df['strategy_431_short'] = ((df['Close'].shift(4) < df['Close'].shift(3)) &
+            (df['Close'].shift(3) < df['Close'].shift(2)) &
+            (df['Close'].shift(2) > df['Close'].shift(1))
+            )
+
+df['candle_reversal_431'] = np.where(df['strategy_431_long'], 'Buy', 
+                                    np.where(df['strategy_431_short'], 'Sell', None))
+'''

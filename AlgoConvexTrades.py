@@ -2,6 +2,9 @@ from algotrading_helper import *
 from algotrading_visualisations import *
 from algotrading_algos import *
 from algotrading_login import *
+from algotrading_playground import *
+from convexAlgos_standalone import *
+
 
 from streamlit_option_menu import option_menu
 import streamlit.components.v1 as components
@@ -56,20 +59,30 @@ def main():
   symbol_list, period, interval, stop_loss, take_profit,trading_strategy_ma,trading_strategy_trend = load_config(refresh)
   
   symbol_list = np.sort(symbol_list)
-  if('period' not in st.session_state):
-    st.session_state['period'] = period[0]
-  if('interval' not in st.session_state):
-    st.session_state['interval'] = interval[0]
-  if('stop_loss_factor' not in st.session_state):
-    st.session_state['stop_loss_factor'] = float(stop_loss[0])
-  if('take_profit_factor' not in st.session_state):
-    st.session_state['take_profit_factor'] = float(take_profit[0])
+  # if('period' not in st.session_state):
+  #   st.session_state['period'] = period[0]
+  # if('interval' not in st.session_state):
+  #   st.session_state['interval'] = interval[0]
+  # if('stop_loss_factor' not in st.session_state):
+  #   st.session_state['stop_loss_factor'] = float(stop_loss[0])
+  # if('take_profit_factor' not in st.session_state):
+  #   st.session_state['take_profit_factor'] = float(take_profit[0])
   
-  if('moving_average' not in st.session_state):
-    st.session_state['moving_average'] = trading_strategy_ma
-  if('trend_based' not in st.session_state):
-    st.session_state['trend_based'] = trading_strategy_trend 
+  # if('moving_average' not in st.session_state):
+  #   st.session_state['moving_average'] = trading_strategy_ma
+  # if('trend_based' not in st.session_state):
+  #   st.session_state['trend_based'] = trading_strategy_trend 
   
+  st.session_state['period'] = period[0]
+  st.session_state['interval'] = interval[0]
+  # st.session_state['refresh_token'] = [extract_number(ts) for ts in interval[0]][0]
+  # st.write(st.session_state['refresh_token'])
+  st.session_state['stop_loss_factor'] = float(stop_loss[0])
+  st.session_state['take_profit_factor'] = float(take_profit[0])
+
+  st.session_state['moving_average'] = trading_strategy_ma
+  st.session_state['trend_based'] = trading_strategy_trend 
+
   ma_list = trading_strategy_ma #["SMA", "EMA","EMA 1-2 candle price continuation"]
   algo_list = trading_strategy_trend #["4-3-1 candle price reversal"]
   convex_trade_algos_list = ma_list + algo_list
@@ -107,16 +120,19 @@ def main():
     
   # load_signals_view(process_time,process_time_df)
   if (st.session_state.main_menu == 0):
-    load_signals_view(process_time,process_time_df)
+    # st.write(st.session_state.interval)
+    asyncio.run(load_signals_view(process_time,process_time_df))
   
   social_media_icons.render(sidebar=True, justify_content="space-evenly")
   
   to_twitter("post")    
   
   # st.sidebar.success("Setup your trading day")
+  print(st.session_state)
+
 
   # ***************
-  # Trading DAY DETUP
+  # Trading DAY SETUP
   # ***************
   if (st.session_state.selected_menu == "Setup Day" ):
     process_name = "Setup Day"
@@ -162,7 +178,7 @@ def main():
   # Trading SIGNALS
   # ***************
   elif (st.session_state.selected_menu == "Signals" ):
-    load_signals_view(process_time,process_time_df)
+    asyncio.run (load_signals_view(process_time,process_time_df))
     
   # ***************
   # Trading STATUS
@@ -255,14 +271,26 @@ def main():
     x = pd.DataFrame([process_time])
     process_time_df = pd.concat([x, process_time_df], ignore_index=True)
   
+  # ***************
+  # ALGO PLAYGROUND
+  # ***************
   elif (st.session_state.selected_menu == "Algo Playground"):
-    asyncio.run (algo_playground())
+    playground_ui(st.session_state.user_watchlist, #known_options, 
+                              st.session_state.selected_algos, 
+                              st.session_state.period, 
+                              st.session_state.interval)
+    # st.button("standalone_algos",type="primary")
+    # if(st.button("standalone_algos")):
+    #   # st.write("button clicked")
+    #   convexalgos_standalone()
+    # if(st.button("algo_playground")):
+    #   asyncio.run (algo_playground())
     
   
   print (process_time_df)
   return
 
-def load_signals_view(process_time,process_time_df):
+async def load_signals_view(process_time,process_time_df):
   st.header("Trading Signals View")
   st.caption("Lists the latest trade triggers")
   # if(main_menu not in st.session_state):
@@ -284,11 +312,14 @@ def load_signals_view(process_time,process_time_df):
   print(known_options, st.session_state)
   print("")
   print("")
-  asyncio.run (signals_view(st.session_state.user_watchlist, # known_options, 
+  await asyncio.sleep(1)
+  # asyncio.run await
+  await (signals_view(st.session_state.user_watchlist, # known_options, 
                             st.session_state.selected_algos, 
                             st.session_state.period, 
                             st.session_state.interval ))
   
+  # print("###################result_signal",result_signal)
   end_time = time.time()
   execution_time = end_time - start_time
   
