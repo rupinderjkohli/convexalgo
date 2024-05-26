@@ -5,7 +5,7 @@ from algotrading_login import *
 import globals
 
 # convexalgos_standalone()
-@st.experimental_fragment(run_every='1m')
+# @st.experimental_fragment(run_every='1m')
 def playground_ui(known_options, 
                               selected_algos, 
                               selected_period, 

@@ -503,7 +503,7 @@ def setup_day(username,user_sel_list, period, interval, symbol_list, algo_functi
   st.write("---")  # Add a horizontal rule
   return known_options, selected_algos
 
-@st.experimental_fragment(run_every="1m")
+# @st.experimental_fragment(run_every="1m")
 async def signals_view(known_options, selected_algos, selected_period, selected_interval):
   # generate summary
   df_summary_view = pd.DataFrame()
@@ -677,7 +677,7 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
   
 # save output in cache to be used by the trading charts
 @st.cache_resource
-@st.experimental_fragment(run_every='1m')
+# @st.experimental_fragment(run_every='1m')
 async def stock_status(known_options, selected_algos, selected_period, selected_interval):
   # generate stocks list view
   # st.write(known_options, selected_algos, selected_period, selected_interval)
