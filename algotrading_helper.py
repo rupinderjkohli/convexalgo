@@ -55,7 +55,10 @@ from algotrading_class import *
 
 from algotrading_algos import *
 
+import tracemalloc
 
+# Enable tracemalloc
+tracemalloc.start()
 # # Using plotly dark template
 # TEMPLATE = 'plotly_dark'
 
@@ -499,14 +502,15 @@ def setup_day(username,user_sel_list, period, interval, symbol_list, algo_functi
   print("selected_algos ",selected_algos)
   st.write("---")  # Add a horizontal rule
   return known_options, selected_algos
-  
+
+@st.experimental_fragment(run_every="1m")
 async def signals_view(known_options, selected_algos, selected_period, selected_interval):
   # generate summary
   df_summary_view = pd.DataFrame()
   
   combined_trading_summary = []
   combined_trading_summary_df = pd.DataFrame()
-  
+  # await asyncio.sleep(1)
   tasks = []
   
   if (len(selected_algos) == 0):
@@ -559,7 +563,7 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
     # st.write("getting summary for: ", symbol)
     # stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
     # st.write(stock_hist_df[:10])
-    # await asyncio.sleep(1)
+    await asyncio.sleep(1)
     # use gather instead of run
     
     # RK051424: getting stock history from a central function in 2 steps -
@@ -574,6 +578,7 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
                  )
     
   results = await asyncio.gather(*tasks)
+  await asyncio.sleep(1)
 
   # Flatten the list nested structure
   flattened_data = [item for sublist in results for item in sublist]
@@ -667,15 +672,17 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
     use_container_width=True,
     hide_index=True,
     )
-  # combined_trading_summary_df['share'] = []
+  app_refresh(selected_interval, "signals_view")
+  return None
   
 # save output in cache to be used by the trading charts
-@st.cache_resource  
+@st.cache_resource
+@st.experimental_fragment(run_every='1m')
 async def stock_status(known_options, selected_algos, selected_period, selected_interval):
   # generate stocks list view
   # st.write(known_options, selected_algos, selected_period, selected_interval)
   
-  # await asyncio.sleep(1)
+  await asyncio.sleep(1)
   stock_status_data = {}
   status_ema_merged_df = {}
   etf_multi_index = pd.MultiIndex.from_product([known_options,
@@ -849,7 +856,7 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     
     # # st.write("from stock_status function")
     # # st.write(etf_processed_signals_df[symbol]) #[:10])
-  
+  app_refresh(selected_interval, "stock_status")
   return stock_status_data, status_ema_merged_df #etf_processed_signals_df, stock_status_data
         
 def show_change_logs():
@@ -956,15 +963,15 @@ async def algo_trading_summary(symbol,
     # results = await asyncio.gather(func_a(), func_b())
     print("getting into functions")
     await asyncio.sleep(1)
-    func1 =  strategy_sma(symbol,
-                 stock_hist_df,
-                 selected_period, 
-                 selected_interval,
-                 algo_strategy = "SMA",
-                 selected_short_window = 5,
-                 selected_long_window = 8,
-                 is_summary = True,
-                 )
+    # func1 =  strategy_sma(symbol,
+    #              stock_hist_df,
+    #              selected_period, 
+    #              selected_interval,
+    #              algo_strategy = "SMA",
+    #              selected_short_window = 5,
+    #              selected_long_window = 8,
+    #              is_summary = True,
+    #              )
     # st.write("func1", func1)
     
     func2 =  strategy_ema(symbol,
@@ -1040,12 +1047,12 @@ async def algo_trading_summary(symbol,
     return (trading_summary_results)
 
     # Get the object allocation traceback
-    # snapshot = tracemalloc.take_snapshot()
-    # top_stats = snapshot.statistics('lineno')
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
 
-    # # Print the top statistics
-    # for stat in top_stats[:10]:
-    #     print(stat)
+    # Print the top statistics
+    for stat in top_stats[:10]:
+        print(stat)
     
 def to_twitter(post):
   # Twitter API credentials
@@ -1092,11 +1099,32 @@ def get_selected_stock_history(known_options,selected_period, selected_interval)
      
   return selected_etf_data
 
-def app_refresh(selected_interval):
+def app_refresh(selected_interval, process):
    # streamlit autorefresh
-  st.write("app_refresh", st.session_state['last_run'],  datetime.now()) 
+  st.write("app_refresh function", st.session_state['last_run'],  datetime.now()) 
   stock_history_refresh_cnt = st_autorefresh(interval=selected_interval, limit=100, key="stock_history_refresh") 
   last_update = datetime.now()
   st.session_state['last_run'] = int(time.time())
+  # last_refresh_log = last_refresh_log.append(st.session_state['last_run'])
+  user_refresh_log = st.session_state.username + "_last_refresh_log.csv"
+  with open(user_refresh_log, 'a+') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow([process, st.session_state['last_run']])
+        
+  # try:
+  #   user_refresh_log = st.session_state.username + "_last_refresh_log.csv"
+  #   st.session_state['last_run'].to_csv(user_refresh_log, mode='w', index=False, header=True)
+  # except pd.errors.EmptyDataError:
+  #   print('CSV file is empty save')
+  # except FileNotFoundError:
+  #   st.session_state['last_run'].to_csv(user_refresh_log, index=False)
+  
   # app_refresh 1716571443 2024-05-24 13:26:31.803263
   return last_update
+
+# def extract_number(time_string):
+#   number = ''
+#   for char in time_string:
+#       if char.isdigit():
+#           number += char
+#   return (number)

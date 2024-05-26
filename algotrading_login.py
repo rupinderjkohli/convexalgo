@@ -63,9 +63,24 @@ def user_login_process():
         st.session_state['user_type'] = None
     if 'last_run' not in st.session_state:
         st.session_state['last_run'] = datetime.now() #since the app is being run the first time
+        
+    if('period' not in st.session_state):
+        st.session_state['period'] = None
+    if('interval' not in st.session_state):
+        st.session_state['interval'] = '1m'
+    if('stop_loss_factor' not in st.session_state):
+        st.session_state['stop_loss_factor'] = None
+    if('take_profit_factor' not in st.session_state):
+        st.session_state['take_profit_factor'] = None
+    
+    if('moving_average' not in st.session_state):
+        st.session_state['moving_average'] = None
+    if('trend_based' not in st.session_state):
+        st.session_state['trend_based'] = None 
+  
   
     # st.write(st.session_state)
-    
+    # last_refresh_log = " "
     name, authentication_status, username = authenticator.login()
      
     # st.write(name, authentication_status, username)
@@ -143,6 +158,7 @@ def show_menu(user, option):
                             on_change=on_change
         )
         manual_select = option #"Signals"
+        # st.write(option, choose)
         # st.write(st.session_state.get('main_menu', option))
         # Update session state based on selection
         st.session_state['selected_menu'] = choose
@@ -159,6 +175,7 @@ def show_menu(user, option):
             # st.write(manual_select)
         else:
             manual_select = st.session_state.get('main_menu', 0) #None
+            # st.write(manual_select)
     
     
     
