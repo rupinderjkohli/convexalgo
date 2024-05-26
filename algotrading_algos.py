@@ -933,9 +933,9 @@ async def strategy_candle_inverted_hammer(symbol,
 def candles_downtrend(df):
     
     return(
-        df['is_red_bear'].shift(2) &
-        df['is_red_bear'].shift(3) &
-        df['is_red_bear'].shift(4)
+        (df['Close'].shift(1) < df['Open'].shift(1)) &
+        (df['Close'].shift(2) < df['Open'].shift(2)) &
+        (df['Close'].shift(3) < df['Open'].shift(3))
         )
 
 def candles_uptrend(df):
@@ -975,7 +975,7 @@ def strategy_hammer(df):
     (df['is_hammer'] & (df['Close']>df['Open'])) & 
     (np.where(df['is_hammer'], df['Close'] > df['Low'].shift(1), False)))
     
-    st.write("strategy_hammer (strategy_hammer)", df[['Close','Open','Low','is_red_bear','is_green_bull','down_trend','up_trend',
+    st.write("strategy_hammer (strategy_hammer)", df[['Close','Open','Low','High','is_red_bear','is_green_bull','down_trend','up_trend',
                                                       'is_hammer','is_inverted_hammer','strategy_hammer_long']].sort_index(ascending=False)
              )
     # st.write("strategy_hammer (strategy_hammer)", df)    

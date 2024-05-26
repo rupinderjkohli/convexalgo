@@ -3,7 +3,7 @@ numpy
 matplotlib
 yfinance
 plotly
-streamlit==1.32.0
+streamlit==1.33.0
 kaleido==0.2.1
 pybase64
 millify

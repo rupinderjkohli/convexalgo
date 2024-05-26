@@ -929,10 +929,6 @@ async def algo_playground():
   results_strategy_hammer_summary = await asyncio.gather(*strategy_hammer_summary_tasks)
   st.write(pd.DataFrame(results_strategy_hammer_summary))
   
-  
-  
-  
-  
   return
   
 # #############################################
@@ -1098,7 +1094,9 @@ def get_selected_stock_history(known_options,selected_period, selected_interval)
 
 def app_refresh(selected_interval):
    # streamlit autorefresh
-  stock_history_refresh_cnt = st_autorefresh(interval=5000, limit=100, key="stock_history_refresh") 
+  st.write("app_refresh", st.session_state['last_run'],  datetime.now()) 
+  stock_history_refresh_cnt = st_autorefresh(interval=selected_interval, limit=100, key="stock_history_refresh") 
   last_update = datetime.now()
   st.session_state['last_run'] = int(time.time())
+  # app_refresh 1716571443 2024-05-24 13:26:31.803263
   return last_update

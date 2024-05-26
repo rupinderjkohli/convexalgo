@@ -264,12 +264,16 @@ def main():
   # ALGO PLAYGROUND
   # ***************
   elif (st.session_state.selected_menu == "Algo Playground"):
+    playground_ui(st.session_state.user_watchlist, #known_options, 
+                              st.session_state.selected_algos, 
+                              st.session_state.period, 
+                              st.session_state.interval)
     # st.button("standalone_algos",type="primary")
-    if(st.button("standalone_algos")):
-      st.write("button clicked")
-      convexalgos_standalone()
-    if(st.button("algo_playground")):
-      asyncio.run (algo_playground())
+    # if(st.button("standalone_algos")):
+    #   # st.write("button clicked")
+    #   convexalgos_standalone()
+    # if(st.button("algo_playground")):
+    #   asyncio.run (algo_playground())
     
   
   print (process_time_df)

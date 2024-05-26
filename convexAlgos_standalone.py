@@ -7,6 +7,7 @@ import datetime
 from datetime import datetime
 import time
 import globals
+import streamlit as st
 
 def get_hist_info(ticker, period, interval):
   # get historical market data
@@ -105,7 +106,7 @@ def ema_continual(df,short_window, long_window):
     return df
 
 
-# def convexalgos_standalone():
+# def main():
 def convexalgos_standalone():    
     # Need to see the output of these functions
     period = "1mo"
@@ -129,7 +130,7 @@ def convexalgos_standalone():
         
         yf_data = yf.Ticker(stock)
         
-        # print("stock history",yf_data)
+        print("stock history",yf_data)
         
         df = get_hist_info(yf_data, period, interval)
         # df = get_selected_stock_history(known_options,selected_period, selected_interval)  
@@ -140,6 +141,8 @@ def convexalgos_standalone():
     
         # CONVEXALGOS
         # Need to see the output of these functions
+        st.write(f'currently doing {stock} with the amount of {qty}')
+    
         st.write("CONVEXALGOS - 4-3-1 Candle Reversal")
         df_candle_reversal_431 = candle_reversal_431(df)
         
