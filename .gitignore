@@ -10,3 +10,5 @@ df_evaluate.csv
 pages/show_trading_charts.py
 /__pycache__
 *user_selected_options.csv
+scheduler.py
+rkohli_last_refresh_log.csv
