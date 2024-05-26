@@ -284,7 +284,7 @@ def load_signals_view(process_time,process_time_df):
   print(known_options, st.session_state)
   print("")
   print("")
-  asyncio.run (signals_view(st.session_state.user_watchlist, # known_options, 
+  await (signals_view(st.session_state.user_watchlist, # known_options, 
                             st.session_state.selected_algos, 
                             st.session_state.period, 
                             st.session_state.interval ))
