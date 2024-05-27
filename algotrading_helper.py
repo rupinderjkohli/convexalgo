@@ -672,7 +672,7 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
     use_container_width=True,
     hide_index=True,
     )
-  app_refresh(selected_interval, "signals_view")
+  # app_refresh(selected_interval, "signals_view")
   return None
   
 # save output in cache to be used by the trading charts
@@ -856,7 +856,7 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     
     # # st.write("from stock_status function")
     # # st.write(etf_processed_signals_df[symbol]) #[:10])
-  app_refresh(selected_interval, "stock_status")
+  # app_refresh(selected_interval, "stock_status")
   return stock_status_data, status_ema_merged_df #etf_processed_signals_df, stock_status_data
         
 def show_change_logs():
