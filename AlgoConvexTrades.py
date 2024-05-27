@@ -15,7 +15,7 @@ from pathlib import Path
 
 pd.options.display.float_format = '{:,.2f}'.format
 
-def main():
+async def main():
   st.set_page_config(
     page_title="Convex Algos Dashboard",
     page_icon="🧊",
@@ -346,4 +346,4 @@ if __name__ == '__main__':
   #   #MainMenu {visibility: hidden;}
   #   footer {visibility: hidden;}
   #   </style> """, unsafe_allow_html=True)
-  main()
+  await main()
