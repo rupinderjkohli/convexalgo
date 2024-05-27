@@ -15,7 +15,7 @@ from pathlib import Path
 
 pd.options.display.float_format = '{:,.2f}'.format
 
-async def main():
+def main():
   st.set_page_config(
     page_title="Convex Algos Dashboard",
     page_icon="🧊",
