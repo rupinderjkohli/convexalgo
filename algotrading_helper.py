@@ -678,10 +678,10 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
 # save output in cache to be used by the trading charts
 @st.cache_resource
 # @st.experimental_fragment(run_every='1m')
-async def stock_status(known_options, selected_algos, selected_period, selected_interval):
+async def stock_status(known_options, selected_algos, selected_period, selected_interval, run_count):
   # generate stocks list view
   # st.write(known_options, selected_algos, selected_period, selected_interval)
-  
+  run_count +=1
   await asyncio.sleep(1)
   stock_status_data = {}
   status_ema_merged_df = {}
