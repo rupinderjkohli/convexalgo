@@ -121,7 +121,7 @@ def main():
   # load_signals_view(process_time,process_time_df)
   if (st.session_state.main_menu == 0):
     # st.write(st.session_state.interval)
-    await (load_signals_view(process_time,process_time_df))
+    asyncio.run (load_signals_view(process_time,process_time_df))
   
   social_media_icons.render(sidebar=True, justify_content="space-evenly")
   
@@ -178,7 +178,7 @@ def main():
   # Trading SIGNALS
   # ***************
   elif (st.session_state.selected_menu == "Signals" ):
-    await (load_signals_view(process_time,process_time_df))
+    asyncio.run (load_signals_view(process_time,process_time_df))
     
   # ***************
   # Trading STATUS
