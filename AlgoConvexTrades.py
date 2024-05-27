@@ -200,7 +200,7 @@ def main():
                               st.session_state.period, 
                               st.session_state.interval,
                               run_count))
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     
     # Convert to DataFrame by flattening the dictionary
     for symbol, symbol_data in stock_status_data.items():
