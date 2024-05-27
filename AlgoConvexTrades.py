@@ -178,7 +178,7 @@ def main():
   # Trading SIGNALS
   # ***************
   elif (st.session_state.selected_menu == "Signals" ):
-    asyncio.run (load_signals_view(process_time,process_time_df))
+    await (load_signals_view(process_time,process_time_df))
     
   # ***************
   # Trading STATUS
