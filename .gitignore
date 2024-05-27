@@ -12,3 +12,4 @@ pages/show_trading_charts.py
 *user_selected_options.csv
 scheduler.py
 rkohli_last_refresh_log.csv
+rkohli_last_refresh_log.csv
