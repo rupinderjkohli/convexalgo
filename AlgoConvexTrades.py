@@ -194,7 +194,7 @@ def main():
     process_name = "Status"
     start_time = time.time()
     
-    stock_status_data, status_ema_merged_df = await (stock_status(st.session_state.user_watchlist, # known_options, 
+    stock_status_data, status_ema_merged_df = asyncio.run (stock_status(st.session_state.user_watchlist, # known_options, 
                               st.session_state.selected_algos, 
                               st.session_state.period, 
                               st.session_state.interval))
