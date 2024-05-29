@@ -106,8 +106,8 @@ def ema_continual(df,short_window, long_window):
     return df
 
 
-# def main():
-def convexalgos_standalone():    
+def main():
+# def convexalgos_standalone():    
     # Need to see the output of these functions
     period = "1mo"
     interval= "15m"
@@ -141,35 +141,35 @@ def convexalgos_standalone():
     
         # CONVEXALGOS
         # Need to see the output of these functions
-        st.write(f'currently doing {stock} with the amount of {qty}')
+        print(f'currently doing {stock} with the amount of {qty}')
     
-        st.write("CONVEXALGOS - 4-3-1 Candle Reversal")
+        print("CONVEXALGOS - 4-3-1 Candle Reversal")
         df_candle_reversal_431 = candle_reversal_431(df)
         
-        st.write(df_candle_reversal_431.head(2))
+        print(df_candle_reversal_431.head(2))
         
         if(df_candle_reversal_431.strategy_431_long.iloc[-1] == 'Buy'):
             print("Long (Buy)")
         elif(df_candle_reversal_431.strategy_431_short.iloc[-1] == 'Sell'):
             print("Short (Sell)")
         
-        st.write("CONVEXALGOS - EMA Crossover")
+        print("CONVEXALGOS - EMA Crossover")
         ema_new_df = ema_new(df,globals.emaSlowLength,globals.emaFastLength)
-        st.write(ema_new_df.head(2))
+        print(ema_new_df.head(2))
         
         if(ema_new_df.ema_crossover.iloc[-1] == '1'):
             print("Long (Buy)")
         elif(ema_new_df.ema_crossover.iloc[-1] == '-1'):
             print("Short (Sell)")
         
-        st.write("CONVEXALGOS - EMA Continual")
+        print("CONVEXALGOS - EMA Continual")
         ema_continual_df = ema_continual(df,globals.emaSlowLength,globals.emaFastLength)
-        st.write(ema_continual_df.head(2))
+        print(ema_continual_df.head(2))
         
         if(ema_continual_df.ema_continual.iloc[-1] == 'Buy'):
             print("Long (Buy)")
         elif(ema_continual_df.ema_continual.iloc[-1] == 'Sell'):
             print("Short (Sell)")
         
-# if __name__ == '__main__':
-#   main()    
+if __name__ == '__main__':
+  main()    
