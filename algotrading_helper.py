@@ -4,12 +4,15 @@
 # ##########################################################
 import pandas as pd
 import numpy as np
+from IPython.display import display
 
 import yfinance as yf       #install
 import datetime
 from datetime import datetime
 import time
 import pytz
+from millify import millify # shortens values (10_000 ---> 10k)
+
 
 # %matplotlib inline
 import matplotlib
@@ -29,44 +32,7 @@ import pybase64
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-import streamlit as st      #install
-from streamlit_js_eval import streamlit_js_eval
-
-from streamlit_autorefresh import st_autorefresh
-# from schedule import every, repeat, run_pending
-
-import streamlit_extras #.metric_cards #import style_metric_cards # beautify metric card with css
-
-# from lightweight_charts import Chart
-import time
-import asyncio
-import nest_asyncio
-
-import base64
-from base64 import b64encode
-
-from millify import millify # shortens values (10_000 ---> 10k)
-
-# To read external property file
-from jproperties import Properties
-import tweepy
-
-from algotrading_class import *
-
 from algotrading_algos import *
-
-import tracemalloc
-
-# Enable tracemalloc
-tracemalloc.start()
-# # Using plotly dark template
-# TEMPLATE = 'plotly_dark'
-
-# st.set_page_config(layout='wide', page_title='Stock Dashboard', page_icon=':dollar:')
-
-
-# update every 5 mins
-# st_autorefresh(interval=5 * 60 * 1000, key="dataframerefresh")
 
 nest_asyncio.apply()
 
@@ -78,43 +44,25 @@ pd.set_option('display.max_columns', None,
 
 pd.options.display.float_format = '${:,.2f}'.format
 
-def setup_session_state():
+# import redis
+# ssl_connection = redis.Redis(host='localhost', port=6666, ssl=True, ssl_cert_reqs="none")
+# ssl_connection.ping()
+
+def setup_default_state():
   print(">>>>>>>>>>>> setup_session_state\n")
-  if('main_menu' not in st.session_state):
-    st.session_state['main_menu'] = st.session_state.get('main_menu', 0)
-  if('selected_menu' not in st.session_state):  
-    st.session_state['selected_menu'] = "Signals"
   
-  if('period' not in st.session_state):
-    st.session_state['period'] = period[0]
-  if('interval' not in st.session_state):
-    st.session_state['interval'] = interval[0]
-  if('stop_loss_factor' not in st.session_state):
-    st.session_state['stop_loss_factor'] = float(stop_loss[0])
-  if('take_profit_factor' not in st.session_state):
-    st.session_state['take_profit_factor'] = float(take_profit[0])
+  period = period[0]
+  interval = interval[0]
+  stop_loss_factor = float(stop_loss[0])
+  take_profit_factor = float(take_profit[0])
   
-  if('moving_average' not in st.session_state):
-    st.session_state['moving_average'] = trading_strategy_ma
-  if('trend_based' not in st.session_state):
-    st.session_state['trend_based'] = trading_strategy_trend 
+  moving_average = trading_strategy_ma
+  trend_based = trading_strategy_trend 
 
-  if('selected_algos' not in st.session_state):
-    st.session_state['selected_algos'] = convex_trade_algos_list
+  selected_algos = convex_trade_algos_list
   
-  
-  # st.session_state['period'] = period[0]
-  # st.session_state['interval'] = interval[0]
-  # # st.session_state['refresh_token'] = [extract_number(ts) for ts in interval[0]][0]
-  # # st.write(st.session_state['refresh_token'])
-  # st.session_state['stop_loss_factor'] = float(stop_loss[0])
-  # st.session_state['take_profit_factor'] = float(take_profit[0])
-
-  # st.session_state['moving_average'] = trading_strategy_ma
-  # st.session_state['trend_based'] = trading_strategy_trend 
   return
 
-@st.cache_resource
 def load_config(refresh):
   configs = Properties()
 
@@ -131,18 +79,102 @@ def load_config(refresh):
   MOVING_AVERAGE_BASED = configs.get('MOVING_AVERAGE_BASED').data.split(',')
   TREND_BASED = configs.get('TREND_BASED').data.split(',')
   
-  
-  # print("SYMBOLS")
-  # print(PERIOD)
-  # SYMBOLS = SYMBOLS.sort()
   if refresh:
     return SYMBOLS
   else:
     return SYMBOLS, PERIOD, INTERVAL, STOP_LOSS, TAKE_PROFIT, MOVING_AVERAGE_BASED, TREND_BASED
 
+
+# https://coderzcolumn.com/tutorials/data-science/candlestick-chart-in-python-mplfinance-plotly-bokeh#2
+
+# ##########################################################  
+# Purpose: Get user specific tickers list
+# ##########################################################
+def load_user_selected_options(username):
+  user_list = []
+  try :
+    user_options = "user_selected_options.csv"
+    df = pd.read_csv(user_options, header=0)
+    
+    if (df.empty):
+      user_list = []
+      
+    else: 
+      user_list = df['0'].unique()
+      print(df['0'].unique())
+  except pd.errors.EmptyDataError:
+    print('CSV file is empty load')
+  except FileNotFoundError:
+    print('CSV file not found load')
   
+  return user_list
+
+# ##########################################################  
+# Purpose: set up the stock ticker watchlist (user customisation)
+# ##########################################################
+def save_user_selected_options(username, selected_tickers):
+  df_tickers = pd.DataFrame(selected_tickers)
+  try:
+    user_options = "user_selected_options.csv"
+    df_tickers.to_csv(user_options, mode='w', index=False, header=True)
+  except pd.errors.EmptyDataError:
+    print('CSV file is empty save')
+  except FileNotFoundError:
+    print('CSV file not found save')
+  return
+  
+# ##########################################################  
+# Purpose: reload the user watchlist
+# ##########################################################
+def display_watchlist():
+  user_sel_list = []
+  user_sel_list = load_user_selected_options("demo")
+  
+  return user_sel_list
   
 
+# ##########################################################  
+# Purpose: Basic EDA
+# ##########################################################
+def historical_overview(df): 
+  df_overview = {}
+  df_overview_df = pd.DataFrame() 
+  # print(df.columns)
+  
+  # df_overview = pd.DataFrame(df['Open','Close'].describe(include='all'))
+  # print(df.describe())
+  
+  period_high = df['High'].mean()
+  period_low = df['Low'].mean()
+  
+  # print(df['Open'].min(), df['Open'].max(), df['Open'].std())
+  period_close_min = df['Close'].min()
+  period_close_max = df['Close'].max()
+  period_close_std = df['Close'].std()
+  
+  period_open_max = df['Open'].max()
+  period_open_min = df['Open'].min()
+  period_open_std = df['Open'].std()
+  
+  for variable in ["period_close_min",
+                  "period_close_max",
+                  "period_close_std",
+                  "period_open_min",
+                  "period_open_min",
+                  "period_open_std",
+                  "period_high",
+                  "period_low"
+                  ]:
+    df_overview[variable] = eval(variable)
+    # print(df_overview)
+  df_overview_df = pd.DataFrame([df_overview])
+  # print(x)
+  
+  # df_overview_df = pd.concat([x, df_overview], ignore_index=True)
+  
+  return df_overview_df
+
+  
 # ##########################################################  
 # Purpose: 
 # """## stocks"""
@@ -176,7 +208,7 @@ def get_all_stock_info(ticker):
   #                           ]]
   info_df.reset_index(inplace=True)
   # info_df_short.reset_index(inplace=True)
-  # st.write (info_df_short.to_dict(orient='dict'))
+  # print (info_df_short.to_dict(orient='dict'))
   return info_df #info_df_short
 
 # ##########################################################  
@@ -227,14 +259,14 @@ def sma_buy_sell_trigger(df, sma_p1, sma_p2):
 #   return
 
 # ##########################################################  
-# Purpose: 
+# Purpose: Retrieve the ticker news
 # ##########################################################
 def get_stk_news(ticker):
 
   try:
     news_df = pd.DataFrame(ticker.news)
   except:
-    st.write("ERROR")
+    # st.write("ERROR")
     return pd.DataFrame()
 
   # note the new way of creating column
@@ -246,301 +278,10 @@ def get_stk_news(ticker):
 
   return news_df_select
 
-# https://coderzcolumn.com/tutorials/data-science/candlestick-chart-in-python-mplfinance-plotly-bokeh#2
-
-def load_user_selected_options(username):
-  user_list = []
-  try :
-    user_options = username + "_user_selected_options.csv"
-    df = pd.read_csv(user_options, header=0)
-    
-    if (df.empty):
-      user_list = []
-      
-    else: 
-      user_list = df['0'].unique()
-      print(df['0'].unique())
-  except pd.errors.EmptyDataError:
-    print('CSV file is empty load')
-  except FileNotFoundError:
-    print('CSV file not found load')
-  
-  return user_list
-
 # ##########################################################  
-# Purpose: set up the stock ticker watchlist (user customisation)
+# Purpose: Retrive the ticker signals
 # ##########################################################
-def save_user_selected_options(username, selected_tickers):
-  df_tickers = pd.DataFrame(selected_tickers)
-  try:
-    user_options = username + "_user_selected_options.csv"
-    df_tickers.to_csv(user_options, mode='w', index=False, header=True)
-  except pd.errors.EmptyDataError:
-    print('CSV file is empty save')
-  except FileNotFoundError:
-    print('CSV file not found save')
-  return
-  
-
-  
-def update_selection():
-  print("options changed")
-  # Session State also supports the attribute based syntax
-  if 'ticker_list' not in st.session_state:
-      st.session_state.key = 'ticker_list'
-      
-  print (st.session_state['ticker_list'])
-  
-  return st.session_state.key 
-  
-  
-# ##########################################################  
-# Purpose: timezone challenges
-# ##########################################################
-#  // you could use this function to convert all your times to required time zone
-def timeToTz(originalTime, timeZone): 
-  st.write(originalTime)
-  # zonedDate = new Date(new Date(originalTime * 1000).toLocaleString('en-US', { timeZone }))
-  zonedDate = pd.to_datetime(originalTime)#.dt.tz_localize('UTC').dt.tz_convert(timeZone)
-  timestamp_utc = zonedDate.replace(tzinfo=timeZone.utc).timestamp()
-
-  return zonedDate, timestamp_utc
-
-from datetime import datetime, timezone
-
-def unix_timestamp(local_timestamp, local_timezone):
-    """turn the input timestamp into a UTC `datetime` object, even though
-    the timestamp is not in UTC time, we must do this to construct a datetime
-    object with the proper date/time values"""
-    dt_fake_utc = datetime.fromtimestamp(local_timestamp, tz=timezone.utc)
-
-    """remove the (incorrect) timezone info that we supplied """
-    dt_naive = dt_fake_utc.replace(tzinfo=None)
-
-    """localize the datetime object to our `timezone`. You cannot use
-    datetime.replace() here, because it does not account for daylight savings
-    time"""
-    dt_local = local_timezone.localize(dt_naive)
-
-    """Convert our datetime object back to a timestamp"""
-    return int(dt_local.timestamp())
-  
-
- 
-
-# ##########################################################  
-# Purpose: Basic EDA
-# ##########################################################
-def historical_overview(df): 
-  df_overview = {}
-  df_overview_df = pd.DataFrame() 
-  # print(df.columns)
-  
-  # df_overview = pd.DataFrame(df['Open','Close'].describe(include='all'))
-  # print(df.describe())
-  
-  period_high = df['High'].mean()
-  period_low = df['Low'].mean()
-  
-  # print(df['Open'].min(), df['Open'].max(), df['Open'].std())
-  period_close_min = df['Close'].min()
-  period_close_max = df['Close'].max()
-  period_close_std = df['Close'].std()
-  
-  period_open_max = df['Open'].max()
-  period_open_min = df['Open'].min()
-  period_open_std = df['Open'].std()
-  
-  for variable in ["period_close_min",
-                  "period_close_max",
-                  "period_close_std",
-                  "period_open_min",
-                  "period_open_min",
-                  "period_open_std",
-                  "period_high",
-                  "period_low"
-                  ]:
-    df_overview[variable] = eval(variable)
-    # print(df_overview)
-  df_overview_df = pd.DataFrame([df_overview])
-  # print(x)
-  
-  # df_overview_df = pd.concat([x, df_overview], ignore_index=True)
-  
-  return df_overview_df
-
-
-
-  
-  
-  
-def display_watchlist():
-  # expander = st.expander("Selected Stocks")
-  
-  user_sel_list = []
-
-  # load_user_selected_options()
-  
-  user_sel_list = load_user_selected_options(st.session_state.username)
-  
-  st.session_state['user_watchlist'] = user_sel_list
-  
-  return user_sel_list
-
-def customize(expander):
-    ticker_list = ""
-    ticker_list = expander.text_area(":red[enter the ticker list seperated with commas]",
-                                key='new_ticker'
-        )
-    
-    if (expander.button("Update Ticker")):
-        with open('config.properties', 'r', encoding='utf-8') as file: 
-            data = file.readlines() 
-        
-            # print(data[1]) 
-            data[1] = data[1].replace('\n', '')
-            # print("postsplit", data[1])
-            
-            data[1] = data[1]+","+ticker_list+"\n"
-            # print(data[1])
-            
-            # print(data)
-        
-        with open('config.properties', 'w', encoding='utf-8') as file: 
-            file.writelines(data) 
-        
-        # ticker_list = ""
-    return ticker_list
-  
-
-def setup_day(username,user_sel_list, period, interval, symbol_list, algo_functions_map):
-  st.markdown(
-      """
-      Welcom to Convex Trades, a one stop solution enabling you to 
-      - find stocks, 
-      - enter and exit trades based on predefined and proven strategies
-  """
-  )
-  
-  # st.markdown(
-  #     """
-  #     ### You are currently setup as:
-  #     """
-  # )
-  with st.container(): # CONTAINER: current day setup
-    # Display list horizontally with HTML/CSS
-    
-    
-    # st.markdown("<div style='display:flex;'>Convex Algo Strategy:  {} <div> "
-    #             .format(algo_strategy), unsafe_allow_html=True)
-
-    st.write("")
-    
-  st.markdown(
-      """
-      ### Customise your trading day
-      """
-  )
-  # **👈 Select your focus of the day sidebar** 
-  
-  st.write("---")  # Add a horizontal rule
-    
-  with st.container(): # CONTAINER: ticker selection         
-    
-    st.markdown("<div style='display:flex;'>The current selected Stocks watchlist:  {} <div> "
-                .format(" , ".join(["<div> {} </div>".format(item) for item in user_sel_list])), unsafe_allow_html=True)
-
-    st.write("")
-    
-    expander = st.expander("Select Stocks Watchlist")
-  
-    # ticker selection
-    multiselect_placeholder = expander.empty()
-    ticker = multiselect_placeholder.multiselect('Selected Ticker(s)', options=symbol_list,
-                                  help = 'Select a ticker', 
-                                  key='ticker_list',
-                                  max_selections=8,
-                                  default= user_sel_list, #["TSLA"],
-                                  placeholder="Choose an option",
-                                  # on_change=update_selection(),
-                                  )
-    # print(ticker)
-    # print(st.session_state)
-    known_options = ticker
-    save_user_selected_options(username,ticker)
-    refresh = False
-      
-  is_customize = expander.toggle("Customize List")
-  with st.container():
-    if is_customize:
-      with st.expander("Customize Stocks Watchlist"):
-        # st.write("Customize Stocks List.")
-        new_ticker_list = customize(expander)
-        if (len(new_ticker_list)!=0):
-          refresh = True
-        if refresh:
-          symbol_list = load_config(refresh)
-          symbol_list = np.sort(symbol_list)
-          # Clear the existing multiselect widget
-          multiselect_placeholder.empty()
-          ticker = multiselect_placeholder.multiselect('Selected Ticker(s)', options=symbol_list,
-                                  # help = 'Select a ticker', 
-                                  # key='ticker_list',
-                                  # max_selections=8,
-                                  default= user_sel_list, #["TSLA"],
-                                  # placeholder="Choose an option",
-                                  # on_change=update_selection(),
-                                  )
-
-          # Recreate the multiselect with updated options
-          toast_message = (":red[Ticker list updated]"
-                      )
-          st.toast(toast_message, icon='🏃')
-          return #symbol_list, stop_loss, take_profit
-        else:
-          return
-  # CONTAINER: ticker selection
-  st.write("---")  # Add a horizontal rule
-
-  st.markdown("<div style='display:flex;'>The current selected Trading Period:  {}  & Interval:  {} <div> "
-                .format(period,interval), unsafe_allow_html=True)
-  st.write("")  
-    # st.markdown("<div style='display:flex;'>Trading Interval:  {} <div> "
-    #             .format(interval), unsafe_allow_html=True)
-    
-  with st.container(): # CONTAINER: Strategy selection 
-    expander = st.expander("Select Trading Period")
-    # period selection
-    selected_period = expander.selectbox(
-        'Select Period', options=['1d','5d','1mo','3mo', '6mo', 'YTD', '1y', 'all'], index=1)
-    
-    # interval selection
-    selected_interval = expander.selectbox(
-        'Select Intervals', options=['1m','2m','5m','15m','30m','60m','90m','1h','1d','5d','1wk','1mo','3mo'], index=2)
-    
-    
-  st.write("---")  # Add a horizontal rule
-
-  with st.container(): # CONTAINER: Strategy selection 
-    expander = st.expander("Select Trading Strategy")
-    
-    algo_name, algo_functions, algo_functions_args = list(algo_functions_map)
-    
-    # Checkbox selection
-    selected_algos = []
-    selected_options = [expander.checkbox(option, value=False) for option in algo_functions_map[0]]
-    for option, selected in zip(algo_name, selected_options):    
-        if selected:
-          selected_algos.append(option)
-          
-  st.session_state.selected_algos = selected_algos
-  
-  print("selected_algos ",selected_algos)
-  st.write("---")  # Add a horizontal rule
-  return known_options, selected_algos
-
-# @st.experimental_fragment(run_every="1m")
-async def signals_view(known_options, selected_algos, selected_period, selected_interval):
+def signals_view(known_options, selected_algos, selected_period, selected_interval):
   # generate summary
   print("####### signals_view run time #######")
   df_summary_view = pd.DataFrame()
@@ -553,28 +294,12 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
   if (len(selected_algos) == 0):
     #RK load from config
     selected_algos = ['5/8 EMA', '5/8 EMA 1-2 candle price','4-3-1 candle price reversal'] 
-    st.session_state.selected_algos = selected_algos
-  
-  st.markdown("<div style='display:flex;'>Stocks watchlist:  {} <div> "
-              .format(" , ".join(["<div> {} </div>".format(item) for item in known_options])), unsafe_allow_html=True)
-  st.write("")
-  
-  st.markdown("<div style='display:flex;'>The current selected Trading Period:  {}  & Interval:  {} <div> "
-                .format(st.session_state.period,st.session_state.interval), unsafe_allow_html=True)
-  st.write("")  
-  
-  st.markdown("<div style='display:flex;'>Trading Strategy:  {} <div> "
-              .format(st.session_state.selected_algos), unsafe_allow_html=True)
-  st.write("")
-  
-  # st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
-  # st.subheader(st.session_state.page_subheader)
     
   # RK051424: getting stock history from a central function in 2 steps - 
   # load the history for all tickers and 
   # then process for individual ticker
   yf_ticker_history = get_selected_stock_history(known_options,selected_period, selected_interval)    
-  # st.write(yf_ticker_history)    
+  
   for symbol in known_options:
     # get ticker data
     # yf_data = yf.Ticker(symbol) #initiate the ticker
@@ -600,45 +325,60 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
     # st.write("getting summary for: ", symbol)
     # stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
     # st.write(stock_hist_df[:10])
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     # use gather instead of run
     
     # RK051424: getting stock history from a central function in 2 steps -
     stock_hist_df = yf_ticker_history[symbol]
     
-    tasks.append(algo_trading_summary(symbol, 
+    # tasks.append(algo_trading_summary(symbol, 
+    #                                  stock_hist_df,
+    #                                  selected_algos, 
+    #                                  selected_period, 
+    #                                  selected_interval,
+    #                                  )
+    #              )
+    # print("algo_trading_summary", symbol)
+    results = algo_trading_summary(symbol, 
                                      stock_hist_df,
                                      selected_algos, 
                                      selected_period, 
                                      selected_interval,
                                      )
-                 )
+    # print ("results algo_trading_summary >>>>>>>>>>>>\n", results)
+    # print ("results algo_trading_summary >>>>>>>>>>>>\n")
+    combined_trading_summary.append(results)
     
-  results = await asyncio.gather(*tasks)
-  await asyncio.sleep(1)
+                 
+  # results = await asyncio.gather(*tasks)
+  # await asyncio.sleep(1)
 
   # Flatten the list nested structure
-  flattened_data = [item for sublist in results for item in sublist]
+  flattened_data = [item for sublist in combined_trading_summary for item in sublist]
   
+  print("##################################### RESULTS #################### \n", combined_trading_summary)
+  
+  print("##################################### flattened_data #################### ", flattened_data)
   # Create a DataFrame from the list of dictionaries
-  combined_trading_summary_df = pd.DataFrame(flattened_data)
+  combined_trading_summary_df = pd.DataFrame(combined_trading_summary)
   # print(combined_trading_summary_df.columns)
   # Index(['symbol', 'algo_strategy', 'stock_trigger_at', 'stock_trigger_state',
   #      'stock_price_at_trigger', 'stock_stop_loss_atr',
   #      'stock_take_profit_atr', 'stock_atr_ma', 'stock_ema_p1', 'stock_ema_p2',
   #      'stock_previous_triggers'],
   #     dtype='object')
-  combined_trading_summary_df = combined_trading_summary_df[['symbol', 
-                                                             'stock_trigger_state',
-                                                             'stock_trigger_at', 
-                                                             'stock_price_at_trigger', 
-                                                             'stock_stop_loss_atr',
-                                                             'stock_take_profit_atr',
-                                                             'algo_strategy', 
-                                                             'tweet_post',
-                                                             'stock_previous_triggers',
-                                                             ]].sort_values(by = ['stock_trigger_at', 'symbol'], ascending=[False, True])
+  # combined_trading_summary_df = combined_trading_summary_df[['symbol', 
+  #                                                            'stock_trigger_state',
+  #                                                            'stock_trigger_at', 
+  #                                                            'stock_price_at_trigger', 
+  #                                                            'stock_stop_loss_atr',
+  #                                                            'stock_take_profit_atr',
+  #                                                            'algo_strategy', 
+  #                                                            'tweet_post',
+  #                                                            'stock_previous_triggers',
+  #                                                            ]].sort_values(by = ['stock_trigger_at', 'symbol'], ascending=[False, True])
   
+  display("............. combined_trading_summary_df .............\n", combined_trading_summary_df)
   # # Add a column with links
   # link_column = []
   # for symbol in combined_trading_summary_df['symbol']:
@@ -655,75 +395,75 @@ async def signals_view(known_options, selected_algos, selected_period, selected_
   #   if col.popover('ℹ️ {i}'): #('ℹ️', key=i):
   #       col.write(combined_trading_summary_df.iloc[i]['symbol'])
   
-  st.data_editor(
-    combined_trading_summary_df,
-    column_config={"symbol": st.column_config.TextColumn(
-        "Ticker",
-        width="small"
-    ),
-                   "algo_strategy": st.column_config.TextColumn(
-        "Strategy Name",
-        width="small"
-    ),
-                   "stock_trigger_state": st.column_config.TextColumn(
-        "Trigger",
-        width="small"
-    ),
-                    "stock_take_profit_atr": st.column_config.NumberColumn(
-        "Take Profit Price",
-        format="%.2f",
-    ),
-                    "stock_stop_loss_atr": st.column_config.NumberColumn(
-        "Stop Loss Price",
-        format="%.2f",
-    ),
-                    "stock_price_at_trigger": st.column_config.NumberColumn(
-        "Trigger Price",
-        format="%.2f",
-    ),
-                    "stock_atr_ma": st.column_config.NumberColumn(
-        "ATR MA",
-        format="%.2f",
-    ),
-                    "stock_previous_triggers": st.column_config.ListColumn(
-        "Previous Triggers",
-        # format="DD MMM YYYY, HH:MM"
-        # width="medium",
-    ),
-                    "stock_trigger_at": st.column_config.DatetimeColumn(
-        "Trigger Time",
-        format = "YYYY-MM-DD HH:mm"
-        # format="DD MMM YYYY, HH:MM"
-    ),
-        # "share": st.column_config.LinkColumn
-        # (
-        #     "share",
-        #     help="social media",
-        #     max_chars=100,
-        #     # display_text="view table",
-        #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
-        # ),
+  # st.data_editor(
+  #   combined_trading_summary_df,
+  #   column_config={"symbol": st.column_config.TextColumn(
+  #       "Ticker",
+  #       width="small"
+  #   ),
+  #                  "algo_strategy": st.column_config.TextColumn(
+  #       "Strategy Name",
+  #       width="small"
+  #   ),
+  #                  "stock_trigger_state": st.column_config.TextColumn(
+  #       "Trigger",
+  #       width="small"
+  #   ),
+  #                   "stock_take_profit_atr": st.column_config.NumberColumn(
+  #       "Take Profit Price",
+  #       format="%.2f",
+  #   ),
+  #                   "stock_stop_loss_atr": st.column_config.NumberColumn(
+  #       "Stop Loss Price",
+  #       format="%.2f",
+  #   ),
+  #                   "stock_price_at_trigger": st.column_config.NumberColumn(
+  #       "Trigger Price",
+  #       format="%.2f",
+  #   ),
+  #                   "stock_atr_ma": st.column_config.NumberColumn(
+  #       "ATR MA",
+  #       format="%.2f",
+  #   ),
+  #                   "stock_previous_triggers": st.column_config.ListColumn(
+  #       "Previous Triggers",
+  #       # format="DD MMM YYYY, HH:MM"
+  #       # width="medium",
+  #   ),
+  #                   "stock_trigger_at": st.column_config.DatetimeColumn(
+  #       "Trigger Time",
+  #       format = "YYYY-MM-DD HH:mm"
+  #       # format="DD MMM YYYY, HH:MM"
+  #   ),
+  #       # "share": st.column_config.LinkColumn
+  #       # (
+  #       #     "share",
+  #       #     help="social media",
+  #       #     max_chars=100,
+  #       #     # display_text="view table",
+  #       #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
+  #       # ),
         
-    },
-    height=None,
-    use_container_width=True,
-    hide_index=True,
-    )
+  #   },
+  #   height=None,
+  #   use_container_width=True,
+  #   hide_index=True,
+  #   )
   # app_refresh(selected_interval, "signals_view")
   return None
   
 # save output in cache to be used by the trading charts
-@st.cache_resource
+# @st.cache_resource
 # @st.experimental_fragment(run_every='1m')
-async def stock_status(known_options, selected_algos, selected_period, selected_interval, run_count):
+def stock_status(known_options, selected_algos, selected_period, selected_interval, run_count):
   # generate stocks list view
   # st.write(known_options, selected_algos, selected_period, selected_interval)
   run_count +=1
-  await asyncio.sleep(1)
+  # await asyncio.sleep(1)
   stock_status_data = {}
   status_ema_merged_df = {}
   etf_multi_index = pd.MultiIndex.from_product([known_options,
-                                                st.session_state.selected_algos],
+                                                selected_algos],
                                                names=['tickers', 'algo_strategy'])
   # Create a DataFrame with the MultiIndex
   etf_processed_signals = pd.DataFrame(index=etf_multi_index,
@@ -742,7 +482,7 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     # RK051424: getting stock history from a central function in 2 steps -
     stock_hist_df = yf_ticker_history[symbol]
     
-    func1 = await strategy_sma(symbol,
+    func1 = strategy_sma(symbol,
                  stock_hist_df,
                  selected_period, 
                  selected_interval,
@@ -753,7 +493,7 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
                  )
     # st.write(func1)
     
-    status_strategy_ema = await strategy_ema(symbol,
+    status_strategy_ema = strategy_ema(symbol,
                  stock_hist_df,
                  selected_period, 
                  selected_interval,
@@ -775,7 +515,7 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     status_strategy_ema.rename(columns={'Position_c': 'Trigger:EMA crossover',
                                         'Close': 'EMA Close Price'}, inplace=True)
     
-    status_strategy_ema_continual = await strategy_ema_continual(symbol,
+    status_strategy_ema_continual = strategy_ema_continual(symbol,
                                  stock_hist_df,
                                  selected_period, 
                                  selected_interval,
@@ -810,32 +550,32 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     status_strategy_ema_continual.rename(columns={'position': 'Trigger:EMA 1-2 Continual',
                                         'Close': 'EMA_C Close Price'}, inplace=True)
     
-    status_strategy_431_reversal = await strategy_431_reversal(symbol,
-                                 stock_hist_df,
-                                 selected_period, 
-                                 selected_interval,
-                                 is_summary = False,
-                                 algo_strategy = "4-3-1 candle price reversal",
-                                 )
-    algo_strategy = "4-3-1 candle price reversal"
+    # status_strategy_431_reversal = strategy_431_reversal(symbol,
+    #                              stock_hist_df,
+    #                              selected_period, 
+    #                              selected_interval,
+    #                              is_summary = False,
+    #                              algo_strategy = "4-3-1 candle price reversal",
+    #                              )
+    # algo_strategy = "4-3-1 candle price reversal"
   
-    print("status_strategy_431_reversal")
-    # print(status_strategy_431_reversal.columns)
-    print()
-    # ['Open', 'Close', 'High', 'Low', 't3', 't2', 't1', 't0',
-      #  'strategy_431_long_c1', 'strategy_431_long_c2', 'strategy_431_long_c3',
-      #  'strategy_431_long', 'strategy_431_short_c1', 'strategy_431_short_c2',
-      #  'strategy_431_short_c3', 'strategy_431_short', 'position', 'atr',
-      #  'atr_ma', 'stop_loss_atr', 'take_profit_atr']
-    #   dtype='object')
-    status_strategy_431_reversal = status_strategy_431_reversal[['Close','strategy_431_long_c1',
-       'strategy_431_long_c2', 'strategy_431_long_c3', 'strategy_431_long',
-       'strategy_431_short_c1', 'strategy_431_short_c2',
-       'strategy_431_short_c3', 'strategy_431_short','position',]]
-    # st.write("4-3-1 candle price reversal", status_strategy_431_reversal.sort_index(ascending=False))
-    # Rename the column position
-    status_strategy_431_reversal.rename(columns={'position': 'Trigger:4-3-1 Reversal',
-                                        'Close': '4-3-1 Close Price'}, inplace=True)
+    # print("status_strategy_431_reversal")
+    # # print(status_strategy_431_reversal.columns)
+    # print()
+    # # ['Open', 'Close', 'High', 'Low', 't3', 't2', 't1', 't0',
+    #   #  'strategy_431_long_c1', 'strategy_431_long_c2', 'strategy_431_long_c3',
+    #   #  'strategy_431_long', 'strategy_431_short_c1', 'strategy_431_short_c2',
+    #   #  'strategy_431_short_c3', 'strategy_431_short', 'position', 'atr',
+    #   #  'atr_ma', 'stop_loss_atr', 'take_profit_atr']
+    # #   dtype='object')
+    # status_strategy_431_reversal = status_strategy_431_reversal[['Close','strategy_431_long_c1',
+    #    'strategy_431_long_c2', 'strategy_431_long_c3', 'strategy_431_long',
+    #    'strategy_431_short_c1', 'strategy_431_short_c2',
+    #    'strategy_431_short_c3', 'strategy_431_short','position',]]
+    # # st.write("4-3-1 candle price reversal", status_strategy_431_reversal.sort_index(ascending=False))
+    # # Rename the column position
+    # status_strategy_431_reversal.rename(columns={'position': 'Trigger:4-3-1 Reversal',
+    #                                     'Close': '4-3-1 Close Price'}, inplace=True)
     
     
     # status_strategy_candle_hammer =  await strategy_candle_hammer(symbol,
@@ -863,9 +603,9 @@ async def stock_status(known_options, selected_algos, selected_period, selected_
     status_ema_merged_df = pd.merge(status_strategy_ema, #[selected_columns_df1], 
                                     status_strategy_ema_continual, #[selected_columns_df2], 
                                     left_index=True, right_index=True, how='outer')
-    status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
-                                    status_strategy_431_reversal, #[selected_columns_df2], 
-                                    left_index=True, right_index=True, how='outer')
+    # status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
+    #                                 status_strategy_431_reversal, #[selected_columns_df2], 
+    #                                 left_index=True, right_index=True, how='outer')
     # status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
     #                                 status_strategy_candle_hammer, #[selected_columns_df2], 
     #                                 left_index=True, right_index=True, how='outer')
@@ -908,7 +648,7 @@ def show_change_logs():
   
   return
 
-async def algo_playground():
+def algo_playground():
   # st.session_state.user_watchlist, # known_options, 
   #                             st.session_state.selected_algos, 
   #                             st.session_state.period, 
@@ -957,49 +697,51 @@ async def algo_playground():
     st.write("strategy_candle_hammer - details",symbol)
     # results_strategy_hammer_details = await asyncio.gather(*strategy_hammer_details_tasks)
     # st.write(type(results_strategy_hammer_details))
-    strategy_candle_hammer_detailed = asyncio.run(strategy_candle_hammer(symbol,
+    strategy_candle_hammer_detailed = (strategy_candle_hammer(symbol,
                                   df,
                                   st.session_state.period, 
                                   st.session_state.interval,
                                   is_summary = False,
                                   algo_strategy = "candle hammer",))
     
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     st.write(strategy_candle_hammer_detailed)
     
     # strategy_hammer(df)
   
   st.write("strategy_candle_hammer - summary")
-  results_strategy_hammer_summary = await asyncio.gather(*strategy_hammer_summary_tasks)
-  st.write(pd.DataFrame(results_strategy_hammer_summary))
+  # results_strategy_hammer_summary = await asyncio.gather(*strategy_hammer_summary_tasks)
+  # st.write(pd.DataFrame(results_strategy_hammer_summary))
   
   return
   
 # #############################################
 
-async def algo_trading_summary(symbol,
+def algo_trading_summary(symbol,
                                stock_hist_df,
                                selected_algos,
                                selected_period, 
                                selected_interval,
                                ):
-    print("algo_trading_summary function is running")
-    print("algo_trading_summary")
+    print("********* algo_trading_summary **********", symbol)
+    trading_summary_results = []
+    
     # st.write(symbol, selected_algos)
     
-    algo_name, algo_functions, algo_functions_args = list(st.session_state.algo_functions_map)
+    # NameError: name 'algo_functions_map' is not defined
+    # algo_name, algo_functions, algo_functions_args = list(algo_functions_map)
     
-    # Extract the second element from each list using list comprehension
-    #RK load from config
-    extracted_functions = [y for x, y in zip(algo_name, algo_functions) if x in selected_algos]
-    # [lst[1] for lst in [algo_name, algo_functions]]
+    # # Extract the second element from each list using list comprehension
+    # #RK load from config
+    # extracted_functions = [y for x, y in zip(algo_name, algo_functions) if x in selected_algos]
+    # # [lst[1] for lst in [algo_name, algo_functions]]
     
     # print("extracted_functions")
     # print(extracted_functions[0], extracted_functions[1])
     
     # results = await asyncio.gather(func_a(), func_b())
-    print("getting into functions")
-    await asyncio.sleep(1)
+    # print("getting into functions")
+    # await asyncio.sleep(1)
     # func1 =  strategy_sma(symbol,
     #              stock_hist_df,
     #              selected_period, 
@@ -1020,7 +762,9 @@ async def algo_trading_summary(symbol,
                  selected_long_window = 8,
                  is_summary = True,
                  )
-    # st.write("func2", func2)
+    # print("func2 >>>>>>>>>      >>>>>>>>>>>>  ", func2)
+    # Combine results into a single list of dictionaries
+    trading_summary_results.append(func2)
     
     func3 =  strategy_ema_continual(symbol,
                                  stock_hist_df,
@@ -1031,16 +775,22 @@ async def algo_trading_summary(symbol,
                                  selected_long_window = 8,
                                  is_summary = True,
                                  )
-    # st.write("func3", func3)
+    # print("func3 >>>>>>>>>      >>>>>>>>>>>>  ", func3)
+    # Combine results into a single list of dictionaries
+    trading_summary_results.append(func3)
+
+    # func4 =  strategy_431_reversal(symbol,
+    #                              stock_hist_df,
+    #                              selected_period, 
+    #                              selected_interval,
+    #                              is_summary = True,
+    #                              algo_strategy = "4-3-1 candle price reversal",
+    #                              )
     
-    func4 =  strategy_431_reversal(symbol,
-                                 stock_hist_df,
-                                 selected_period, 
-                                 selected_interval,
-                                 is_summary = True,
-                                 algo_strategy = "4-3-1 candle price reversal",
-                                 )
-    
+    # print("func4 >>>>>>>>>      >>>>>>>>>>>>  ", func4)
+    # # Combine results into a single list of dictionaries
+    # trading_summary_results.append(func4)
+
     # func5 =  strategy_candle_hammer(symbol,
     #                              stock_hist_df,
     #                              selected_period, 
@@ -1058,24 +808,30 @@ async def algo_trading_summary(symbol,
     # st.write("func4", func4)
     
     
-    results = await asyncio.gather(func2, func3, func4)
+    # results = await asyncio.gather(func2) #, func3, func4)
     # st.write("results", results)
-  
-    await asyncio.sleep(1)
+
+    # results = func2
     
-    print("algo_trading_summary function is done")
-    # st.write(results)
+    # await asyncio.sleep(1)
+    
+    # print("algo_trading_summary function is done")
+    # print(results)
     
     # Combine results into a single list of dictionaries
-    trading_summary_results = []
-    trading_summary_results_df = pd.DataFrame()
-    for result in results:
-        trading_summary_results.append(result)
-    # print(type(trading_summary_results))
-    # st.write(trading_summary_results)
+    # trading_summary_results = []
+    # trading_summary_results.append(results)
+    
+    # trading_summary_results_df = pd.DataFrame()
+    # for result in results:
+    #   print("trading_summary_results ================\n", result)
+    #   trading_summary_results.append(result)
+    # print("trading_summary_results ================\n",trading_summary_results)
+    # print("trading_summary_results ================\n")
+    # # st.write(trading_summary_results)
 
     # Create a DataFrame from the list of dictionaries
-    print("generated trading summary for ", symbol)
+    print(" ================ generated trading summary for ================>>>", symbol, "\n", trading_summary_results)
     # trading_summary_results_df = pd.DataFrame(trading_summary_results)
     # st.write(trading_summary_results_df)
     
@@ -1084,12 +840,13 @@ async def algo_trading_summary(symbol,
     return (trading_summary_results)
 
     # Get the object allocation traceback
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
+    # snapshot = tracemalloc.take_snapshot()
+    # top_stats = snapshot.statistics('lineno')
 
     # Print the top statistics
-    for stat in top_stats[:10]:
-        print(stat)
+    # for stat in top_stats[:10]:
+    #     print(stat)
+
     
 def to_twitter(post):
   # Twitter API credentials

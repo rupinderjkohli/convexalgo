@@ -7,7 +7,7 @@ import datetime
 from datetime import datetime
 import time
 import globals
-import streamlit as st
+# import streamlit as st
 
 def get_hist_info(ticker, period, interval):
   # get historical market data
@@ -135,7 +135,7 @@ def main():
         df = get_hist_info(yf_data, period, interval)
         # df = get_selected_stock_history(known_options,selected_period, selected_interval)  
         
-        # print("stock history",df.head())
+        print("stock history",df.head())
         
         print(f'currently doing {stock} with the amount of {qty}')
     

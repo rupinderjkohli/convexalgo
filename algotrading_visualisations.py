@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, date, timezone
 import time
 import pytz
 
-import streamlit as st      #install
+# import streamlit as st      #install
 # from streamlit_lightweight_charts import renderLightweightCharts
 
 from lightweight_charts import Chart

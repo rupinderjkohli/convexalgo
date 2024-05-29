@@ -1,3 +1,4 @@
+# from algotrading_helper import *
 
 import pandas as pd
 import numpy as np
@@ -10,8 +11,8 @@ import pytz
 
 import csv
 
-import streamlit as st      #install
-from streamlit_js_eval import streamlit_js_eval
+# import streamlit as st      #install
+# from streamlit_js_eval import streamlit_js_eval
 
 # from lightweight_charts import Chart
 import time
@@ -25,12 +26,37 @@ from millify import millify # shortens values (10_000 ---> 10k)
 from jproperties import Properties
 
 
-import tracemalloc
+# import tracemalloc
 
-# Enable tracemalloc
-tracemalloc.start()
+# # Enable tracemalloc
+# tracemalloc.start()
 
-async def strategy_sma(symbol,
+
+def load_config(refresh):
+  configs = Properties()
+
+  with open('./config.properties', 'rb') as config_file:
+      configs.load(config_file)
+
+  SYMBOLS = configs.get('SYMBOLS').data.split(',') 
+  
+  # get the following config variables to session state
+  PERIOD = configs.get('PERIOD')
+  INTERVAL = configs.get('INTERVAL')
+  STOP_LOSS = configs.get('STOP_LOSS')
+  TAKE_PROFIT = configs.get('TAKE_PROFIT')
+  MOVING_AVERAGE_BASED = configs.get('MOVING_AVERAGE_BASED').data.split(',')
+  TREND_BASED = configs.get('TREND_BASED').data.split(',')
+  
+  if refresh:
+    return SYMBOLS
+  else:
+    return SYMBOLS, PERIOD, INTERVAL, STOP_LOSS, TAKE_PROFIT, MOVING_AVERAGE_BASED, TREND_BASED
+
+
+
+
+def strategy_sma(symbol,
                  stock_hist_df,
                  selected_period, 
                  selected_interval,
@@ -41,7 +67,7 @@ async def strategy_sma(symbol,
                  ):
     
     print("processing strategy_sma ", symbol)
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     #   print("Function B is done")
     
     stock_df, df_pos, previous_triggers, short_window_col, long_window_col = MovingAverageCrossStrategy(symbol,
@@ -49,7 +75,7 @@ async def strategy_sma(symbol,
                                                                     selected_short_window,
                                                                     selected_long_window,
                                                                     algo_strategy,)
-    trading_snapshot_sma = await trading_signals_view(symbol,
+    trading_snapshot_sma = trading_signals_view(symbol,
                                                  algo_strategy,
                                                  stock_df,
                                                  df_pos,
@@ -68,7 +94,7 @@ async def strategy_sma(symbol,
     # return trading_snapshot_sma
   
   
-async def strategy_ema(symbol,
+def strategy_ema(symbol,
                  stock_hist_df,
                  selected_period, 
                  selected_interval,
@@ -77,7 +103,7 @@ async def strategy_ema(symbol,
                  selected_long_window,
                  is_summary,
                  ):
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     print("processing strategy_ema ", symbol)
     # await asyncio.sleep(1)
     stock_df, df_pos, previous_triggers, short_window_col, long_window_col = MovingAverageCrossStrategy(symbol,
@@ -86,7 +112,7 @@ async def strategy_ema(symbol,
                                                                     selected_long_window,
                                                                     algo_strategy,
                                                                     True)
-    trading_snapshot_ema = await trading_signals_view(symbol,
+    trading_snapshot_ema = trading_signals_view(symbol,
                                                  algo_strategy,
                                                  stock_df,
                                                  df_pos,
@@ -101,13 +127,13 @@ async def strategy_ema(symbol,
     if (is_summary):
         return_snapshot = trading_snapshot_ema
     else: return_snapshot = stock_df
-    # st.write(">>>>>>>>>>>strategy ema >>>>>>>>>> return_snapshot",type(return_snapshot))
+    # print(">>>>>>>>>>>strategy ema >>>>>>>>>> return_snapshot",(return_snapshot))
     return return_snapshot
     
     # return trading_snapshot_ema
     
   
-async def strategy_ema_continual(symbol,
+def strategy_ema_continual(symbol,
                                  stock_hist_df,
                                  selected_period, 
                                  selected_interval,
@@ -116,7 +142,7 @@ async def strategy_ema_continual(symbol,
                                  selected_long_window,
                                  is_summary,
                                  ):
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     print("processing strategy_ema_continual ", symbol)
     # await asyncio.sleep(1)
     stock_df, df_pos, previous_triggers, short_window_col, long_window_col = MovingAverageCrossStrategy(symbol,
@@ -126,7 +152,7 @@ async def strategy_ema_continual(symbol,
                                                                     algo_strategy,
                                                                     True)
     # st.write(">>>>strategy_ema_continual - stock_df",stock_df)
-    stock_ema_continual_df = await ema_continual(symbol,
+    stock_ema_continual_df =  ema_continual(symbol,
                              stock_df,
                              selected_short_window,
                              selected_long_window,
@@ -135,7 +161,7 @@ async def strategy_ema_continual(symbol,
                                     #   selected_long_window
                              )
      
-    trading_snapshot_ema_continual = await trading_signals_view(symbol,
+    trading_snapshot_ema_continual = trading_signals_view(symbol,
                                                  algo_strategy,
                                                  stock_ema_continual_df,
                                                  df_pos,
@@ -154,7 +180,7 @@ async def strategy_ema_continual(symbol,
     
     
   
-async def strategy_431_reversal(symbol,
+def strategy_431_reversal(symbol,
                                 stock_hist_df,
                                 selected_period, 
                                 selected_interval,
@@ -162,47 +188,33 @@ async def strategy_431_reversal(symbol,
                                 algo_strategy = "4-3-1 candle price reversal",
                                 ):
     print("processing strategy_431_reversal ", symbol)
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     # Collate high level stats on the data
     quick_explore = {}
 
     quick_explore_df = pd.DataFrame() 
     
-    df_four_three_one_soldiers = await strategy_four_three_one_soldiers(symbol,
+    df_four_three_one_soldiers = strategy_four_three_one_soldiers(symbol,
                                     stock_hist_df,
                                     selected_period, 
                                     selected_interval,
                                     algo_strategy = "4-3-1 candle price reversal",)
     
-    # st.write("df_four_three_one_soldiers",type(df_four_three_one_soldiers),df_four_three_one_soldiers)
-
-    # st.write("df_four_three_one_soldiers")
-    # Get the index of the row where the column value is "Buy" or "Sell"
-    # buy_sell_index = (df_four_three_one_soldiers == "Buy") | (df_four_three_one_soldiers == "Sell")
-    # index_of_buy_sell = buy_sell_index.idxmax(axis=1)
-    # st.write(index_of_buy_sell)
     stock_trigger_at = df_four_three_one_soldiers.index.max()
-    # stock_trigger_at = df_four_three_one_soldiers.index.index_of_buy_sell()
     
     stock_trigger_state = df_four_three_one_soldiers.loc[df_four_three_one_soldiers.index ==  stock_trigger_at, "position"].to_list()[0]
     stock_price_at_trigger = df_four_three_one_soldiers.loc[df_four_three_one_soldiers.index ==  stock_trigger_at, "Close"].to_list()[0]
     
-    # df_four_three_one_soldiers, buy_short, sell_long = calculate_atr_buy_sell(df_four_three_one_soldiers)
-    
-    # st.write("df_four_three_one_soldiers.columns")
-    # print(df_four_three_one_soldiers.columns)
-    # st.write(stock_trigger_state)
-    
     if (stock_trigger_state == "Buy"):
-        stock_stop_loss_atr = stock_price_at_trigger - st.session_state.stop_loss_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"]).to_list()[0]
-        stock_take_profit_atr = (stock_price_at_trigger + st.session_state.take_profit_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
+        stock_stop_loss_atr = stock_price_at_trigger - stop_loss_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"]).to_list()[0]
+        stock_take_profit_atr = (stock_price_at_trigger + take_profit_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
 
         # df_four_three_one_soldiers['stop_loss_atr'] = df_four_three_one_soldiers.Close - st.session_state.stop_loss_factor * df_four_three_one_soldiers.atr_ma
         # df_four_three_one_soldiers['take_profit_atr'] = df_four_three_one_soldiers.Close + st.session_state.take_profit_factor * df_four_three_one_soldiers.atr_ma
     
     elif (stock_trigger_state == "Sell"):
-        stock_stop_loss_atr = (stock_price_at_trigger + st.session_state.stop_loss_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
-        stock_take_profit_atr = (stock_price_at_trigger - st.session_state.take_profit_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
+        stock_stop_loss_atr = (stock_price_at_trigger + stop_loss_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
+        stock_take_profit_atr = (stock_price_at_trigger - take_profit_factor * (df_four_three_one_soldiers.loc[(df_four_three_one_soldiers.index == df_four_three_one_soldiers.index.max()), "atr_ma"])).to_list()[0]
 
         # df_four_three_one_soldiers['stop_loss_atr'] = df_four_three_one_soldiers.Close + st.session_state.stop_loss_factor * df_four_three_one_soldiers.atr_ma
         # df_four_three_one_soldiers['take_profit_atr'] = df_four_three_one_soldiers.Close - st.session_state.take_profit_factor * df_four_three_one_soldiers.atr_ma
@@ -244,7 +256,7 @@ async def strategy_431_reversal(symbol,
     return return_snapshot
       
 
-async def trading_signals_view(symbol, 
+def trading_signals_view(symbol, 
                           algo_strategy,
                           stock_df, 
                           df_pos, 
@@ -261,8 +273,31 @@ async def trading_signals_view(symbol,
     quick_explore_df = pd.DataFrame() 
     etf_info = pd.DataFrame()
     etf_data = {} # dictionary
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     
+    # ###################
+    refresh = False
+    symbol_list, period, interval, stop_loss, take_profit,trading_strategy_ma,trading_strategy_trend = load_config(refresh)
+    
+    symbol_list = np.sort(symbol_list)
+    period = period[0]
+    interval = interval[0]
+    stop_loss_factor = float(stop_loss[0])
+    take_profit_factor = float(take_profit[0])
+    
+    ma_list = trading_strategy_ma #["SMA", "EMA","EMA 1-2 candle price continuation"]
+    algo_list = trading_strategy_trend #["4-3-1 candle price reversal"]
+    convex_trade_algos_list = ma_list + algo_list
+    selected_algos = convex_trade_algos_list
+    
+    # List of algo functions
+    algo_functions = [strategy_sma, strategy_ema, strategy_ema_continual, strategy_431_reversal]
+    
+    # TODO
+    algo_functions_args = []
+    
+    algo_functions_map = (((convex_trade_algos_list, algo_functions, algo_functions_args)))
+    #################
     if (~df_pos.empty & ~previous_triggers.empty):  
         # put this to a new tab on click of the button
         # ###################################################
@@ -283,18 +318,18 @@ async def trading_signals_view(symbol,
         # (sell order) profit order is - if trigger is Sell; loss order is + if trigger is Buy 
         
         if (stock_trigger_state == "Buy"):
-            stock_stop_loss_atr = stock_price_at_trigger - st.session_state.stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
-            stock_take_profit_atr = (stock_price_at_trigger + st.session_state.take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
+            stock_stop_loss_atr = stock_price_at_trigger - stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"]).to_list()[0]
+            stock_take_profit_atr = (stock_price_at_trigger + take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
             
-            etf_data[symbol]['stop_loss_atr'] = stock_df.Close - st.session_state.stop_loss_factor * stock_df.atr_ma
-            etf_data[symbol]['take_profit_atr'] = stock_df.Close + st.session_state.take_profit_factor * stock_df.atr_ma
+            etf_data[symbol]['stop_loss_atr'] = stock_df.Close - stop_loss_factor * stock_df.atr_ma
+            etf_data[symbol]['take_profit_atr'] = stock_df.Close + take_profit_factor * stock_df.atr_ma
         
         elif (stock_trigger_state == "Sell"):
-            stock_stop_loss_atr = (stock_price_at_trigger + st.session_state.stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
-            stock_take_profit_atr = (stock_price_at_trigger - st.session_state.take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
+            stock_stop_loss_atr = (stock_price_at_trigger + stop_loss_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
+            stock_take_profit_atr = (stock_price_at_trigger - take_profit_factor * (df_pos.loc[(df_pos.index == df_pos.index.max()), "atr_ma"])).to_list()[0]
             
-            etf_data[symbol]['stop_loss_atr'] = stock_df.Close + st.session_state.stop_loss_factor * stock_df.atr_ma
-            etf_data[symbol]['take_profit_atr'] = stock_df.Close - st.session_state.take_profit_factor * stock_df.atr_ma
+            etf_data[symbol]['stop_loss_atr'] = stock_df.Close + stop_loss_factor * stock_df.atr_ma
+            etf_data[symbol]['take_profit_atr'] = stock_df.Close - take_profit_factor * stock_df.atr_ma
         
         
         
@@ -332,7 +367,7 @@ async def trading_signals_view(symbol,
     # quick_explore_df = quick_explore_df.set_index(['symbol'])
     # print(quick_explore_df)
     
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     # st.subheader("stock_view_details")
     # st.write(stock_view_details.sort_index(ascending=False))
     
@@ -501,7 +536,7 @@ def get_current_price(symbol, selected_period, selected_interval):
     # getting error: IndexError: single positional indexer is out-of-bounds
     return todays_data['Close'].iloc[-1]
 
-async def ema_continual(symbol, 
+def ema_continual(symbol, 
                   stock_df,
                   short_window,
                   long_window, 
@@ -517,7 +552,7 @@ async def ema_continual(symbol,
     # BEGIN: DEBUG_INFO
     # st.write(symbol)
     
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     
     ema_continual_df = stock_df
     ema_continual_df['ema_5above8'] = (ema_continual_df[short_window_col] > ema_continual_df[long_window_col])
@@ -663,16 +698,16 @@ def candle_four_three_one_soldiers(df, is_sorted) -> pd.Series:
   df_evaluate, buy_short, sell_long = calculate_atr_buy_sell(df_evaluate)
   
   if any(df_evaluate['position'] == "Buy"):
-      df_evaluate['stop_loss_atr'] = df_evaluate.Close - st.session_state.stop_loss_factor * df_evaluate.atr_ma
-      df_evaluate['take_profit_atr'] = df_evaluate.Close + st.session_state.take_profit_factor * df_evaluate.atr_ma
+      df_evaluate['stop_loss_atr'] = df_evaluate.Close - stop_loss_factor * df_evaluate.atr_ma
+      df_evaluate['take_profit_atr'] = df_evaluate.Close + take_profit_factor * df_evaluate.atr_ma
     
   elif any(df_evaluate['position'] == "Sell"):
-      df_evaluate['stop_loss_atr'] = df_evaluate.Close + st.session_state.stop_loss_factor * df_evaluate.atr_ma
-      df_evaluate['take_profit_atr'] = df_evaluate.Close - st.session_state.take_profit_factor * df_evaluate.atr_ma
+      df_evaluate['stop_loss_atr'] = df_evaluate.Close + stop_loss_factor * df_evaluate.atr_ma
+      df_evaluate['take_profit_atr'] = df_evaluate.Close - take_profit_factor * df_evaluate.atr_ma
   
   return df_evaluate
     
-async def strategy_four_three_one_soldiers(symbol,
+def strategy_four_three_one_soldiers(symbol,
                                  df,
                                  selected_period, 
                                  selected_interval,
@@ -682,7 +717,7 @@ async def strategy_four_three_one_soldiers(symbol,
     df_strategy_431 = candle_four_three_one_soldiers(df, False)
     # df_strategy_431 = df
     
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     # st.write("filtered data - strategy_431_long")
     df_strategy_431_long = (df_strategy_431[df_strategy_431["strategy_431_long"] == True])
     # st.write(df_strategy_431_long.sort_index(ascending=False))
@@ -740,13 +775,13 @@ def candle_hammer(df: pd.DataFrame = None) -> pd.Series:
         & (((df["Open"] - df["Low"]) / (0.001 + df["High"] - df["Low"])) > 0.6)
     )
     
-async def strategy_candle_hammer(symbol,
+def strategy_candle_hammer(symbol,
                                  df,
                                  selected_period, 
                                  selected_interval,
                                  is_summary, # = True,
                                  algo_strategy = "candle hammer",):
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     
     st.write("strategy_candle_hammer", symbol)
     # st.write(candle_hammer(df))
@@ -840,13 +875,13 @@ def candle_inverted_hammer(df: pd.DataFrame = None) -> pd.Series:
         & ((df["High"] - df["Open"]) / (0.001 + df["High"] - df["Low"]) > 0.6)
     )  
     
-async def strategy_candle_inverted_hammer(symbol,
+def strategy_candle_inverted_hammer(symbol,
                                  df,
                                  selected_period, 
                                  selected_interval,
                                  is_summary,# = True,
                                  algo_strategy = "candle inverted hammer",):
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
     st.write("df_strategy_candle_inverted_hammer")
     df_strategy_candle_inverted_hammer = df
     
