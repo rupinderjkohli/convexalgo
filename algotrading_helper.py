@@ -55,10 +55,10 @@ from algotrading_class import *
 
 from algotrading_algos import *
 
-import tracemalloc
+# import tracemalloc
 
-# Enable tracemalloc
-tracemalloc.start()
+# # Enable tracemalloc
+# tracemalloc.start()
 # # Using plotly dark template
 # TEMPLATE = 'plotly_dark'
 
