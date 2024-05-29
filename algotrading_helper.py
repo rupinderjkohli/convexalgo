@@ -78,6 +78,42 @@ pd.set_option('display.max_columns', None,
 
 pd.options.display.float_format = '${:,.2f}'.format
 
+def setup_session_state():
+  print(">>>>>>>>>>>> setup_session_state\n")
+  if('main_menu' not in st.session_state):
+    st.session_state['main_menu'] = st.session_state.get('main_menu', 0)
+  if('selected_menu' not in st.session_state):  
+    st.session_state['selected_menu'] = "Signals"
+  
+  if('period' not in st.session_state):
+    st.session_state['period'] = period[0]
+  if('interval' not in st.session_state):
+    st.session_state['interval'] = interval[0]
+  if('stop_loss_factor' not in st.session_state):
+    st.session_state['stop_loss_factor'] = float(stop_loss[0])
+  if('take_profit_factor' not in st.session_state):
+    st.session_state['take_profit_factor'] = float(take_profit[0])
+  
+  if('moving_average' not in st.session_state):
+    st.session_state['moving_average'] = trading_strategy_ma
+  if('trend_based' not in st.session_state):
+    st.session_state['trend_based'] = trading_strategy_trend 
+
+  if('selected_algos' not in st.session_state):
+    st.session_state['selected_algos'] = convex_trade_algos_list
+  
+  
+  # st.session_state['period'] = period[0]
+  # st.session_state['interval'] = interval[0]
+  # # st.session_state['refresh_token'] = [extract_number(ts) for ts in interval[0]][0]
+  # # st.write(st.session_state['refresh_token'])
+  # st.session_state['stop_loss_factor'] = float(stop_loss[0])
+  # st.session_state['take_profit_factor'] = float(take_profit[0])
+
+  # st.session_state['moving_average'] = trading_strategy_ma
+  # st.session_state['trend_based'] = trading_strategy_trend 
+  return
+
 @st.cache_resource
 def load_config(refresh):
   configs = Properties()
@@ -506,6 +542,7 @@ def setup_day(username,user_sel_list, period, interval, symbol_list, algo_functi
 # @st.experimental_fragment(run_every="1m")
 async def signals_view(known_options, selected_algos, selected_period, selected_interval):
   # generate summary
+  print("####### signals_view run time #######")
   df_summary_view = pd.DataFrame()
   
   combined_trading_summary = []
