@@ -195,11 +195,11 @@ def main():
     start_time = time.time()
     
     run_count = 0
-    stock_status_data, status_ema_merged_df, run_count = asyncio.run (stock_status(st.session_state.user_watchlist, # known_options, 
+    stock_status_data, status_ema_merged_df = asyncio.run (stock_status(st.session_state.user_watchlist, # known_options, 
                               st.session_state.selected_algos, 
                               st.session_state.period, 
                               st.session_state.interval,
-                              run_count))
+                              ))
     # await asyncio.sleep(1)
     
     # Convert to DataFrame by flattening the dictionary
