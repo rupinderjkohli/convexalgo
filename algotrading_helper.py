@@ -1046,13 +1046,13 @@ async def algo_trading_summary(symbol,
   
     return (trading_summary_results)
 
-    # Get the object allocation traceback
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
+    # # Get the object allocation traceback
+    # snapshot = tracemalloc.take_snapshot()
+    # top_stats = snapshot.statistics('lineno')
 
-    # Print the top statistics
-    for stat in top_stats[:10]:
-        print(stat)
+    # # Print the top statistics
+    # for stat in top_stats[:10]:
+    #     print(stat)
     
 def to_twitter(post):
   # Twitter API credentials
