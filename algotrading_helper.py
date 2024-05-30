@@ -356,29 +356,29 @@ def signals_view(known_options, selected_algos, selected_period, selected_interv
   # Flatten the list nested structure
   flattened_data = [item for sublist in combined_trading_summary for item in sublist]
   
-  print("##################################### RESULTS #################### \n", combined_trading_summary)
+  display("##################################### RESULTS #################### \n", combined_trading_summary)
   
   print("##################################### flattened_data #################### ", flattened_data)
   # Create a DataFrame from the list of dictionaries
-  combined_trading_summary_df = pd.DataFrame(combined_trading_summary)
-  # print(combined_trading_summary_df.columns)
+  combined_trading_summary_df = pd.DataFrame(flattened_data)
+  print(combined_trading_summary_df.columns)
   # Index(['symbol', 'algo_strategy', 'stock_trigger_at', 'stock_trigger_state',
   #      'stock_price_at_trigger', 'stock_stop_loss_atr',
   #      'stock_take_profit_atr', 'stock_atr_ma', 'stock_ema_p1', 'stock_ema_p2',
   #      'stock_previous_triggers'],
   #     dtype='object')
-  # combined_trading_summary_df = combined_trading_summary_df[['symbol', 
-  #                                                            'stock_trigger_state',
-  #                                                            'stock_trigger_at', 
-  #                                                            'stock_price_at_trigger', 
-  #                                                            'stock_stop_loss_atr',
-  #                                                            'stock_take_profit_atr',
-  #                                                            'algo_strategy', 
-  #                                                            'tweet_post',
-  #                                                            'stock_previous_triggers',
-  #                                                            ]].sort_values(by = ['stock_trigger_at', 'symbol'], ascending=[False, True])
+  combined_trading_summary_df = combined_trading_summary_df[['symbol', 
+                                                             'stock_trigger_state',
+                                                             'stock_trigger_at', 
+                                                             'stock_price_at_trigger', 
+                                                             'stock_stop_loss_atr',
+                                                             'stock_take_profit_atr',
+                                                             'algo_strategy', 
+                                                             'tweet_post',
+                                                             'stock_previous_triggers',
+                                                             ]].sort_values(by = ['stock_trigger_at', 'symbol'], ascending=[False, True])
   
-  display("............. combined_trading_summary_df .............\n", combined_trading_summary_df)
+  display("............. combined_trading_summary_df .............\n", (combined_trading_summary_df))
   # # Add a column with links
   # link_column = []
   # for symbol in combined_trading_summary_df['symbol']:

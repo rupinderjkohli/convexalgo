@@ -102,6 +102,9 @@ def main():
   print("Ticker Status View")
   print("Shows the status of the implemented strategies for all tickers")
   
+  # data = {'symbol': 'RSP', 'stock_trigger_at': 2024-05-30 11:04:00-04:00, 'stock_trigger_state': 'Sell', 'stock_price_at_trigger': 163.13999938964844, 'stock_stop_loss_atr': 163.19886193956648, 'stock_take_profit_atr': 163.03909216121752, 'stock_atr_ma': 0.03363574281030771, 'stock_ema_p1': 163.18687467319677, 'stock_ema_p2': 163.19013138629703, 'algo_strategy': 'EMA', 'tweet_post': 'RSP: Sell; 2024-05-30 11:04; 163.14; SL: 163.20; PT: 163.04',} # 'stock_previous_triggers': ['2024/05/30 11:04', '2024/05/30 10:44', '2024/05/30 10:43', '2024/05/30 10:35', '2024/05/30 10:27', '2024/05/30 10:20']} 
+  # display(pd.DataFrame(data))
+
   run_count = 0
   # stock_status_data, status_ema_merged_df, run_count = asyncio.run (stock_status(known_options, 
   #                           selected_algos, 
