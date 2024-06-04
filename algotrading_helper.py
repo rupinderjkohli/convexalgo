@@ -183,6 +183,9 @@ def get_all_stock_info(ticker):
   # get all stock info
 
   info = ticker.info
+  print (info.keys())
+
+  info_keys = info.keys()
   info_df = pd.DataFrame.from_dict([info])
   # info_df_short = info_df[['symbol', 'shortName', 'exchange', 'quoteType', 'currency',
   #                          'previousClose', 'open', 'dayLow', 'dayHigh',
@@ -209,7 +212,7 @@ def get_all_stock_info(ticker):
   info_df.reset_index(inplace=True)
   # info_df_short.reset_index(inplace=True)
   # print (info_df_short.to_dict(orient='dict'))
-  return info_df #info_df_short
+  return info #_df #info_df_short
 
 # ##########################################################  
 # Purpose: 
@@ -302,6 +305,7 @@ def signals_view(known_options, selected_algos, selected_period, selected_interv
   
   for symbol in known_options:
     # get ticker data
+    
     # yf_data = yf.Ticker(symbol) #initiate the ticker
     
     
@@ -330,6 +334,8 @@ def signals_view(known_options, selected_algos, selected_period, selected_interv
     
     # RK051424: getting stock history from a central function in 2 steps -
     stock_hist_df = yf_ticker_history[symbol]
+    # display("DDDDDDDDDDDDDDDD  stock_hist_df from SIGNALS VIEW <<<<<<<<<<<<<<", symbol)
+    # display (stock_hist_df[['Open', 'Close', 'High', 'Low']][:20])
     
     # tasks.append(algo_trading_summary(symbol, 
     #                                  stock_hist_df,
@@ -887,6 +893,8 @@ def get_selected_stock_history(known_options,selected_period, selected_interval)
     # get ticker data
     yf_data = yf.Ticker(symbol) #initiate the ticker
     # st.write("fetching status for: ", symbol )
+    get_all_stock_info(yf_data)
+
     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)  
     selected_etf_data[symbol] = stock_hist_df
     
