@@ -183,7 +183,7 @@ def get_all_stock_info(ticker):
   # get all stock info
 
   info = ticker.info
-  print (info.keys())
+  # print (info.keys())
 
   info_keys = info.keys()
   info_df = pd.DataFrame.from_dict([info])
@@ -306,59 +306,23 @@ def signals_view(known_options, selected_algos, selected_period, selected_interv
   for symbol in known_options:
     # get ticker data
     
-    # yf_data = yf.Ticker(symbol) #initiate the ticker
-    
-    
-    # st.session_state.page_subheader = '{0} ({1})'.format(yf_data.info['shortName'], yf_data.info['symbol'])
-    # st.subheader(st.session_state.page_subheader)
-    
-    # # generate summary
-    # etf_summary_info = get_all_stock_info(yf_data)
-    # # st.write(etf_summary_info.T)
-    # df_details = etf_summary_info[['symbol', 'shortName','quoteType','financialCurrency',
-    #                                 'industry','sector','currentPrice','recommendationKey', 
-    #                                 'fiftyTwoWeekHigh','fiftyTwoWeekLow', 
-    #                                 'grossMargins','ebitdaMargins']]
-    # df_details['52w Range'] = ((df_details['currentPrice'] - df_details['fiftyTwoWeekLow'])/(df_details['fiftyTwoWeekHigh'] - df_details['fiftyTwoWeekLow']))*100
-    
-    # df_summary_view = pd.concat([df_summary_view, df_details], ignore_index=True)
-    # Add 52 week price range
     
     # generate trading summary
     # based on the selected algo strategy call the selected functions
-    # st.write("getting summary for: ", symbol)
-    # stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)
-    # st.write(stock_hist_df[:10])
-    # await asyncio.sleep(1)
-    # use gather instead of run
     
     # RK051424: getting stock history from a central function in 2 steps -
     stock_hist_df = yf_ticker_history[symbol]
-    # display("DDDDDDDDDDDDDDDD  stock_hist_df from SIGNALS VIEW <<<<<<<<<<<<<<", symbol)
     # display (stock_hist_df[['Open', 'Close', 'High', 'Low']][:20])
     
-    # tasks.append(algo_trading_summary(symbol, 
-    #                                  stock_hist_df,
-    #                                  selected_algos, 
-    #                                  selected_period, 
-    #                                  selected_interval,
-    #                                  )
-    #              )
-    # print("algo_trading_summary", symbol)
     results = algo_trading_summary(symbol, 
                                      stock_hist_df,
                                      selected_algos, 
                                      selected_period, 
                                      selected_interval,
                                      )
-    # print ("results algo_trading_summary >>>>>>>>>>>>\n", results)
-    # print ("results algo_trading_summary >>>>>>>>>>>>\n")
     combined_trading_summary.append(results)
     
                  
-  # results = await asyncio.gather(*tasks)
-  # await asyncio.sleep(1)
-
   # Flatten the list nested structure
   flattened_data = [item for sublist in combined_trading_summary for item in sublist]
   
@@ -367,12 +331,7 @@ def signals_view(known_options, selected_algos, selected_period, selected_interv
   print("##################################### flattened_data #################### ", flattened_data)
   # Create a DataFrame from the list of dictionaries
   combined_trading_summary_df = pd.DataFrame(flattened_data)
-  print(combined_trading_summary_df.columns)
-  # Index(['symbol', 'algo_strategy', 'stock_trigger_at', 'stock_trigger_state',
-  #      'stock_price_at_trigger', 'stock_stop_loss_atr',
-  #      'stock_take_profit_atr', 'stock_atr_ma', 'stock_ema_p1', 'stock_ema_p2',
-  #      'stock_previous_triggers'],
-  #     dtype='object')
+  
   combined_trading_summary_df = combined_trading_summary_df[['symbol', 
                                                              'stock_trigger_state',
                                                              'stock_trigger_at', 
@@ -381,86 +340,13 @@ def signals_view(known_options, selected_algos, selected_period, selected_interv
                                                              'stock_take_profit_atr',
                                                              'algo_strategy', 
                                                              'tweet_post',
-                                                             'stock_previous_triggers',
+                                                            #  'stock_previous_triggers',
                                                              ]].sort_values(by = ['stock_trigger_at', 'symbol'], ascending=[False, True])
   
   display("............. combined_trading_summary_df .............\n", (combined_trading_summary_df))
-  # # Add a column with links
-  # link_column = []
-  # for symbol in combined_trading_summary_df['symbol']:
-  #   link = f'https://example.com/{symbol}'
-  #   link_column.append(f'[Link]({link})')
-  # # Add the link column to the DataFrame
-  # combined_trading_summary_df['share'] = link_column
   
-  # # Create a column for popover toggles
-  # toggle_col = st.columns(combined_trading_summary_df.shape[0]) # Create a column for each row 
-  # print("toggle_col#########################", toggle_col)
-  
-  # for i, col in enumerate(combined_trading_summary_df.shape[0]):
-  #   if col.popover('ℹ️ {i}'): #('ℹ️', key=i):
-  #       col.write(combined_trading_summary_df.iloc[i]['symbol'])
-  
-  # st.data_editor(
-  #   combined_trading_summary_df,
-  #   column_config={"symbol": st.column_config.TextColumn(
-  #       "Ticker",
-  #       width="small"
-  #   ),
-  #                  "algo_strategy": st.column_config.TextColumn(
-  #       "Strategy Name",
-  #       width="small"
-  #   ),
-  #                  "stock_trigger_state": st.column_config.TextColumn(
-  #       "Trigger",
-  #       width="small"
-  #   ),
-  #                   "stock_take_profit_atr": st.column_config.NumberColumn(
-  #       "Take Profit Price",
-  #       format="%.2f",
-  #   ),
-  #                   "stock_stop_loss_atr": st.column_config.NumberColumn(
-  #       "Stop Loss Price",
-  #       format="%.2f",
-  #   ),
-  #                   "stock_price_at_trigger": st.column_config.NumberColumn(
-  #       "Trigger Price",
-  #       format="%.2f",
-  #   ),
-  #                   "stock_atr_ma": st.column_config.NumberColumn(
-  #       "ATR MA",
-  #       format="%.2f",
-  #   ),
-  #                   "stock_previous_triggers": st.column_config.ListColumn(
-  #       "Previous Triggers",
-  #       # format="DD MMM YYYY, HH:MM"
-  #       # width="medium",
-  #   ),
-  #                   "stock_trigger_at": st.column_config.DatetimeColumn(
-  #       "Trigger Time",
-  #       format = "YYYY-MM-DD HH:mm"
-  #       # format="DD MMM YYYY, HH:MM"
-  #   ),
-  #       # "share": st.column_config.LinkColumn
-  #       # (
-  #       #     "share",
-  #       #     help="social media",
-  #       #     max_chars=100,
-  #       #     # display_text="view table",
-  #       #     # default=add_container(etf_data[symbol], quick_explore_df[symbol])
-  #       # ),
-        
-  #   },
-  #   height=None,
-  #   use_container_width=True,
-  #   hide_index=True,
-  #   )
-  # app_refresh(selected_interval, "signals_view")
   return None
   
-# save output in cache to be used by the trading charts
-# @st.cache_resource
-# @st.experimental_fragment(run_every='1m')
 def stock_status(known_options, selected_algos, selected_period, selected_interval, run_count):
   # generate stocks list view
   # st.write(known_options, selected_algos, selected_period, selected_interval)
@@ -471,6 +357,7 @@ def stock_status(known_options, selected_algos, selected_period, selected_interv
   etf_multi_index = pd.MultiIndex.from_product([known_options,
                                                 selected_algos],
                                                names=['tickers', 'algo_strategy'])
+  print(etf_multi_index)
   # Create a DataFrame with the MultiIndex
   etf_processed_signals = pd.DataFrame(index=etf_multi_index,
                                        columns = ['Value']
@@ -893,7 +780,7 @@ def get_selected_stock_history(known_options,selected_period, selected_interval)
     # get ticker data
     yf_data = yf.Ticker(symbol) #initiate the ticker
     # st.write("fetching status for: ", symbol )
-    get_all_stock_info(yf_data)
+    # get_all_stock_info(yf_data)
 
     stock_hist_df = get_hist_info(yf_data, selected_period, selected_interval)  
     selected_etf_data[symbol] = stock_hist_df

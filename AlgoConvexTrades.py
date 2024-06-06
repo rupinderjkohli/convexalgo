@@ -106,12 +106,12 @@ def main():
   # display(pd.DataFrame(data))
 
   run_count = 0
-  # stock_status_data, status_ema_merged_df, run_count = asyncio.run (stock_status(known_options, 
-  #                           selected_algos, 
-  #                           period, 
-  #                           interval,
-  #                           run_count))
-  # # await asyncio.sleep(1)
+  stock_status_data, status_ema_merged_df, run_count = stock_status(known_options, 
+                            selected_algos, 
+                            period, 
+                            interval,
+                            run_count)
+  # await asyncio.sleep(1)
     
   # # Convert to DataFrame by flattening the dictionary
   # for symbol, symbol_data in stock_status_data.items():

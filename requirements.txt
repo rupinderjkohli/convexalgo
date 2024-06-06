@@ -3,21 +3,22 @@ numpy
 matplotlib
 yfinance
 plotly
-streamlit==1.35.0
-kaleido==0.2.1
+# streamlit==1.35.0
+# kaleido==0.2.1
 pybase64
 millify
-lightweight_charts
+# lightweight_charts
 asyncio
 nest_asyncio
 pytz
-streamlit-option-menu
-streamlit-extras
-streamlit_js_eval
-streamlit-authenticator
+# streamlit-option-menu
+# streamlit-extras
+# streamlit_js_eval
+# streamlit-authenticator
 jproperties
-futures
-st_social_media_links
+# futures
+# st_social_media_links
 tweepy
-streamlit_autorefresh
-schedule
+# streamlit_autorefresh
+# schedule
+IPython
