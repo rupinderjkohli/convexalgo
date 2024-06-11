@@ -59,29 +59,29 @@ def main():
   symbol_list, period, interval, stop_loss, take_profit,trading_strategy_ma,trading_strategy_trend = load_config(refresh)
   
   symbol_list = np.sort(symbol_list)
-  if('period' not in st.session_state):
-    st.session_state['period'] = period[0]
-  if('interval' not in st.session_state):
-    st.session_state['interval'] = interval[0]
-  if('stop_loss_factor' not in st.session_state):
-    st.session_state['stop_loss_factor'] = float(stop_loss[0])
-  if('take_profit_factor' not in st.session_state):
-    st.session_state['take_profit_factor'] = float(take_profit[0])
+  # if('period' not in st.session_state):
+  #   st.session_state['period'] = period[0]
+  # if('interval' not in st.session_state):
+  #   st.session_state['interval'] = interval[0]
+  # if('stop_loss_factor' not in st.session_state):
+  #   st.session_state['stop_loss_factor'] = float(stop_loss[0])
+  # if('take_profit_factor' not in st.session_state):
+  #   st.session_state['take_profit_factor'] = float(take_profit[0])
   
-  if('moving_average' not in st.session_state):
-    st.session_state['moving_average'] = trading_strategy_ma
-  if('trend_based' not in st.session_state):
-    st.session_state['trend_based'] = trading_strategy_trend 
+  # if('moving_average' not in st.session_state):
+  #   st.session_state['moving_average'] = trading_strategy_ma
+  # if('trend_based' not in st.session_state):
+  #   st.session_state['trend_based'] = trading_strategy_trend 
   
-  # st.session_state['period'] = period[0]
-  # st.session_state['interval'] = interval[0]
-  # # st.session_state['refresh_token'] = [extract_number(ts) for ts in interval[0]][0]
-  # # st.write(st.session_state['refresh_token'])
-  # st.session_state['stop_loss_factor'] = float(stop_loss[0])
-  # st.session_state['take_profit_factor'] = float(take_profit[0])
+  st.session_state['period'] = period[0]
+  st.session_state['interval'] = interval[0]
+  # st.session_state['refresh_token'] = [extract_number(ts) for ts in interval[0]][0]
+  # st.write(st.session_state['refresh_token'])
+  st.session_state['stop_loss_factor'] = float(stop_loss[0])
+  st.session_state['take_profit_factor'] = float(take_profit[0])
 
-  # st.session_state['moving_average'] = trading_strategy_ma
-  # st.session_state['trend_based'] = trading_strategy_trend 
+  st.session_state['moving_average'] = trading_strategy_ma
+  st.session_state['trend_based'] = trading_strategy_trend 
 
   ma_list = trading_strategy_ma #["SMA", "EMA","EMA 1-2 candle price continuation"]
   algo_list = trading_strategy_trend #["4-3-1 candle price reversal"]
