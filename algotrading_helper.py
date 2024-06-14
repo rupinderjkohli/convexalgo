@@ -714,21 +714,5 @@ def app_refresh(selected_interval, process):
   with open(user_refresh_log, 'a+') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow([process, st.session_state['last_run']])
-        
-  # try:
-  #   user_refresh_log = st.session_state.username + "_last_refresh_log.csv"
-  #   st.session_state['last_run'].to_csv(user_refresh_log, mode='w', index=False, header=True)
-  # except pd.errors.EmptyDataError:
-  #   print('CSV file is empty save')
-  # except FileNotFoundError:
-  #   st.session_state['last_run'].to_csv(user_refresh_log, index=False)
   
-  # app_refresh 1716571443 2024-05-24 13:26:31.803263
   return last_update
-
-# def extract_number(time_string):
-#   number = ''
-#   for char in time_string:
-#       if char.isdigit():
-#           number += char
-#   return (number)
