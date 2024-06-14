@@ -32,6 +32,8 @@ import pybase64
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+import globals
+
 from algotrading_algos import *
 
 nest_asyncio.apply()
@@ -44,24 +46,6 @@ pd.set_option('display.max_columns', None,
 
 pd.options.display.float_format = '${:,.2f}'.format
 
-# import redis
-# ssl_connection = redis.Redis(host='localhost', port=6666, ssl=True, ssl_cert_reqs="none")
-# ssl_connection.ping()
-
-def setup_default_state():
-  print(">>>>>>>>>>>> setup_session_state\n")
-  
-  period = period[0]
-  interval = interval[0]
-  stop_loss_factor = float(stop_loss[0])
-  take_profit_factor = float(take_profit[0])
-  
-  moving_average = trading_strategy_ma
-  trend_based = trading_strategy_trend 
-
-  selected_algos = convex_trade_algos_list
-  
-  return
 
 def load_config(refresh):
   configs = Properties()
@@ -69,21 +53,21 @@ def load_config(refresh):
   with open('./config.properties', 'rb') as config_file:
       configs.load(config_file)
 
-  SYMBOLS = configs.get('SYMBOLS').data.split(',') 
+  globals.SYMBOLS = configs.get('SYMBOLS').data.split(',') 
   
   # get the following config variables to session state
-  PERIOD = configs.get('PERIOD')
-  INTERVAL = configs.get('INTERVAL')
-  STOP_LOSS = configs.get('STOP_LOSS')
-  TAKE_PROFIT = configs.get('TAKE_PROFIT')
-  MOVING_AVERAGE_BASED = configs.get('MOVING_AVERAGE_BASED').data.split(',')
-  TREND_BASED = configs.get('TREND_BASED').data.split(',')
+  globals.PERIOD = configs.get('PERIOD')
+  globals.INTERVAL = configs.get('INTERVAL')
+  globals.STOP_LOSS = configs.get('STOP_LOSS')
+  globals.TAKE_PROFIT = configs.get('TAKE_PROFIT')
+  globals.MOVING_AVERAGE_BASED = configs.get('MOVING_AVERAGE_BASED').data.split(',')
+  globals.TREND_BASED = configs.get('TREND_BASED').data.split(',')
   
-  if refresh:
-    return SYMBOLS
-  else:
-    return SYMBOLS, PERIOD, INTERVAL, STOP_LOSS, TAKE_PROFIT, MOVING_AVERAGE_BASED, TREND_BASED
-
+  # if refresh:
+  #   return globals.SYMBOLS
+  # else:
+  #   return globals.SYMBOLS, globals.PERIOD, globals.INTERVAL, globals.STOP_LOSS, globals.TAKE_PROFIT, globals.MOVING_AVERAGE_BASED, globals.TREND_BASED
+  return
 
 # https://coderzcolumn.com/tutorials/data-science/candlestick-chart-in-python-mplfinance-plotly-bokeh#2
 
@@ -287,6 +271,10 @@ def get_stk_news(ticker):
 def signals_view(known_options, selected_algos, selected_period, selected_interval):
   # generate summary
   print("####### signals_view run time #######")
+  
+  # setup globals
+  
+  # print(globals.stop_loss_factor, "global variables *********************")
   df_summary_view = pd.DataFrame()
   
   combined_trading_summary = []
@@ -294,9 +282,9 @@ def signals_view(known_options, selected_algos, selected_period, selected_interv
   # await asyncio.sleep(1)
   tasks = []
   
-  if (len(selected_algos) == 0):
+  # if (len(selected_algos) == 0):
     #RK load from config
-    selected_algos = ['5/8 EMA', '5/8 EMA 1-2 candle price','4-3-1 candle price reversal'] 
+    # selected_algos = ['5/8 EMA', '5/8 EMA 1-2 candle price','4-3-1 candle price reversal'] 
     
   # RK051424: getting stock history from a central function in 2 steps - 
   # load the history for all tickers and 
@@ -304,9 +292,6 @@ def signals_view(known_options, selected_algos, selected_period, selected_interv
   yf_ticker_history = get_selected_stock_history(known_options,selected_period, selected_interval)    
   
   for symbol in known_options:
-    # get ticker data
-    
-    
     # generate trading summary
     # based on the selected algo strategy call the selected functions
     
@@ -321,14 +306,13 @@ def signals_view(known_options, selected_algos, selected_period, selected_interv
                                      selected_interval,
                                      )
     combined_trading_summary.append(results)
-    
                  
   # Flatten the list nested structure
   flattened_data = [item for sublist in combined_trading_summary for item in sublist]
   
-  display("##################################### RESULTS #################### \n", combined_trading_summary)
+  # display("##################################### RESULTS #################### \n", combined_trading_summary)
   
-  print("##################################### flattened_data #################### ", flattened_data)
+  # print("##################################### flattened_data #################### ", flattened_data)
   # Create a DataFrame from the list of dictionaries
   combined_trading_summary_df = pd.DataFrame(flattened_data)
   
@@ -347,17 +331,16 @@ def signals_view(known_options, selected_algos, selected_period, selected_interv
   
   return None
   
-def stock_status(known_options, selected_algos, selected_period, selected_interval, run_count):
+def stock_status(known_options, selected_algos, selected_period, selected_interval):
   # generate stocks list view
   # st.write(known_options, selected_algos, selected_period, selected_interval)
-  run_count +=1
   # await asyncio.sleep(1)
   stock_status_data = {}
   status_ema_merged_df = {}
   etf_multi_index = pd.MultiIndex.from_product([known_options,
                                                 selected_algos],
                                                names=['tickers', 'algo_strategy'])
-  print(etf_multi_index)
+  # print(etf_multi_index)
   # Create a DataFrame with the MultiIndex
   etf_processed_signals = pd.DataFrame(index=etf_multi_index,
                                        columns = ['Value']
@@ -375,17 +358,6 @@ def stock_status(known_options, selected_algos, selected_period, selected_interv
     # RK051424: getting stock history from a central function in 2 steps -
     stock_hist_df = yf_ticker_history[symbol]
     
-    func1 = strategy_sma(symbol,
-                 stock_hist_df,
-                 selected_period, 
-                 selected_interval,
-                 algo_strategy = "SMA",
-                 selected_short_window = 5,
-                 selected_long_window = 8,
-                 is_summary = False,
-                 )
-    # st.write(func1)
-    
     status_strategy_ema = strategy_ema(symbol,
                  stock_hist_df,
                  selected_period, 
@@ -397,13 +369,8 @@ def stock_status(known_options, selected_algos, selected_period, selected_interv
                  )
     algo_strategy = "5/8 EMA"
     
-    print("status_strategy_ema")
-    # print(status_strategy_ema.columns)
-    print()
-    
     status_strategy_ema = status_strategy_ema [[ 
        'Close','5_EMA', '8_EMA', 'Position_c',]]
-    # st.write("EMA", status_strategy_ema.sort_index(ascending=False))
     # Rename the column Position_c
     status_strategy_ema.rename(columns={'Position_c': 'Trigger:EMA crossover',
                                         'Close': 'EMA Close Price'}, inplace=True)
@@ -418,54 +385,35 @@ def stock_status(known_options, selected_algos, selected_period, selected_interv
                                  is_summary = False,
                                  )
     algo_strategy = "5/8 EMA 1-2 candle price"
-    # etf_processed_signals[symbol][algo_strategy] = status_strategy_ema
-    # st.write(etf_processed_signals) #[symbol][:10])
     
-    # ema_continual + the following columns
-    # stock_df['ema_5above8'];stock_df['t0_close_aboveema5'];stock_df['t0_low_belowema5'];stock_df['ema_continual_long'];
-    # stock_df['ema_5below8'];stock_df['t0_close_belowema5'];stock_df['t0_low_aboveema5'];stock_df['ema_continual_short']
-    print("status_strategy_ema_continual")
-    print(status_strategy_ema_continual.columns)
-    print()
-    # Index(['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',
-      #  '5_EMA', '8_EMA', 'Signal', 'Position', 'atr', 'atr_ma', 'position_c',
-      #  'stop_loss_atr', 'take_profit_atr', '5_EMA 1-2 candle price',
-      #  '8_EMA 1-2 candle price', 'ema_5above8', 't0_close_aboveema5',
-      #  't0_low_belowema5', 'ema_continual_long', 'ema_5below8',
-      #  't0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short'],
-    #   dtype='object')
     status_strategy_ema_continual = status_strategy_ema_continual[[ 
        'Close','5_5/8 EMA 1-2 candle price','8_5/8 EMA 1-2 candle price',  
        'ema_5above8','t0_close_aboveema5','t0_low_belowema5', 'ema_continual_long', 
        'ema_5below8','t0_close_belowema5', 't0_low_aboveema5', 'ema_continual_short','position']]
-    # st.write("EMA 1-2 candle price", status_strategy_ema_continual.sort_index(ascending=False))
     # Rename the column position
     status_strategy_ema_continual.rename(columns={'position': 'Trigger:EMA 1-2 Continual',
                                         'Close': 'EMA_C Close Price'}, inplace=True)
     
-    # status_strategy_431_reversal = strategy_431_reversal(symbol,
-    #                              stock_hist_df,
-    #                              selected_period, 
-    #                              selected_interval,
-    #                              is_summary = False,
-    #                              algo_strategy = "4-3-1 candle price reversal",
-    #                              )
-    # algo_strategy = "4-3-1 candle price reversal"
+    status_strategy_431_reversal = strategy_431_reversal(symbol,
+                                 stock_hist_df,
+                                 selected_period, 
+                                 selected_interval,
+                                 is_summary = False,
+                                 algo_strategy = "4-3-1 candle price reversal",
+                                 )
+    algo_strategy = "4-3-1 candle price reversal"
   
     # print("status_strategy_431_reversal")
-    # # print(status_strategy_431_reversal.columns)
-    # print()
     # # ['Open', 'Close', 'High', 'Low', 't3', 't2', 't1', 't0',
     #   #  'strategy_431_long_c1', 'strategy_431_long_c2', 'strategy_431_long_c3',
     #   #  'strategy_431_long', 'strategy_431_short_c1', 'strategy_431_short_c2',
     #   #  'strategy_431_short_c3', 'strategy_431_short', 'position', 'atr',
     #   #  'atr_ma', 'stop_loss_atr', 'take_profit_atr']
     # #   dtype='object')
-    # status_strategy_431_reversal = status_strategy_431_reversal[['Close','strategy_431_long_c1',
-    #    'strategy_431_long_c2', 'strategy_431_long_c3', 'strategy_431_long',
-    #    'strategy_431_short_c1', 'strategy_431_short_c2',
-    #    'strategy_431_short_c3', 'strategy_431_short','position',]]
-    # # st.write("4-3-1 candle price reversal", status_strategy_431_reversal.sort_index(ascending=False))
+    status_strategy_431_reversal = status_strategy_431_reversal[['Close','strategy_431_long_c1',
+       'strategy_431_long_c2', 'strategy_431_long_c3', 'strategy_431_long',
+       'strategy_431_short_c1', 'strategy_431_short_c2',
+       'strategy_431_short_c3', 'strategy_431_short','position',]]
     # # Rename the column position
     # status_strategy_431_reversal.rename(columns={'position': 'Trigger:4-3-1 Reversal',
     #                                     'Close': '4-3-1 Close Price'}, inplace=True)
@@ -496,9 +444,9 @@ def stock_status(known_options, selected_algos, selected_period, selected_interv
     status_ema_merged_df = pd.merge(status_strategy_ema, #[selected_columns_df1], 
                                     status_strategy_ema_continual, #[selected_columns_df2], 
                                     left_index=True, right_index=True, how='outer')
-    # status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
-    #                                 status_strategy_431_reversal, #[selected_columns_df2], 
-    #                                 left_index=True, right_index=True, how='outer')
+    status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
+                                    status_strategy_431_reversal, #[selected_columns_df2], 
+                                    left_index=True, right_index=True, how='outer')
     # status_ema_merged_df = pd.merge(status_ema_merged_df, #[selected_columns_df1], 
     #                                 status_strategy_candle_hammer, #[selected_columns_df2], 
     #                                 left_index=True, right_index=True, how='outer')
@@ -616,35 +564,9 @@ def algo_trading_summary(symbol,
                                selected_period, 
                                selected_interval,
                                ):
-    print("********* algo_trading_summary **********", symbol)
+    # print("********* algo_trading_summary **********", symbol)
     trading_summary_results = []
     
-    # st.write(symbol, selected_algos)
-    
-    # NameError: name 'algo_functions_map' is not defined
-    # algo_name, algo_functions, algo_functions_args = list(algo_functions_map)
-    
-    # # Extract the second element from each list using list comprehension
-    # #RK load from config
-    # extracted_functions = [y for x, y in zip(algo_name, algo_functions) if x in selected_algos]
-    # # [lst[1] for lst in [algo_name, algo_functions]]
-    
-    # print("extracted_functions")
-    # print(extracted_functions[0], extracted_functions[1])
-    
-    # results = await asyncio.gather(func_a(), func_b())
-    # print("getting into functions")
-    # await asyncio.sleep(1)
-    # func1 =  strategy_sma(symbol,
-    #              stock_hist_df,
-    #              selected_period, 
-    #              selected_interval,
-    #              algo_strategy = "SMA",
-    #              selected_short_window = 5,
-    #              selected_long_window = 8,
-    #              is_summary = True,
-    #              )
-    # st.write("func1", func1)
     
     func2 =  strategy_ema(symbol,
                  stock_hist_df,
@@ -672,17 +594,17 @@ def algo_trading_summary(symbol,
     # Combine results into a single list of dictionaries
     trading_summary_results.append(func3)
 
-    # func4 =  strategy_431_reversal(symbol,
-    #                              stock_hist_df,
-    #                              selected_period, 
-    #                              selected_interval,
-    #                              is_summary = True,
-    #                              algo_strategy = "4-3-1 candle price reversal",
-    #                              )
+    func4 =  strategy_431_reversal(symbol,
+                                 stock_hist_df,
+                                 selected_period, 
+                                 selected_interval,
+                                 is_summary = True,
+                                 algo_strategy = "4-3-1 candle price reversal",
+                                 )
     
     # print("func4 >>>>>>>>>      >>>>>>>>>>>>  ", func4)
-    # # Combine results into a single list of dictionaries
-    # trading_summary_results.append(func4)
+    # Combine results into a single list of dictionaries
+    trading_summary_results.append(func4)
 
     # func5 =  strategy_candle_hammer(symbol,
     #                              stock_hist_df,
@@ -724,21 +646,13 @@ def algo_trading_summary(symbol,
     # # st.write(trading_summary_results)
 
     # Create a DataFrame from the list of dictionaries
-    print(" ================ generated trading summary for ================>>>", symbol, "\n", trading_summary_results)
+    # print(" ================ generated trading summary for ================>>>", symbol, "\n", trading_summary_results)
     # trading_summary_results_df = pd.DataFrame(trading_summary_results)
     # st.write(trading_summary_results_df)
     
     # PLACEHOLDER TO TEST FOR NEW ALGOS
   
     return (trading_summary_results)
-
-    # Get the object allocation traceback
-    # snapshot = tracemalloc.take_snapshot()
-    # top_stats = snapshot.statistics('lineno')
-
-    # Print the top statistics
-    # for stat in top_stats[:10]:
-    #     print(stat)
 
     
 def to_twitter(post):
@@ -751,27 +665,28 @@ def to_twitter(post):
   api_secret = "yluErKd8PSwPhLGFRCB3R3kkbpOJZ8YaERJn4JJyu9inyn1DLO"
 
   # Authenticate to Twitter
-  auth = tweepy.OAuth1UserHandler(#consumer_key, consumer_secret, 
+  auth = tweepy.OAuth1UserHandler(consumer_key, consumer_secret, 
                                   api_key, api_secret, 
                                   access_token, access_token_secret)
   api = tweepy.API(auth)
+  api.update_status(tweet_text)
 
-  # Streamlit app
-  st.sidebar.title("")
-  st.sidebar.subheader('Tweet from ConvexTrades!')
+  # # Streamlit app
+  # st.sidebar.title("")
+  # st.sidebar.subheader('Tweet from ConvexTrades!')
 
-  # Get tweet text from user input
-  tweet_text = st.sidebar.text_area('Enter your tweet:', '')
+  # # Get tweet text from user input
+  # tweet_text = st.sidebar.text_area('Enter your tweet:', '')
 
-  # Button to send tweet
-  if st.sidebar.button('Send Tweet'):
-      # Check if tweet text is not empty
-      if tweet_text.strip():
-          # Send tweet
-          api.update_status(tweet_text)
-          st.sidebar.success('Tweet sent successfully!')
-      else:
-          st.sidebar.warning('Please enter some text for your tweet.')
+  # # Button to send tweet
+  # if st.sidebar.button('Send Tweet'):
+  #     # Check if tweet text is not empty
+  #     if tweet_text.strip():
+  #         # Send tweet
+  #         api.update_status(tweet_text)
+  #         st.sidebar.success('Tweet sent successfully!')
+  #     else:
+  #         st.sidebar.warning('Please enter some text for your tweet.')
 
 
 def get_selected_stock_history(known_options,selected_period, selected_interval):
